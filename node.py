@@ -1,7 +1,6 @@
 class NodeMeta(type):
     pass
 
-
 class NodeBase(object):
 
     @classmethod
@@ -11,9 +10,6 @@ class NodeBase(object):
     @classmethod
     def get_by(cls, *args, **kwargs):
         return None
-
-    def 
-
 
 class Node(NodeBase):
     __metaclass__ = NodeMeta

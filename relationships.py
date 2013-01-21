@@ -1,5 +1,10 @@
-class ManyToOne(object):
+from properties import Property
+
+class ManyToOne(Property):
     pass
 
-class OneToMany(object):
+class OneToMany(Property):
+    pass
+
+class ManyToMany(Property):
     pass
