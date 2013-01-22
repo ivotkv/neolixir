@@ -3,14 +3,7 @@ from py2neo.rest import ResourceNotFound
 from neolixir import meta
 from entity import Entity
 
-class NodeEntityMeta(type):
-
-    def __init__(cls, name, bases, dict_):
-        cls._instrumented = True if name != 'NodeEntity' else False
-
 class NodeEntity(Entity):
-    
-    __metaclass__ = NodeEntityMeta
 
     def __init__(self, entity=None, **properties):
         super(NodeEntity, self).__init__(entity, **properties)

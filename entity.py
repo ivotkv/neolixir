@@ -1,6 +1,17 @@
-from properties import PropertyContainer
+from properties import PropertyContainer, Property
+
+class EntityMeta(type):
+
+    def __init__(cls, name, bases, dict_):
+        super(EntityMeta, cls).__init__(name, bases, dict_)
+
+        for k, v in dict_.iteritems():
+            if isinstance(v, Property):
+                v.name = k
 
 class Entity(object):
+    
+    __metaclass__ = EntityMeta
 
     def __init__(self, entity=None, **properties):
         self._entity = entity

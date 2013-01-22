@@ -48,6 +48,45 @@ class PropertyContainer(dict):
         return super(PropertyContainer, self).update(*args, **kwargs)
 
 class Property(object):
+
+    def __init__(self, name=None, nullable=True, default=None):
+        self._name = None
+        self.name = name
+        self.nullable = nullable
+        self.default = default
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        if self._name is None:
+            self._name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        elif self.name is None:
+            return None
+        else:
+            return self._out(instance.properties.get(self.name, self.default))
+    
+    def __set__(self, instance, value):
+        if self.name is not None:
+            instance.properties[self.name] = self._in(value)
+    
+    def __delete__(self, instance):
+        if self.name is not None:
+            del instance.properties[self.name]
+
+    def _out(self, value):
+        return value
+
+    def _in(self, value):
+        return value
+
+class Array(Property):
     pass
 
 class Boolean(Property):
