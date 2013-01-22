@@ -4,16 +4,20 @@ class PropertyContainer(dict):
         super(PropertyContainer, self).__init__()
         self._entity = entity
         self._dirty = False
-
-        if entity:
-            for k, v in entity.get_properties().iteritems():
-                self[k] = v
+        self.reload()
 
     def is_dirty(self):
         return self._dirty
 
-    def set_dirty(self):
-        self._dirty = True
+    def set_dirty(self, dirty=True):
+        self._dirty = dirty
+
+    def reload(self):
+        super(PropertyContainer, self).clear()
+        if self._entity:
+            for k, v in self._entity.get_properties().iteritems():
+                super(PropertyContainer, self).__setitem__(k, v)
+        self.set_dirty(False)
 
     def __setitem__(self, key, value):
         self.set_dirty()

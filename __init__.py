@@ -2,6 +2,6 @@ from metadata import MetaData
 
 __version__ = '0.1'
 
-__all__ = ['metadata']
+__all__ = ['meta']
 
-metadata = MetaData()
+meta = MetaData()

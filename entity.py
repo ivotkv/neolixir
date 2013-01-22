@@ -18,7 +18,7 @@ class Entity(object):
                                                  "\n".join(self._get_repr_data()))
 
     @property
-    def properties():
+    def properties(self):
         return self._properties
 
     def is_phantom(self):
@@ -26,3 +26,6 @@ class Entity(object):
 
     def is_dirty(self):
         return self._properties.is_dirty()
+
+    def reload(self):
+        self._properties.reload()
