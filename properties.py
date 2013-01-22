@@ -86,9 +86,6 @@ class Property(object):
     def _in(self, value):
         return value
 
-class Array(Property):
-    pass
-
 class Boolean(Property):
     pass
 
@@ -106,3 +103,27 @@ class Decimal(Property):
 
 class DateTime(Property):
     pass
+
+class Array(Property):
+
+    def __init__(self, type_=None, name=None):
+        super(Array, self).__init__(name=name)
+        self._type = type_
+
+    def __get__(self, instance, owner):
+        value = super(Array, self).__get__(instance, owner)
+        if instance is not None and not isinstance(value, TypedList):
+            value = TypedList(value, type_=self._type)
+            super(Array, self).__set__(instance, value)
+        return value
+
+    def __set__(self, instance, value):
+        if not isinstance(value, TypedList):
+            value = TypedList(value, type_=self._type)
+        super(Array, self).__set__(instance, value)
+
+class TypedList(list):
+    
+    def __init__(self, list_=None, type_=None):
+        super(TypedList, self).__init__(list_ or [])
+        self._type = type_
