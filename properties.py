@@ -47,5 +47,23 @@ class PropertyContainer(dict):
         self.set_dirty()
         return super(PropertyContainer, self).update(*args, **kwargs)
 
-class PropertyDescriptor(object):
+class Property(object):
+    pass
+
+class Boolean(Property):
+    pass
+
+class String(Property):
+    pass
+
+class Integer(Property):
+    pass
+
+class Float(Property):
+    pass
+
+class Decimal(Property):
+    pass
+
+class DateTime(Property):
     pass
