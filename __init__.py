@@ -1,7 +1,7 @@
-from engine import Engine
+from metadata import MetaData
 
 __version__ = '0.1'
 
-__all__ = ['Engine']
+__all__ = ['metadata']
 
-engine = None
+metadata = MetaData()

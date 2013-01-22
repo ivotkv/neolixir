@@ -1,25 +1,28 @@
 from py2neo.neo4j import Node
-from engine import get_engine
+from py2neo.rest import ResourceNotFound
+from neolixir import metadata
+from entity import Entity
 
 class NodeEntityMeta(type):
 
-    def __new__(cls, name, bases, dict_):
-        attrs = ((name, value) for name, value in dct.items() if not name.startswith('__'))
-        uppercase_attr = dict((name.upper(), value) for name, value in attrs)
+    def __init__(cls, name, bases, dict_):
+        cls._instrumented = True if name != 'NodeEntity' else False
 
-        return super(NodeEntityMeta, cls).__new__(cls, name, bases, dict_)
-
-class NodeEntity(Node):
-
+class NodeEntity(Entity):
+    
     __metaclass__ = NodeEntityMeta
 
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, entity=None, **properties):
+        super(NodeEntity, self).__init__(entity, **properties)
 
     @classmethod
     def get_by(cls, **kwargs):
-        e = get_engine()
-        if 'id' in kwargs:
-            return e.get_node(kwargs['id'])
-        else:
+        node = None
 
+        if 'id' in kwargs:
+            node = metadata.engine.get_node(kwargs['id'])
+
+        try:
+            return cls(node) if node is not None else None
+        except ResourceNotFound:
+            return None
