@@ -1,3 +1,6 @@
+from decimal import Decimal
+from datetime import datetime
+
 class PropertyContainer(dict):
 
     def __init__(self, entity=None):
@@ -49,10 +52,11 @@ class PropertyContainer(dict):
 
 class Property(object):
 
-    def __init__(self, name=None, nullable=True, default=None):
+    _type = None
+
+    def __init__(self, name=None, default=None):
         self._name = None
         self.name = name
-        self.nullable = nullable
         self.default = default
 
     @property
@@ -67,63 +71,100 @@ class Property(object):
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        elif self.name is None:
-            return None
         else:
-            return self._out(instance.properties.get(self.name, self.default))
+            value = instance.properties.get(self.name)
+            return self.normalize(value if value is not None else self.default)
     
     def __set__(self, instance, value):
-        if self.name is not None:
-            instance.properties[self.name] = self._in(value)
+        instance.properties[self.name] = self.normalize(value)
     
     def __delete__(self, instance):
-        if self.name is not None:
-            del instance.properties[self.name]
+        del instance.properties[self.name]
 
-    def _out(self, value):
-        return value
-
-    def _in(self, value):
+    def normalize(self, value):
+        if value is not None and self._type is not None:
+            if not isinstance(value, self._type):
+                value = self._type(value)
         return value
 
 class Boolean(Property):
-    pass
+
+    _type = bool
 
 class String(Property):
-    pass
+
+    _type = unicode
 
 class Integer(Property):
-    pass
+
+    _type = int
 
 class Float(Property):
-    pass
 
-class Decimal(Property):
-    pass
+    _type = float
+
+class Numeric(Property):
+
+    _type = Decimal
+
+    def __init__(self, scale=None, name=None, default=None):
+        super(Numeric, self).__init__(name=name, default=default)
+        self.scale = scale
+    
+    def __set__(self, instance, value):
+        if value is not None:
+            value = str(value)
+        instance.properties[self.name] = value
+
+    def normalize(self, value):
+        value = super(Numeric, self).normalize(value)
+        if self.scale is not None and isinstance(value, Decimal):
+            value = value.quantize(Decimal('1.' + '0' * self.scale))
+        return value
 
 class DateTime(Property):
-    pass
+
+    _type = datetime
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        else:
+            value = instance.properties.get(self.name)
+            if value is not None and not isinstance(value, datetime):
+                try:
+                    value = datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    value = None
+            return value if value is not None else self.default
+    
+    def __set__(self, instance, value):
+        if value is not None:
+            value = value.strftime("%Y-%m-%d %H:%M:%S")
+        instance.properties[self.name] = value
 
 class Array(Property):
 
-    def __init__(self, type_=None, name=None):
+    def __init__(self, type=None, name=None):
         super(Array, self).__init__(name=name)
-        self._type = type_
+        self._type = type
 
     def __get__(self, instance, owner):
         value = super(Array, self).__get__(instance, owner)
         if instance is not None and not isinstance(value, TypedList):
-            value = TypedList(value, type_=self._type)
+            value = TypedList(value, type=self._type)
             super(Array, self).__set__(instance, value)
         return value
 
     def __set__(self, instance, value):
         if not isinstance(value, TypedList):
-            value = TypedList(value, type_=self._type)
+            value = TypedList(value, type=self._type)
         super(Array, self).__set__(instance, value)
 
 class TypedList(list):
     
-    def __init__(self, list_=None, type_=None):
-        super(TypedList, self).__init__(list_ or [])
-        self._type = type_
+    #TODO: implement type checking and enforcing
+
+    def __init__(self, list=None, type=None):
+        super(TypedList, self).__init__(list or [])
+        self._type = type
