@@ -5,10 +5,10 @@ class EntityMeta(type):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
-        cls._instrumented_properties = []
+        cls._attributes = []
         for k, v in dict_.iteritems():
             if isinstance(v, Property):
-                cls._instrumented_properties.append(k)
+                cls._attributes.append(k)
                 v.name = k
 
 class Entity(object):

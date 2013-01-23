@@ -4,16 +4,16 @@ from py2neo import neo4j, cypher
 class Engine(object):
 
     def __init__(self, url='http://localhost:7474/db/data/'):
-        self.__threadlocal__ = threading.local()
+        self._threadlocal = threading.local()
         self.url = url
 
     @property
     def instance(self):
         try:
-            return self.__threadlocal__.instance
+            return self._threadlocal.instance
         except AttributeError:
-            self.__threadlocal__.instance = neo4j.GraphDatabaseService(self.url)
-            return self.__threadlocal__.instance
+            self._threadlocal.instance = neo4j.GraphDatabaseService(self.url)
+            return self._threadlocal.instance
 
     def execute(self, *args, **kwargs):
         return cypher.execute(self.instance, *args, **kwargs)
