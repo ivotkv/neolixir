@@ -163,7 +163,7 @@ class Array(Property):
 
 class TypedList(list):
     
-    #TODO: implement type checking and enforcing
+    # TODO: implement type checking, casting and enforcing
 
     def __init__(self, list=None, type=None):
         super(TypedList, self).__init__(list or [])

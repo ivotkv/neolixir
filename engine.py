@@ -1,6 +1,9 @@
 import threading
 from py2neo import neo4j, cypher
 
+class OperationalError(Exception):
+    pass
+
 class Engine(object):
 
     def __init__(self, url='http://localhost:7474/db/data/', metadata=None):

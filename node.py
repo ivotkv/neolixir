@@ -1,9 +1,16 @@
 from py2neo.neo4j import Node
 from py2neo.rest import ResourceNotFound
 from neolixir import meta
-from entity import Entity
+from entity import Entity, EntityMeta
+
+class NodeEntityMeta(EntityMeta):
+
+    def __init__(cls, name, bases, dict_):
+        super(NodeEntityMeta, cls).__init__(name, bases, dict_)
 
 class NodeEntity(Entity):
+
+    __metaclass__ = NodeEntityMeta
 
     def __init__(self, entity=None, **properties):
         super(NodeEntity, self).__init__(entity, **properties)
