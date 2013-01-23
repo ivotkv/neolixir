@@ -3,8 +3,9 @@ from py2neo import neo4j, cypher
 
 class Engine(object):
 
-    def __init__(self, url='http://localhost:7474/db/data/'):
+    def __init__(self, url='http://localhost:7474/db/data/', metadata=None):
         self._threadlocal = threading.local()
+        self._metadata = metadata
         self.url = url
 
     @property
