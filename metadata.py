@@ -13,6 +13,10 @@ class MetaData(object):
         return self._engine.instance
 
     @property
+    def execute(self):
+        return self._engine.execute
+
+    @property
     def session(self):
         return self._session
 
