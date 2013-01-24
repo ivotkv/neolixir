@@ -1,5 +1,5 @@
+from metadata import metadata
 from properties import PropertyContainer, Property
-from neolixir import meta
 
 class EntityMeta(type):
 
@@ -13,7 +13,7 @@ class EntityMeta(type):
                 v.name = k
         cls._attributes = tuple(attrs)
         
-        meta.classes[name] = cls
+        metadata.classes[name] = cls
 
 class Entity(object):
     
@@ -22,13 +22,13 @@ class Entity(object):
     _initialized = False
 
     def __new__(cls, entity=None, **properties):
-        instance = meta.session.get_entity(entity)
+        instance = metadata.session.get_entity(entity)
         if instance is not None:
             return instance
         else:
             instance = super(Entity, cls).__new__(cls)
             instance._entity = entity
-            meta.session.add_entity(instance)
+            metadata.session.add_entity(instance)
             return instance
 
     def __init__(self, entity=None, **properties):
@@ -87,4 +87,4 @@ class Entity(object):
 
     def delete(self):
         if not self.is_phantom():
-            meta.engine.delete(self._entity)
+            metadata.engine.delete(self._entity)

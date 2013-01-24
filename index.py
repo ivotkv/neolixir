@@ -1,16 +1,16 @@
 from py2neo.neo4j import Node, Relationship
+from metadata import metadata
+from exceptions import *
 from entity import Entity
 from node import NodeEntity
 from relationship import RelationshipEntity
-from engine import OperationalError
-from neolixir import meta
 
 class Index(object):
 
     _type = Entity
 
     def __init__(self, type, name, config=None):
-        self._index = meta.engine.get_or_create_index(type, name, config)
+        self._index = metadata.engine.get_or_create_index(type, name, config)
 
     @property
     def name(self):

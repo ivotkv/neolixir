@@ -5,7 +5,7 @@ from session import Session
 class MetaData(object):
 
     def __init__(self, url='http://localhost:7474/db/data/'):
-        self._engine = Engine(url=url, metadata=self)
+        self.engine = url
         self._session = Session(metadata=self)
         self._classes = {}
         self._classnodes = threading.local()
@@ -13,6 +13,10 @@ class MetaData(object):
     @property
     def engine(self):
         return self._engine.instance
+
+    @engine.setter
+    def engine(self, url):
+        self._engine = Engine(url=url, metadata=self)
 
     @property
     def execute(self):
@@ -52,3 +56,5 @@ class MetaData(object):
                 self.execute("START n=node{0} MATCH n-[r:EXTENDS]->() DELETE r".format(n))
             for b in (self.classnode(x) for x in cls.__bases__ if issubclass(x, Entity)):
                 self.execute("START n=node{0}, b=node{1} CREATE UNIQUE n-[r:EXTENDS]->b".format(n, b))
+
+metadata = MetaData()

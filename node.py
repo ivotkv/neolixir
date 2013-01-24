@@ -1,13 +1,13 @@
 from py2neo.rest import ResourceNotFound
-from neolixir import meta
+from metadata import metadata
 from entity import Entity, EntityMeta
 
 class NodeEntity(Entity):
 
     def save(self):
         if self.is_phantom():
-            self._entity = meta.engine.create(self.properties)[0]
-            meta.session.add_entity(self)
+            self._entity = metadata.engine.create(self.properties)[0]
+            metadata.session.add_entity(self)
             self.properties._entity = self._entity
             self.properties.reload()
         elif self.is_dirty():
@@ -18,7 +18,7 @@ class NodeEntity(Entity):
         node = None
 
         if 'id' in kwargs:
-            node = meta.engine.get_node(kwargs['id'])
+            node = metadata.engine.get_node(kwargs['id'])
 
         try:
             return cls(node) if node is not None else None
