@@ -22,6 +22,10 @@ class PropertyContainer(dict):
                 super(PropertyContainer, self).__setitem__(k, v)
         self.set_dirty(False)
 
+    def save(self):
+        self._entity.set_properties(self)
+        self.set_dirty(False)
+
     def __setitem__(self, key, value):
         self.set_dirty()
         super(PropertyContainer, self).__setitem__(key, value)

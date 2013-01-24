@@ -13,27 +13,51 @@ class EntityMeta(type):
                 v.name = k
         cls._attributes = tuple(attrs)
         
-        meta.entities[name] = cls
+        meta.classes[name] = cls
 
 class Entity(object):
     
     __metaclass__ = EntityMeta
 
-    def __init__(self, entity=None, **properties):
-        self._entity = entity
-        self._properties = PropertyContainer(self._entity)
+    _initialized = False
 
-        for k, v in properties.iteritems():
-            self._properties[k] = v
+    def __new__(cls, entity=None, **properties):
+        instance = meta.session.get_entity(entity)
+        if instance is not None:
+            return instance
+        else:
+            instance = super(Entity, cls).__new__(cls)
+            instance._entity = entity
+            meta.session.add_entity(instance)
+            return instance
+
+    def __init__(self, entity=None, **properties):
+        if not self._initialized:
+            self._properties = PropertyContainer(self._entity)
+
+            for k, v in properties.iteritems():
+                if k in self._attributes:
+                    setattr(self, k, v)
+                else:
+                    self._properties[k] = v
+
+            self._initialized = True
 
     def _get_repr_data(self):
-        return ["Id = {0}".format(self._entity.id if self._entity else None),
-                "Attributes = {0}".format(self._attributes),
-                "Properties = {0}".format(self._properties)]
+        return ["Id = {0}".format(self.id),
+                "Attributes = {0}".format(self.attributes),
+                "Properties = {0}".format(self.properties)]
 
     def __repr__(self):
         return "<{0} (0x{1:x}): \n{2}\n>".format(self.__class__.__name__, id(self),
                                                  "\n".join(self._get_repr_data()))
+
+    def __str__(self):
+        return str(self._entity) if self._entity else '()'
+
+    @property
+    def id(self):
+        return self._entity.id if self._entity else None
 
     @property
     def attributes(self):
@@ -47,7 +71,20 @@ class Entity(object):
         return self._entity is None
 
     def is_dirty(self):
-        return self._properties.is_dirty()
+        return self.properties.is_dirty()
 
     def reload(self):
-        self._properties.reload()
+        self.properties.reload()
+
+    def rollback(self):
+        self.reload()
+
+    def save(self):
+        if self.is_phantom():
+            raise NotImplementedError("generic Entity cannot create new entities")
+        elif self.is_dirty():
+            self.properties.save()
+
+    def delete(self):
+        if not self.is_phantom():
+            meta.engine.delete(self._entity)
