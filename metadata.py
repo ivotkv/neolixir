@@ -2,6 +2,8 @@ import threading
 from engine import Engine
 from session import Session
 
+__all__ = ['metadata']
+
 class MetaData(object):
 
     def __init__(self, url='http://localhost:7474/db/data/'):

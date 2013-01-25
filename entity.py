@@ -1,5 +1,7 @@
-from metadata import metadata
+from metadata import metadata as m
 from properties import PropertyContainer, Property
+
+__all__ = ['Entity']
 
 class EntityMeta(type):
 
@@ -13,7 +15,7 @@ class EntityMeta(type):
                 v.name = k
         cls._attributes = tuple(attrs)
         
-        metadata.classes[name] = cls
+        m.classes[name] = cls
 
 class Entity(object):
     
@@ -22,13 +24,13 @@ class Entity(object):
     _initialized = False
 
     def __new__(cls, entity=None, **properties):
-        instance = metadata.session.get_entity(entity)
+        instance = m.session.get_entity(entity)
         if instance is not None:
             return instance
         else:
             instance = super(Entity, cls).__new__(cls)
             instance._entity = entity
-            metadata.session.add_entity(instance)
+            m.session.add_entity(instance)
             return instance
 
     def __init__(self, entity=None, **properties):
@@ -87,4 +89,4 @@ class Entity(object):
 
     def delete(self):
         if not self.is_phantom():
-            metadata.engine.delete(self._entity)
+            m.engine.delete(self._entity)

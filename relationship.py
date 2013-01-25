@@ -1,13 +1,6 @@
 from entity import Entity
 
-class RelationshipEntity(Entity):
-    pass
+__all__ = ['Relationship']
 
-class ManyToOne(object):
-    pass
-
-class OneToMany(object):
-    pass
-
-class ManyToMany(object):
+class Relationship(Entity):
     pass

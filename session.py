@@ -1,6 +1,6 @@
 import threading
 from itertools import chain
-from py2neo.neo4j import Node, Relationship
+from py2neo import neo4j
 
 class Session(object):
 
@@ -44,15 +44,15 @@ class Session(object):
     def add_entity(self, entity):
         if entity.is_phantom():
             self.phantoms.add(entity)
-        elif isinstance(entity._entity, Node):
+        elif isinstance(entity._entity, neo4j.Node):
             self.nodes[entity.id] = entity
-        elif isinstance(entity._entity, Relationship):
+        elif isinstance(entity._entity, neo4j.Relationship):
             self.relationships[entity.id] = entity
 
     def get_entity(self, entity):
-        if isinstance(entity, Node):
+        if isinstance(entity, neo4j.Node):
             return self.nodes.get(entity.id)
-        elif isinstance(entity, Relationship):
+        elif isinstance(entity, neo4j.Relationship):
             return self.relationships.get(entity.id)
         return None
 

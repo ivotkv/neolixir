@@ -1,16 +1,16 @@
-from py2neo.neo4j import Node, Relationship
-from metadata import metadata
+from py2neo import neo4j
+from metadata import metadata as m
 from exceptions import *
 from entity import Entity
-from node import NodeEntity
-from relationship import RelationshipEntity
+from node import Node
+from relationship import Relationship
 
 class Index(object):
 
     _type = Entity
 
     def __init__(self, type, name, config=None):
-        self._index = metadata.engine.get_or_create_index(type, name, config)
+        self._index = m.engine.get_or_create_index(type, name, config)
 
     @property
     def name(self):
@@ -36,14 +36,14 @@ class Index(object):
 
 class NodeIndex(Index):
 
-    _type = NodeEntity
+    _type = Node
 
     def __init__(self, name, config=None):
-        super(NodeIndex, self).__init__(Node, name, config)
+        super(NodeIndex, self).__init__(neo4j.Node, name, config)
 
 class RelationshipIndex(Index):
 
-    _type = RelationshipEntity
+    _type = Relationship
 
     def __init__(self, name, config=None):
-        super(RelationshipIndex, self).__init__(Relationship, name, config)
+        super(RelationshipIndex, self).__init__(neo4j.Relationship, name, config)
