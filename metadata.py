@@ -1,4 +1,5 @@
 import threading
+from py2neo import neo4j
 from engine import Engine
 from session import Session
 
@@ -11,6 +12,7 @@ class MetaData(object):
         self._session = Session(metadata=self)
         self._classes = {}
         self._classnodes = threading.local()
+        self._classnodes._idmap = {}
 
     @property
     def engine(self):
@@ -46,17 +48,29 @@ class MetaData(object):
         try:
             return getattr(self._classnodes, name)
         except AttributeError:
-            node = self.index.get('classnode', name, {'type': 'class', 'name': name})
+            node = self.index.get('classnode', name, {'type': 'classnode', 'classname': name})
             setattr(self._classnodes, name, node)
+            self._classnodes._idmap[node.id] = name
             return node
+
+    def class_from_classnode(self, node):
+        try:
+            name = self._classnodes._idmap[node.id]
+        except KeyError:
+            if not isinstance(node, neo4j.Node):
+                node = node._entity
+            name = node.get_properties().get('classname')
+            if name is not None:
+                self._classnodes._idmap[node.id] = name
+        return self._classes.get(name)
 
     def init(self, reset=False):
         from entity import Entity
         for cls in self.classes.values():
             n = self.classnode(cls)
             if reset:
-                self.execute("START n=node{0} MATCH n-[r:EXTENDS]->() DELETE r".format(n))
+                self.execute("start n=node{0} match n-[r:EXTENDS]->() delete r".format(n))
             for b in (self.classnode(x) for x in cls.__bases__ if issubclass(x, Entity)):
-                self.execute("START n=node{0}, b=node{1} CREATE UNIQUE n-[r:EXTENDS]->b".format(n, b))
+                self.execute("start n=node{0}, b=node{1} create unique n-[r:EXTENDS]->b".format(n, b))
 
 metadata = MetaData()

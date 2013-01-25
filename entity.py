@@ -1,3 +1,4 @@
+from util import classproperty
 from metadata import metadata as m
 from properties import PropertyContainer, Property
 
@@ -8,12 +9,12 @@ class EntityMeta(type):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
-        attrs = []
+        if not hasattr(cls, '_attributes'):
+            cls._attributes = set()
         for k, v in dict_.iteritems():
             if isinstance(v, Property):
-                attrs.append(k)
+                cls._attributes.add(k)
                 v.name = k
-        cls._attributes = tuple(attrs)
         
         m.classes[name] = cls
 
@@ -56,6 +57,10 @@ class Entity(object):
 
     def __str__(self):
         return str(self._entity) if self._entity else '()'
+
+    @classproperty
+    def classnode(cls):
+        return m.classnode(cls)
 
     @property
     def id(self):

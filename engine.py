@@ -17,4 +17,4 @@ class Engine(object):
             return self._threadlocal.instance
 
     def execute(self, *args, **kwargs):
-        return cypher.execute(self.instance, *args, **kwargs)
+        return cypher.execute(self.instance, *args, **kwargs)[0]
