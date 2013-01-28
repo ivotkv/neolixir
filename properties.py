@@ -29,7 +29,8 @@ class PropertyContainer(dict):
         self.set_dirty(False)
 
     def __setitem__(self, key, value):
-        self.set_dirty()
+        if self.get(key) != value:
+            self.set_dirty()
         super(PropertyContainer, self).__setitem__(key, value)
 
     def __delitem__(self, key):

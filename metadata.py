@@ -48,7 +48,7 @@ class MetaData(object):
         try:
             return getattr(self._classnodes, name)
         except AttributeError:
-            node = self.index.get('classnode', name, {'type': 'classnode', 'classname': name})
+            node = self.index.get('classnode', name, {'__type__': 'classnode', 'classname': name})
             setattr(self._classnodes, name, node)
             self._classnodes._idmap[node.id] = name
             return node
