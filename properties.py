@@ -187,8 +187,7 @@ class Rel(object):
         if instance is None:
             return self
         else:
-            instance.relationships.setdefault(self.key, set())
-            return instance.relationships[self.key]
+            return instance.relationships.get(self.key)
 
 class RelOut(Rel):
 

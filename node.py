@@ -8,21 +8,21 @@ __all__ = ['Node']
 
 class Node(Entity):
 
-    def __init__(self, entity=None, **properties):
-        if not self._initialized:
-            super(Node, self).__init__(entity, **properties)
-            from relationship import RelationshipContainer
-            self._relationships = RelationshipContainer(self)
-            self._relationships.reload()
-
     def _get_repr_data(self):
         data = super(Node, self)._get_repr_data()
-        data.append("Relationships = {0}".format(self.relationships))
+        if m.debug:
+            data.append("Relationships = {0}".format(self.relationships))
         return data
 
     @property
     def relationships(self):
-        return self._relationships
+        try:
+            return self._relationships
+        except AttributeError:
+            from relationship import RelationshipContainer
+            self._relationships = RelationshipContainer(self)
+            self._relationships.reload()
+            return self._relationships
 
     def reload(self):
         super(Node, self).reload()

@@ -47,9 +47,11 @@ class Entity(object):
             self._initialized = True
 
     def _get_repr_data(self):
-        return ["Id = {0}".format(self.id),
-                "Attributes = {0}".format(self.attributes),
-                "Properties = {0}".format(self.properties)]
+        data = ["Id = {0}".format(self.id),
+                "Attributes = {0}".format(self.attributes)]
+        if m.debug:
+            data.append("Properties = {0}".format(self.properties))
+        return data
 
     def __repr__(self):
         return "<{0} (0x{1:x}): \n{2}\n>".format(self.__class__.__name__, id(self),
