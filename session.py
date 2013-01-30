@@ -56,6 +56,14 @@ class Session(object):
             return self.relationships.get(entity.id)
         return None
 
+    def expunge(self, entity):
+        if entity.is_phantom():
+            self.phantoms.remove(entity)
+        elif isinstance(entity._entity, neo4j.Node):
+            del self.nodes[entity.id]
+        elif isinstance(entity._entity, neo4j.Relationship):
+            del self.relationships[entity.id]
+
     def rollback(self):
         for entity in chain(self.nodes.values(), self.relationships.values()):
             entity.rollback()
@@ -63,7 +71,15 @@ class Session(object):
 
     def commit(self):
         # TODO Batch-ify
+        from relationship import Relationship
+        phantom_relationships = []
         while self.phantoms:
-            self.phantoms.pop().save()
+            entity = self.phantoms.pop()
+            if isinstance(entity, Relationship):
+                phantom_relationships.append(entity)
+            else:
+                entity.save()
         for entity in chain(self.nodes.values(), self.relationships.values()):
+            entity.save()
+        for entity in phantom_relationships:
             entity.save()

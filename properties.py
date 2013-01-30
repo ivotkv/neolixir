@@ -1,13 +1,13 @@
 from decimal import Decimal
 from datetime import datetime
 
-__all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Array']
+__all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Array', 'RelOut', 'RelIn']
 
 class PropertyContainer(dict):
 
-    def __init__(self, entity=None):
+    def __init__(self, owner):
         super(PropertyContainer, self).__init__()
-        self._entity = entity
+        self.owner = owner
         self._dirty = False
         self.reload()
 
@@ -19,13 +19,13 @@ class PropertyContainer(dict):
 
     def reload(self):
         super(PropertyContainer, self).clear()
-        if self._entity:
-            for k, v in self._entity.get_properties().iteritems():
+        if self.owner._entity:
+            for k, v in self.owner._entity.get_properties().iteritems():
                 super(PropertyContainer, self).__setitem__(k, v)
         self.set_dirty(False)
 
     def save(self):
-        self._entity.set_properties(self)
+        self.owner._entity.set_properties(self)
         self.set_dirty(False)
 
     def __setitem__(self, key, value):
@@ -175,3 +175,27 @@ class TypedList(list):
     def __init__(self, list=None, type=None):
         super(TypedList, self).__init__(list or [])
         self._type = type
+
+class Rel(object):
+
+    def __init__(self, direction, type):
+        self.direction = direction
+        self.type = type
+        self.key = '{0}:{1}'.format(direction, type)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        else:
+            instance.relationships.setdefault(self.key, set())
+            return instance.relationships[self.key]
+
+class RelOut(Rel):
+
+    def __init__(self, type):
+        super(RelOut, self).__init__(direction='OUT', type=type)
+
+class RelIn(Rel):
+
+    def __init__(self, type):
+        super(RelIn, self).__init__(direction='IN', type=type)

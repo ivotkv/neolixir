@@ -1,3 +1,4 @@
+from py2neo import neo4j
 from util import classproperty
 from exceptions import *
 from metadata import metadata as m
@@ -7,25 +8,35 @@ __all__ = ['Node']
 
 class Node(Entity):
 
+    def __init__(self, entity=None, **properties):
+        if not self._initialized:
+            super(Node, self).__init__(entity, **properties)
+            from relationship import RelationshipContainer
+            self._relationships = RelationshipContainer(self)
+            self._relationships.reload()
+
+    def _get_repr_data(self):
+        data = super(Node, self)._get_repr_data()
+        data.append("Relationships = {0}".format(self.relationships))
+        return data
+
+    @property
+    def relationships(self):
+        return self._relationships
+
+    def reload(self):
+        super(Node, self).reload()
+        self.relationships.reload()
+
     def save(self):
         if self.is_phantom():
             classnode = m.classnode(self.__class__)
             self._entity = m.engine.create(self.properties, (0, "INSTANCE_OF", classnode._entity))[0]
             m.session.add_entity(self)
-            self.properties._entity = self._entity
             self.properties.reload()
         elif self.is_dirty():
             self.properties.save()
-
-    @classmethod
-    def from_node(cls, node, classname=None):
-        if classname is not None:
-            nodeclass = m.classes.get(classname, cls)
-            if issubclass(nodeclass, cls):
-                cls = nodeclass
-            else:
-                return None
-        return cls(node) if node is not None else None
+        return True
 
     @classproperty
     def _query(cls):
@@ -36,11 +47,32 @@ class Node(Entity):
         return cls._query.format("".join((" and i.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems())))
 
     @classmethod
+    def get(cls, item, classname=None):
+        if isinstance(item, cls):
+            return item
+        elif isinstance(item, int):
+            item = m.engine.get_node(item)
+        elif not isinstance(item, neo4j.Node):
+            return None
+
+        if classname is None:
+            classname = cls.get_classname_from_id(item.id)
+
+        nodeclass = m.classes.get(classname)
+        if nodeclass is None or not issubclass(nodeclass, cls):
+            return None
+
+        try:
+            return nodeclass(item)
+        except ResourceNotFound:
+            return None
+
+    @classmethod
     def get_by(cls, **kwargs):
         if 'id' in kwargs:
             try:
                 n, c = m.execute('start n=node({0}) match n-[?:INSTANCE_OF]->c return n, c.classname'.format(kwargs['id']))[0]
-                return cls.from_node(n, c)
+                return cls.get(n, c)
             except (CypherError, IndexError):
                 return None
         else:
@@ -51,3 +83,12 @@ class Node(Entity):
                     results.append(c(node))
             return results
         return None
+
+    @classmethod
+    def get_classname_from_id(cls, id):
+        if m.session.nodes.has_key(id):
+            return m.session.nodes[id].__class__.__name__
+        try:
+            return m.execute('start n=node({0}) match n-[?:INSTANCE_OF]->c return c.classname'.format(id))[0][0]
+        except (CypherError, IndexError):
+            return None

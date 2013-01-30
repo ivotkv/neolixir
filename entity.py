@@ -1,6 +1,6 @@
 from util import classproperty
 from metadata import metadata as m
-from properties import PropertyContainer, Property
+from properties import PropertyContainer, Property, Rel
 
 __all__ = ['Entity']
 
@@ -12,7 +12,7 @@ class EntityMeta(type):
         if not hasattr(cls, '_attributes'):
             cls._attributes = set()
         for k, v in dict_.iteritems():
-            if isinstance(v, Property):
+            if isinstance(v, (Property, Rel)):
                 cls._attributes.add(k)
                 v.name = k
         
@@ -36,7 +36,7 @@ class Entity(object):
 
     def __init__(self, entity=None, **properties):
         if not self._initialized:
-            self._properties = PropertyContainer(self._entity)
+            self._properties = PropertyContainer(self)
 
             for k, v in properties.iteritems():
                 if k in self._attributes:
@@ -83,6 +83,9 @@ class Entity(object):
     def reload(self):
         self.properties.reload()
 
+    def expunge(self):
+        m.session.expunge(self)
+
     def rollback(self):
         self.reload()
 
@@ -91,6 +94,7 @@ class Entity(object):
             raise NotImplementedError("generic Entity cannot create new entities")
         elif self.is_dirty():
             self.properties.save()
+        return True
 
     def delete(self):
         if not self.is_phantom():
