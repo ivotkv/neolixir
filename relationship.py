@@ -33,15 +33,23 @@ class Relationship(Entity):
         return Node.get(self._entity.start_node) if self._entity else self._start
 
     @property
+    def start_id(self):
+        return self._entity.start_node.id if self._entity else self._start.id
+
+    @property
     def end(self):
         return Node.get(self._entity.end_node) if self._entity else self._end
+
+    @property
+    def end_id(self):
+        return self._entity.end_node.id if self._entity else self._end.id
 
     @property
     def type(self):
         return self._entity.type if self._entity else self._type
 
     def __repr__(self):
-        return "<{0} (0x{1:x}): {2}-[{3}:{4} {5}]->{6}>".format(self.__class__.__name__, id(self), self.start, self.id, self.type, self.properties, self.end)
+        return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start_id, self.id, self.type, self.properties, self.end_id)
 
     def add_to_owners(self):
         if self.start:
