@@ -12,8 +12,6 @@ import properties as __m_properties__
 from relationship import *
 import relationship as __m_relationship__
 
-__version__ = '1.0'
-
 __all__ = [n for m in dir() if re.match('^__m_.*', m) for n in eval(m).__all__]
 
 del re, n, m

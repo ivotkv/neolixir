@@ -36,14 +36,13 @@ class Entity(object):
 
     def __init__(self, entity=None, **properties):
         if not self._initialized:
-            self._properties = PropertyContainer(self)
-
-            for k, v in properties.iteritems():
-                if k in self._attributes:
-                    setattr(self, k, v)
-                else:
-                    self._properties[k] = v
-
+            if len(properties) > 0:
+                self._properties = PropertyContainer(self)
+                for k, v in properties.iteritems():
+                    if k in self._attributes:
+                        setattr(self, k, v)
+                    else:
+                        self._properties[k] = v
             self._initialized = True
 
     def _get_repr_data(self):
@@ -74,6 +73,8 @@ class Entity(object):
 
     @property
     def properties(self):
+        if not getattr(self, '_properties', None):
+            self._properties = PropertyContainer(self)
         return self._properties
 
     def is_phantom(self):

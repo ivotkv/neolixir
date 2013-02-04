@@ -8,6 +8,11 @@ __all__ = ['Node']
 
 class Node(Entity):
 
+    def __new__(cls, value=None, **properties):
+        if isinstance(value, int):
+            value = m.engine.get_node(value)
+        return super(Node, cls).__new__(cls, value, **properties)
+
     def _get_repr_data(self):
         data = super(Node, self)._get_repr_data()
         if m.debug:
@@ -16,13 +21,11 @@ class Node(Entity):
 
     @property
     def relationships(self):
-        try:
-            return self._relationships
-        except AttributeError:
+        if not getattr(self, '_relationships', None):
             from relationship import RelationshipContainer
             self._relationships = RelationshipContainer(self)
             self._relationships.reload()
-            return self._relationships
+        return self._relationships
 
     def reload(self):
         super(Node, self).reload()
