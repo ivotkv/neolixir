@@ -1,3 +1,4 @@
+from py2neo import neo4j
 from util import classproperty
 from metadata import metadata as m
 from properties import PropertyContainer, Property, Rel
@@ -24,6 +25,8 @@ class Entity(object):
     _initialized = False
 
     def __new__(cls, entity=None, **properties):
+        if not isinstance(entity, neo4j.PropertyContainer):
+            entity = None
         instance = m.session.get_entity(entity)
         if instance is not None:
             return instance
@@ -34,6 +37,8 @@ class Entity(object):
             return instance
 
     def __init__(self, entity=None, **properties):
+        if not isinstance(entity, neo4j.PropertyContainer):
+            entity = None
         if not self._initialized:
             for k, v in properties.iteritems():
                 if k in self._descriptors:
@@ -86,7 +91,10 @@ class Entity(object):
         return self._entity is None
 
     def is_dirty(self):
-        return self.properties.is_dirty()
+        if getattr(self, '_properties', None) is None:
+            return False
+        else:
+            return self.properties.is_dirty()
 
     def reload(self):
         if getattr(self, '_properties', None) is not None:

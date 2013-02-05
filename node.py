@@ -34,7 +34,7 @@ class Node(Entity):
 
     def save(self):
         if self.is_phantom():
-            classnode = m.classnode(self.__class__)
+            classnode = self.classnode
             self.set_entity(m.engine.create(self.properties, (0, "INSTANCE_OF", classnode))[0])
             m.session.add_entity(self)
         elif self.is_dirty():
