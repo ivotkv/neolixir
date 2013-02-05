@@ -9,11 +9,10 @@ class EntityMeta(type):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
-        if not hasattr(cls, '_attributes'):
-            cls._attributes = set()
+        cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else set()
         for k, v in dict_.iteritems():
             if isinstance(v, (Property, Rel)):
-                cls._attributes.add(k)
+                cls._descriptors.add(k)
                 v.name = k
         
         m.classes[name] = cls
@@ -39,7 +38,7 @@ class Entity(object):
             if len(properties) > 0:
                 self._properties = PropertyContainer(self)
                 for k, v in properties.iteritems():
-                    if k in self._attributes:
+                    if k in self._descriptors:
                         setattr(self, k, v)
                     else:
                         self._properties[k] = v
@@ -47,7 +46,7 @@ class Entity(object):
 
     def _get_repr_data(self):
         data = ["Id = {0}".format(self.id),
-                "Attributes = {0}".format(self.attributes)]
+                "Descriptors = {0}".format(self.descriptors)]
         if m.debug:
             data.append("Properties = {0}".format(self.properties))
         return data
@@ -68,14 +67,22 @@ class Entity(object):
         return self._entity.id if self._entity else None
 
     @property
-    def attributes(self):
-        return self._attributes
+    def descriptors(self):
+        return self._descriptors
 
     @property
     def properties(self):
-        if not getattr(self, '_properties', None):
+        if getattr(self, '_properties', None) is None:
             self._properties = PropertyContainer(self)
         return self._properties
+
+    def set_entity(self, entity):
+        if self._entity is None:
+            self._entity = entity
+            self.reload()
+            return True
+        else:
+            return False
 
     def is_phantom(self):
         return self._entity is None
@@ -84,7 +91,8 @@ class Entity(object):
         return self.properties.is_dirty()
 
     def reload(self):
-        self.properties.reload()
+        if getattr(self, '_properties', None) is not None:
+            self.properties.reload()
 
     def expunge(self):
         m.session.expunge(self)

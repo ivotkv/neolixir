@@ -21,7 +21,7 @@ class Node(Entity):
 
     @property
     def relationships(self):
-        if not getattr(self, '_relationships', None):
+        if getattr(self, '_relationships', None) is None:
             from relationship import RelationshipContainer
             self._relationships = RelationshipContainer(self)
             self._relationships.reload()
@@ -29,14 +29,14 @@ class Node(Entity):
 
     def reload(self):
         super(Node, self).reload()
-        self.relationships.reload()
+        if getattr(self, '_relationships', None) is not None:
+            self.relationships.reload()
 
     def save(self):
         if self.is_phantom():
             classnode = m.classnode(self.__class__)
-            self._entity = m.engine.create(self.properties, (0, "INSTANCE_OF", classnode._entity))[0]
+            self.set_entity(m.engine.create(self.properties, (0, "INSTANCE_OF", classnode))[0])
             m.session.add_entity(self)
-            self.properties.reload()
         elif self.is_dirty():
             self.properties.save()
         return True

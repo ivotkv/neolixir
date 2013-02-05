@@ -36,8 +36,8 @@ class MetaData(object):
         try:
             return self._index
         except AttributeError:
-            from index import NodeIndex
-            self._index = NodeIndex('metadata')
+            from index import Index
+            self._index = Index(neo4j.Node, 'metadata')
             return self._index
 
     @property
@@ -58,8 +58,6 @@ class MetaData(object):
         try:
             name = self._classnodes._idmap[node.id]
         except KeyError:
-            if not isinstance(node, neo4j.Node):
-                node = node._entity
             name = node.get_properties().get('classname')
             if name is not None:
                 self._classnodes._idmap[node.id] = name
@@ -70,8 +68,8 @@ class MetaData(object):
         for cls in self.classes.values():
             n = self.classnode(cls)
             if reset:
-                self.execute("start n=node{0} match n-[r:EXTENDS]->() delete r".format(n))
+                self.execute("start n=node({0}) match n-[r:EXTENDS]->() delete r".format(n.id))
             for b in (self.classnode(x) for x in cls.__bases__ if issubclass(x, Entity)):
-                self.execute("start n=node{0}, b=node{1} create unique n-[r:EXTENDS]->b".format(n, b))
+                self.execute("start n=node({0}), b=node({1}) create unique n-[r:EXTENDS]->b".format(n.id, b.id))
 
 metadata = MetaData()
