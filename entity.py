@@ -35,13 +35,11 @@ class Entity(object):
 
     def __init__(self, entity=None, **properties):
         if not self._initialized:
-            if len(properties) > 0:
-                self._properties = PropertyContainer(self)
-                for k, v in properties.iteritems():
-                    if k in self._descriptors:
-                        setattr(self, k, v)
-                    else:
-                        self._properties[k] = v
+            for k, v in properties.iteritems():
+                if k in self._descriptors:
+                    setattr(self, k, v)
+                else:
+                    self.properties[k] = v
             self._initialized = True
 
     def _get_repr_data(self):
