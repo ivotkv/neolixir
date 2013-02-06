@@ -24,28 +24,26 @@ class Entity(object):
 
     _initialized = False
 
-    def __new__(cls, entity=None, **properties):
-        if not isinstance(entity, neo4j.PropertyContainer):
-            entity = None
-        instance = m.session.get_entity(entity)
+    def __new__(cls, value=None, **properties):
+        if isinstance(value, cls):
+            return value
+        instance = m.session.get_entity(value)
         if instance is not None:
             return instance
         else:
             instance = super(Entity, cls).__new__(cls)
-            instance._entity = entity
-            m.session.add_entity(instance)
             return instance
 
-    def __init__(self, entity=None, **properties):
-        if not isinstance(entity, neo4j.PropertyContainer):
-            entity = None
+    def __init__(self, value=None, **properties):
         if not self._initialized:
+            self._entity = value if isinstance(value, neo4j.PropertyContainer) else None
             for k, v in properties.iteritems():
                 if k in self._descriptors:
                     setattr(self, k, v)
                 else:
                     self.properties[k] = v
             self._initialized = True
+            m.session.add_entity(self)
 
     def _get_repr_data(self):
         data = ["Id = {0}".format(self.id),
@@ -75,9 +73,11 @@ class Entity(object):
 
     @property
     def properties(self):
-        if getattr(self, '_properties', None) is None:
+        try:
+            return self._properties
+        except AttributeError:
             self._properties = PropertyContainer(self)
-        return self._properties
+            return self._properties
 
     def set_entity(self, entity):
         if self._entity is None:
@@ -91,13 +91,13 @@ class Entity(object):
         return self._entity is None
 
     def is_dirty(self):
-        if getattr(self, '_properties', None) is None:
+        if not hasattr(self, '_properties'):
             return False
         else:
             return self.properties.is_dirty()
 
     def reload(self):
-        if getattr(self, '_properties', None) is not None:
+        if hasattr(self, '_properties'):
             self.properties.reload()
 
     def expunge(self):

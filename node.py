@@ -21,15 +21,17 @@ class Node(Entity):
 
     @property
     def relationships(self):
-        if getattr(self, '_relationships', None) is None:
+        try:
+            return self._relationships
+        except AttributeError:
             from relationship import RelationshipContainer
             self._relationships = RelationshipContainer(self)
             self._relationships.reload()
-        return self._relationships
+            return self._relationships
 
     def reload(self):
         super(Node, self).reload()
-        if getattr(self, '_relationships', None) is not None:
+        if hasattr(self, '_relationships'):
             self.relationships.reload()
 
     def save(self):
@@ -50,23 +52,23 @@ class Node(Entity):
         return cls._query.format("".join((" and i.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems())))
 
     @classmethod
-    def get(cls, item, classname=None):
-        if isinstance(item, cls):
-            return item
-        elif isinstance(item, int):
-            item = m.engine.get_node(item)
-        elif not isinstance(item, neo4j.Node):
+    def get(cls, value, classname=None):
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, int):
+            value = m.engine.get_node(value)
+        elif not isinstance(value, neo4j.Node):
             return None
 
         if classname is None:
-            classname = cls.get_classname_from_id(item.id)
+            classname = cls.get_classname_from_id(value.id)
 
         nodeclass = m.classes.get(classname)
         if nodeclass is None or not issubclass(nodeclass, cls):
             return None
 
         try:
-            return nodeclass(item)
+            return nodeclass(value)
         except ResourceNotFound:
             return None
 

@@ -7,11 +7,12 @@ class Session(object):
     def __init__(self, metadata=None):
         self._threadlocal = threading.local()
         self._metadata = metadata
-        self.clear()
 
     def clear(self):
         self.nodes.clear()
         self.relationships.clear()
+        self.relationship_tuples.clear()
+        self.relmap.clear()
         self.phantoms.clear()
 
     @property
@@ -29,6 +30,23 @@ class Session(object):
         except AttributeError:
             self._threadlocal.relationships = {}
             return self._threadlocal.relationships
+
+    @property
+    def relationship_tuples(self):
+        try:
+            return self._threadlocal.relationship_tuples
+        except AttributeError:
+            self._threadlocal.relationship_tuples = {}
+            return self._threadlocal.relationship_tuples
+
+    @property
+    def relmap(self):
+        try:
+            return self._threadlocal.relmap
+        except AttributeError:
+            from relationship import RelationshipMapper
+            self._threadlocal.relmap = RelationshipMapper()
+            return self._threadlocal.relmap
 
     @property
     def phantoms(self):
@@ -60,12 +78,18 @@ class Session(object):
             self.nodes[entity.id] = entity
         elif isinstance(entity._entity, neo4j.Relationship):
             self.relationships[entity.id] = entity
+        from relationship import Relationship
+        if isinstance(entity, Relationship):
+            self.relationship_tuples[entity.tuple] = entity
+            self.relmap.add(entity)
 
-    def get_entity(self, entity):
-        if isinstance(entity, neo4j.Node):
-            return self.nodes.get(entity.id)
-        elif isinstance(entity, neo4j.Relationship):
-            return self.relationships.get(entity.id)
+    def get_entity(self, value):
+        if isinstance(value, neo4j.Node):
+            return self.nodes.get(value.id)
+        elif isinstance(value, neo4j.Relationship):
+            return self.relationships.get(value.id)
+        elif isinstance(value, tuple):
+            return self.relationship_tuples.get(value)
         return None
 
     def expunge(self, entity):
@@ -75,6 +99,10 @@ class Session(object):
             del self.nodes[entity.id]
         elif isinstance(entity._entity, neo4j.Relationship):
             del self.relationships[entity.id]
+        from relationship import Relationship
+        if isinstance(entity, Relationship):
+            del self.relationship_tuples[entity.tuple]
+            self.relmap.remove(entity)
 
     def rollback(self):
         for entity in chain(self.nodes.values(), self.relationships.values()):

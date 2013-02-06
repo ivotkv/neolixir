@@ -7,55 +7,52 @@ __all__ = ['Relationship']
 
 class Relationship(Entity):
 
-    def __new__(cls, entity_or_tuple=None, **properties):
-        entity = entity_or_tuple if isinstance(entity_or_tuple, neo4j.Relationship) else None
-        return super(Relationship, cls).__new__(cls, entity, **properties)
+    def __new__(cls, value=None, **properties):
+        if isinstance(value, int):
+            value = m.engine.get_relationship(value)
+        elif isinstance(value, tuple):
+            value = (Node.get(value[0]), value[1], Node.get(value[2]))
+            if value[0] is None:
+                raise ValueError("start node not found!")
+            if value[2] is None:
+                raise ValueError("end node not found!")
+        return super(Relationship, cls).__new__(cls, value, **properties)
 
-    def __init__(self, entity_or_tuple=None, **properties):
+    def __init__(self, value=None, **properties):
         if not self._initialized:
-            if isinstance(entity_or_tuple, tuple):
-                self._start = Node.get(entity_or_tuple[0])
-                self._type = entity_or_tuple[1]
-                self._end = Node.get(entity_or_tuple[2])
-                entity = None
-            elif isinstance(entity_or_tuple, neo4j.Relationship):
-                self._start = None
-                self._type = None
-                self._end = None
-                entity = entity_or_tuple
-            else:
-                raise ValueError("expected neo4j.Relationship or tuple")
-            super(Relationship, self).__init__(entity, **properties)
-            self.add_to_owners()
+            if isinstance(value, tuple):
+                self._start = Node.get(value[0])
+                self._type = value[1]
+                self._end = Node.get(value[2])
+            super(Relationship, self).__init__(value, **properties)
 
     @property
     def start(self):
-        return Node.get(self._entity.start_node) if self._entity else self._start
-
-    @property
-    def start_id(self):
-        return self._entity.start_node.id if self._entity else self._start.id
+        return Node.get(self._entity.start_node) if self._entity is not None else self._start
 
     @property
     def end(self):
-        return Node.get(self._entity.end_node) if self._entity else self._end
-
-    @property
-    def end_id(self):
-        return self._entity.end_node.id if self._entity else self._end.id
+        return Node.get(self._entity.end_node) if self._entity is not None else self._end
 
     @property
     def type(self):
-        return self._entity.type if self._entity else self._type
+        return self._entity.type if self._entity is not None else self._type
+
+    @property
+    def tuple(self):
+        return (self.start, self.type, self.end)
 
     def __repr__(self):
-        return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start_id, self.id, self.type, self.properties, self.end_id)
+        return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.properties, self.end.id)
 
-    def add_to_owners(self):
-        if self.start:
-            self.start.relationships.add(self)
-        if self.end:
-            self.end.relationships.add(self)
+    @classmethod
+    def get(cls, value):
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, (int, tuple)):
+            return cls(value)
+        else:
+            return None
 
     def save(self):
         if self.is_phantom():
@@ -119,35 +116,52 @@ class RelationshipList(list):
     def extend(self, list):
         super(RelationshipList, self).extend((v for v in (self.validate(v) for v in list) if v not in self))
 
-class RelationshipContainer(dict):
+class RelationshipDict(dict):
 
-    def __init__(self, owner):
-        super(RelationshipContainer, self).__init__()
-        self.owner = owner
-
-    def reload(self):
-        for rel in (r for s in self.values() for r in s if r.is_phantom()):
-            rel.expunge()
-        self.clear()
-        if not self.owner.is_phantom():
-            for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(self.owner.id)):
-                if row[0].type not in ('INSTANCE_OF', 'EXTENDS'):
-                    self.add(Relationship(row[0]))
-
-    def get_key(self, rel):
-        return ('OUT:' if rel.start == self.owner else 'IN:') + rel.type
-
-    def setdefault(self, key):
-        return super(RelationshipContainer, self).setdefault(key, RelationshipList(self.owner, *key.split(':')))
-
-    def get(self, key):
-        return self.setdefault(key)
+    def __init__(self, direction):
+        self.direction = direction
 
     def add(self, rel):
-        key = self.get_key(rel)
-        self.setdefault(key).append(rel)
+        pass
 
     def remove(self, rel):
-        key = self.get_key(rel)
-        if self.has_key(key):
-            self[key].remove(rel)
+        pass
+
+    def get(self, item):
+        if isinstance(item, int):
+            if not self.has_key(int):
+                return self.setdefault(item, RelationshipList(item)) 
+        elif isinstance(item, Node):
+            pass
+        else:
+            raise KeyError('unexpected key type')
+
+class RelationshipMapper(set):
+
+    def __init__(self):
+        super(RelationshipMapper, self).__init__()
+        self.start = RelationshipDict('OUT')
+        self.end = RelationshipDict('IN')
+
+    def clear(self):
+        super(RelationshipMapper, self).clear()
+        self.start.clear()
+        self.end.clear()
+
+    def add(self, rel):
+        assert isinstance(rel, Relationship)
+        super(RelationshipMapper,self).add(rel)
+        self.start.add(rel)
+        self.end.add(rel)
+
+    def remove(self, rel):
+        assert isinstance(rel, Relationship)
+        super(RelationshipMapper,self).remove(rel)
+        self.start.remove(rel)
+        self.end.remove(rel)
+
+    def load_node_rels(self, node):
+        if not node.is_phantom():
+            for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):
+                if row[0].type not in ('INSTANCE_OF', 'EXTENDS'):
+                    self.add(Relationship(row[0]))
