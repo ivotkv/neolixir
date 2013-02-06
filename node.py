@@ -74,13 +74,13 @@ class Node(Entity):
     def get_by(cls, **kwargs):
         if 'id' in kwargs:
             try:
-                n, c = m.execute('start n=node({0}) match n-[?:INSTANCE_OF]->c return n, c.classname'.format(kwargs['id']))[0]
+                n, c = m.cypher('start n=node({0}) match n-[?:INSTANCE_OF]->c return n, c.classname'.format(kwargs['id']))[0]
                 return cls.get(n, c)
             except (CypherError, IndexError):
                 return None
         else:
             results = []
-            for node, path in m.execute(cls.query(**kwargs)):
+            for node, path in m.cypher(cls.query(**kwargs)):
                 c = m.class_from_classnode(path.nodes[-2])
                 if c is not None:
                     results.append(c(node))
@@ -92,6 +92,6 @@ class Node(Entity):
         if m.session.nodes.has_key(id):
             return m.session.nodes[id].__class__.__name__
         try:
-            return m.execute('start n=node({0}) match n-[?:INSTANCE_OF]->c return c.classname'.format(id))[0][0]
+            return m.cypher('start n=node({0}) match n-[?:INSTANCE_OF]->c return c.classname'.format(id))[0][0]
         except (CypherError, IndexError):
             return None

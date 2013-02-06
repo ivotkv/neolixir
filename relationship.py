@@ -130,7 +130,7 @@ class RelationshipContainer(dict):
             rel.expunge()
         self.clear()
         if not self.owner.is_phantom():
-            for row in m.execute("start n=node({0}) match n-[r]-() return r".format(self.owner.id)):
+            for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(self.owner.id)):
                 if row[0].type not in ('INSTANCE_OF', 'EXTENDS'):
                     self.add(Relationship(row[0]))
 

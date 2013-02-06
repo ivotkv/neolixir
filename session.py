@@ -5,26 +5,38 @@ from py2neo import neo4j
 class Session(object):
 
     def __init__(self, metadata=None):
+        self._threadlocal = threading.local()
         self._metadata = metadata
         self.clear()
 
     def clear(self):
-        self._threadlocal = threading.local()
-        self._threadlocal.nodes = {}
-        self._threadlocal.relationships = {}
-        self._threadlocal.phantoms = set()
+        self.nodes.clear()
+        self.relationships.clear()
+        self.phantoms.clear()
 
     @property
     def nodes(self):
-        return self._threadlocal.nodes
+        try:
+            return self._threadlocal.nodes
+        except AttributeError:
+            self._threadlocal.nodes = {}
+            return self._threadlocal.nodes
 
     @property
     def relationships(self):
-        return self._threadlocal.relationships
+        try:
+            return self._threadlocal.relationships
+        except AttributeError:
+            self._threadlocal.relationships = {}
+            return self._threadlocal.relationships
 
     @property
     def phantoms(self):
-        return self._threadlocal.phantoms
+        try:
+            return self._threadlocal.phantoms
+        except AttributeError:
+            self._threadlocal.phantoms = set()
+            return self._threadlocal.phantoms
 
     @property
     def count(self):

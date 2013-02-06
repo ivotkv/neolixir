@@ -8,12 +8,12 @@ __all__ = ['metadata']
 class MetaData(object):
 
     def __init__(self, url='http://localhost:7474/db/data/', debug=False):
+        self.url = url
         self.engine = url
         self.debug = debug
         self._session = Session(metadata=self)
         self._classes = {}
-        self._classnodes = threading.local()
-        self._classnodes._idmap = {}
+        self._classnodes = {'_idmap': {}}
 
     @property
     def engine(self):
@@ -24,8 +24,12 @@ class MetaData(object):
         self._engine = Engine(url=url, metadata=self)
 
     @property
-    def execute(self):
-        return self._engine.execute
+    def batch(self):
+        return self._engine.batch
+
+    @property
+    def cypher(self):
+        return self._engine.cypher
 
     @property
     def session(self):
@@ -47,29 +51,31 @@ class MetaData(object):
     def classnode(self, cls):
         name = cls.__name__ if isinstance(cls, type) else cls
         try:
-            return getattr(self._classnodes, name)
-        except AttributeError:
+            return self._classnodes[name]
+        except KeyError:
             node = self.index.get('classnode', name, {'__type__': 'classnode', 'classname': name})
-            setattr(self._classnodes, name, node)
-            self._classnodes._idmap[node.id] = name
+            self._classnodes[name] = node
+            self._classnodes['_idmap'][node.id] = name
             return node
 
     def class_from_classnode(self, node):
         try:
-            name = self._classnodes._idmap[node.id]
+            name = self._classnodes['_idmap'][node.id]
         except KeyError:
             name = node.get_properties().get('classname')
             if name is not None:
-                self._classnodes._idmap[node.id] = name
+                self._classnodes['_idmap'][node.id] = name
         return self._classes.get(name)
 
     def init(self, reset=False):
         from entity import Entity
+        batch = self.batch()
         for cls in self.classes.values():
             n = self.classnode(cls)
             if reset:
-                self.execute("start n=node({0}) match n-[r:EXTENDS]->() delete r".format(n.id))
+                batch.cypher("start n=node({0}) match n-[r:EXTENDS]->() delete r".format(n.id))
             for b in (self.classnode(x) for x in cls.__bases__ if issubclass(x, Entity)):
-                self.execute("start n=node({0}), b=node({1}) create unique n-[r:EXTENDS]->b".format(n.id, b.id))
+                batch.cypher("start n=node({0}), b=node({1}) create unique n-[r:EXTENDS]->b".format(n.id, b.id))
+        batch.submit()
 
 metadata = MetaData()
