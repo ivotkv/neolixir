@@ -57,6 +57,7 @@ class Node(Entity):
         if self.deleted:
             if not self.is_phantom():
                 self._entity.delete()
+                self.expunge()
         elif self.is_phantom():
             classnode = self.classnode
             self.set_entity(m.engine.create(self.properties, (0, "INSTANCE_OF", classnode))[0])

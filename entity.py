@@ -127,6 +127,7 @@ class Entity(object):
         if self.deleted:
             if not self.is_phantom():
                 self._entity.delete()
+                self.expunge()
         elif self.is_phantom():
             raise NotImplementedError("generic Entity cannot create new entities")
         elif self.is_dirty():

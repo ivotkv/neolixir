@@ -89,5 +89,5 @@ class Session(object):
         # TODO Batch-ify
         while self.phantomnodes:
             self.phantomnodes.pop().save()
-        for entity in chain(self.nodes.itervalues(), self.relmap.itervalues()):
+        for entity in list(chain(self.nodes.itervalues(), self.relmap.itervalues())):
             entity.save()
