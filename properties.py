@@ -59,12 +59,9 @@ class PropertyContainer(dict):
 
 class Property(object):
 
-    _type = None
-
-    def __init__(self, name=None, default=None):
+    def __init__(self, name=None):
         self._name = None
         self.name = name
-        self.default = default
 
     @property
     def name(self):
@@ -74,6 +71,14 @@ class Property(object):
     def name(self, name):
         if self._name is None:
             self._name = name
+
+class FieldProperty(Property):
+
+    _type = None
+
+    def __init__(self, name=None, default=None):
+        super(FieldProperty, self).__init__(name)
+        self.default = default
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -94,23 +99,23 @@ class Property(object):
                 value = self._type(value)
         return value
 
-class Boolean(Property):
+class Boolean(FieldProperty):
 
     _type = bool
 
-class String(Property):
+class String(FieldProperty):
 
     _type = unicode
 
-class Integer(Property):
+class Integer(FieldProperty):
 
     _type = int
 
-class Float(Property):
+class Float(FieldProperty):
 
     _type = float
 
-class Numeric(Property):
+class Numeric(FieldProperty):
 
     _type = Decimal
 
@@ -129,7 +134,7 @@ class Numeric(Property):
             value = value.quantize(Decimal('1.' + '0' * self.scale))
         return value
 
-class DateTime(Property):
+class DateTime(FieldProperty):
 
     _type = datetime
 
@@ -150,7 +155,7 @@ class DateTime(Property):
             value = value.strftime("%Y-%m-%d %H:%M:%S")
         instance.properties[self.name] = value
 
-class Array(Property):
+class Array(FieldProperty):
 
     def __init__(self, type=None, name=None):
         super(Array, self).__init__(name=name)
@@ -176,25 +181,31 @@ class TypedList(list):
         super(TypedList, self).__init__(list or [])
         self._type = type
 
-class Rel(object):
+class RelProperty(Property):
 
-    def __init__(self, direction, type):
-        self.direction = direction
+    direction = None
+
+    def __init__(self, type, name=None):
+        super(RelProperty, self).__init__(name)
         self.type = type
-        self.key = '{0}:{1}'.format(direction, type)
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
-            return instance.relationships.get(self.key)
+            try:
+                return instance._relfilters[self.name]
+            except KeyError:
+                from relationship import RelationshipFilter
+                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type)
+                if len(instance._relfilters) == 1:
+                    instance._relfilters[self.name].reload()
+                return instance._relfilters[self.name]
 
-class RelOut(Rel):
+class RelOut(RelProperty):
 
-    def __init__(self, type):
-        super(RelOut, self).__init__(direction='OUT', type=type)
+    direction = 'OUT'
 
-class RelIn(Rel):
+class RelIn(RelProperty):
 
-    def __init__(self, type):
-        super(RelIn, self).__init__(direction='IN', type=type)
+    direction = 'IN'

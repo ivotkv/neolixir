@@ -1,3 +1,4 @@
+from itertools import ifilter, imap
 from py2neo import neo4j
 from entity import Entity
 from metadata import metadata as m
@@ -26,7 +27,7 @@ class Relationship(Entity):
 
     def __init__(self, value=None, **properties):
         if not self._initialized:
-            if isinstance(value, tuple):
+            if self._entity is None and isinstance(value, tuple):
                 self._start = Node.get(value[0])
                 self._type = value[1]
                 self._end = Node.get(value[2])
@@ -146,3 +147,73 @@ class RelationshipMapper(object):
             for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):
                 if row[0].type not in ('INSTANCE_OF', 'EXTENDS'):
                     self.add(Relationship(row[0]))
+
+class RelationshipFilter(object):
+
+    def __init__(self, owner, direction=None, type=None):
+        self.map = m.session.relmap
+        self.owner = owner
+        self.direction = str(direction).upper()
+        self.type = type
+
+    def reload(self):
+        self.map.load_node_rels(self.owner)
+
+    @property
+    def data(self):
+        if self.direction == 'OUT':
+            return self.map.start.setdefault(self.owner, set())
+        elif self.direction == 'IN':
+            return self.map.end.setdefault(self.owner, set())
+        else:
+            outgoing = self.map.start.setdefault(self.owner, set())
+            incoming = self.map.end.setdefault(self.owner, set())
+            return outgoing.union(incoming)
+
+    def filterfunc(self, rel):
+        return self.type is None or rel.type == self.type
+
+    def nodefunc(self, rel):
+        return rel.end if rel.start is self.owner else rel.start
+
+    def relfunc(self, value):
+        from relationship import Relationship
+        if isinstance(value, Relationship):
+            return value
+        elif value is not None and self.direction in ('IN', 'OUT') and self.type is not None:
+            from node import Node
+            other = Node.get(value)
+            if other is not None:
+                if self.direction == 'OUT':
+                    return Relationship((self.owner, self.type, other))
+                else:
+                    return Relationship((other, self.type, self.owner))
+            else:
+                raise ValueError("could not find other Node")
+        else:
+            raise ValueError("value could not be converted to Relationship")
+
+    def __iter__(self):
+        return ifilter(self.filterfunc, self.data)
+
+    def __len__(self):
+        return sum((1 for item in iter(self)))
+
+    def __repr__(self):
+        return "[{0}]".format(", ".join(imap(repr, iter(self))))
+
+    def iternodes(self):
+        return imap(self.nodefunc, iter(self))
+
+    def nodes(self):
+        return list(self.iternodes())
+
+    def add(self, value):
+        self.map.add(self.relfunc(value))
+
+    @property
+    def append(self):
+        return self.add
+
+    def remove(self, value):
+        self.map.remove(self.relfunc(value))

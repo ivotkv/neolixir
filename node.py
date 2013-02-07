@@ -15,6 +15,11 @@ class Node(Entity):
             raise ValueError("Node can only be instantiated by id, entity or None")
         return super(Node, cls).__new__(cls, value, **properties)
 
+    def __init__(self, value=None, **properties):
+        if not self._initialized:
+            self._relfilters = {}
+            super(Node, self).__init__(value, **properties)
+
     def _get_repr_data(self):
         data = super(Node, self)._get_repr_data()
         if m.debug:
@@ -24,16 +29,17 @@ class Node(Entity):
     @property
     def relationships(self):
         try:
-            return self._relationships
-        except AttributeError:
-            from relationship import RelationshipContainer
-            self._relationships = RelationshipContainer(self)
-            self._relationships.reload()
-            return self._relationships
+            return self._relfilters['_all']
+        except KeyError:
+            from relationship import RelationshipFilter
+            self._relfilters['_all'] = RelationshipFilter(self)
+            if len(self._relfilters) == 1:
+                self._relfilters['_all'].reload()
+            return self._relfilters['_all']
 
     def reload(self):
         super(Node, self).reload()
-        if hasattr(self, '_relationships'):
+        if len(self._relfilters) > 0:
             self.relationships.reload()
 
     def save(self):

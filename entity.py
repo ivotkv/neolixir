@@ -1,7 +1,7 @@
 from py2neo import neo4j
 from util import classproperty
 from metadata import metadata as m
-from properties import PropertyContainer, Property, Rel
+from properties import PropertyContainer, Property
 
 __all__ = ['Entity']
 
@@ -12,7 +12,7 @@ class EntityMeta(type):
 
         cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else set()
         for k, v in dict_.iteritems():
-            if isinstance(v, (Property, Rel)):
+            if isinstance(v, Property):
                 cls._descriptors.add(k)
                 v.name = k
         
