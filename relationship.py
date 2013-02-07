@@ -16,6 +16,7 @@ class Relationship(Entity):
                 raise ValueError("start node not found!")
             if value[2] is None:
                 raise ValueError("end node not found!")
+            # TODO: try to load exisiting relationship
         return super(Relationship, cls).__new__(cls, value, **properties)
 
     def __init__(self, value=None, **properties):
@@ -136,29 +137,74 @@ class RelationshipDict(dict):
         else:
             raise KeyError('unexpected key type')
 
-class RelationshipMapper(set):
+class RelationshipMapper(object):
 
     def __init__(self):
-        super(RelationshipMapper, self).__init__()
+        self._ids = {}
+        self._phantoms = set()
+        self._tuples = {}
         self.start = RelationshipDict('OUT')
         self.end = RelationshipDict('IN')
 
     def clear(self):
-        super(RelationshipMapper, self).clear()
+        self._ids.clear()
+        self._phantoms.clear()
+        self._tuples.clear()
         self.start.clear()
         self.end.clear()
 
     def add(self, rel):
         assert isinstance(rel, Relationship)
-        super(RelationshipMapper,self).add(rel)
+        if rel.id is not None:
+            self._phantoms.discard(rel)
+            self._ids[rel.id] = rel
+        else:
+            self._phantoms.add(rel)
+        self._tuples[rel.tuple] = rel
         self.start.add(rel)
         self.end.add(rel)
 
     def remove(self, rel):
         assert isinstance(rel, Relationship)
-        super(RelationshipMapper,self).remove(rel)
+        self._ids.pop(rel.id, None)
+        self._phantoms.discard(rel)
+        self._tuples.pop(rel.tuple, None)
         self.start.remove(rel)
         self.end.remove(rel)
+
+    def get(self, value):
+        if isinstance(value, int):
+            return self._ids.get(value)
+        elif isinstance(value, neo4j.Relationship):
+            return self._ids.get(value.id)
+        elif isinstance(value, tuple):
+            return self._tuples.get(value)
+        else:
+            return None
+
+    def __len__(self):
+        return len(self._tuples)
+
+    def __iter__(self):
+        return self._tuples.itervalues()
+
+    def itervalues(self):
+        return self._tuples.itervalues()
+
+    def values(self):
+        return self._tuples.values()
+
+    def iterphantoms(self):
+        return iter(self._phantoms)
+
+    def phantoms(self):
+        return list(self._phantoms)
+
+    def iterpersisted(self):
+        return self._ids.itervalues()
+
+    def persisted(self):
+        return self._ids.values()
 
     def load_node_rels(self, node):
         if not node.is_phantom():

@@ -10,10 +10,8 @@ class Session(object):
 
     def clear(self):
         self.nodes.clear()
-        self.relationships.clear()
-        self.relationship_tuples.clear()
+        self.phantomnodes.clear()
         self.relmap.clear()
-        self.phantoms.clear()
 
     @property
     def nodes(self):
@@ -24,20 +22,12 @@ class Session(object):
             return self._threadlocal.nodes
 
     @property
-    def relationships(self):
+    def phantomnodes(self):
         try:
-            return self._threadlocal.relationships
+            return self._threadlocal.phantomnodes
         except AttributeError:
-            self._threadlocal.relationships = {}
-            return self._threadlocal.relationships
-
-    @property
-    def relationship_tuples(self):
-        try:
-            return self._threadlocal.relationship_tuples
-        except AttributeError:
-            self._threadlocal.relationship_tuples = {}
-            return self._threadlocal.relationship_tuples
+            self._threadlocal.phantomnodes = set()
+            return self._threadlocal.phantomnodes
 
     @property
     def relmap(self):
@@ -49,77 +39,55 @@ class Session(object):
             return self._threadlocal.relmap
 
     @property
-    def phantoms(self):
-        try:
-            return self._threadlocal.phantoms
-        except AttributeError:
-            self._threadlocal.phantoms = set()
-            return self._threadlocal.phantoms
-
-    @property
     def count(self):
-        return len(self.nodes) + len(self.relationships) + len(self.phantoms)
+        return len(self.nodes) + len(self.phantomnodes) + len(self.relmap)
 
     @property
     def new(self):
-        return len(self.phantoms)
+        return len(self.phantomnodes) + len(self.relmap._phantoms)
 
     @property
     def dirty(self):
-        return sum((1 for x in chain(self.nodes.values(), self.relationships.values()) if x.is_dirty()))
+        return sum((1 for x in chain(self.nodes.itervalues(), self.relmap.iterpersisted()) if x.is_dirty()))
 
     def is_dirty(self):
         return self.new + self.dirty > 0
 
     def add_entity(self, entity):
-        if entity.is_phantom():
-            self.phantoms.add(entity)
-        elif isinstance(entity._entity, neo4j.Node):
-            self.nodes[entity.id] = entity
-        elif isinstance(entity._entity, neo4j.Relationship):
-            self.relationships[entity.id] = entity
         from relationship import Relationship
         if isinstance(entity, Relationship):
-            self.relationship_tuples[entity.tuple] = entity
             self.relmap.add(entity)
+        else:
+            if entity.is_phantom():
+                self.phantomnodes.add(entity)
+            else:
+                self.phantomnodes.discard(entity)
+                self.nodes[entity.id] = entity
 
     def get_entity(self, value):
         if isinstance(value, neo4j.Node):
             return self.nodes.get(value.id)
-        elif isinstance(value, neo4j.Relationship):
-            return self.relationships.get(value.id)
-        elif isinstance(value, tuple):
-            return self.relationship_tuples.get(value)
-        return None
+        elif isinstance(value, (neo4j.Relationship, tuple)):
+            return self.relmap.get(value)
+        else:
+            return None
 
     def expunge(self, entity):
-        if entity.is_phantom():
-            self.phantoms.remove(entity)
-        elif isinstance(entity._entity, neo4j.Node):
-            del self.nodes[entity.id]
-        elif isinstance(entity._entity, neo4j.Relationship):
-            del self.relationships[entity.id]
         from relationship import Relationship
         if isinstance(entity, Relationship):
-            del self.relationship_tuples[entity.tuple]
             self.relmap.remove(entity)
+        else:
+            self.phantomnodes.discard(entity)
+            self.nodes.pop(entity.id, None)
 
     def rollback(self):
-        for entity in chain(self.nodes.values(), self.relationships.values()):
+        for entity in chain(self.nodes.itervalues(), self.relmap.itervalues()):
             entity.rollback()
         self.clear()
 
     def commit(self):
         # TODO Batch-ify
-        from relationship import Relationship
-        phantom_relationships = []
-        while self.phantoms:
-            entity = self.phantoms.pop()
-            if isinstance(entity, Relationship):
-                phantom_relationships.append(entity)
-            else:
-                entity.save()
-        for entity in chain(self.nodes.values(), self.relationships.values()):
-            entity.save()
-        for entity in phantom_relationships:
+        while self.phantomnodes:
+            self.phantomnodes.pop().save()
+        for entity in chain(self.nodes.itervalues(), self.relmap.itervalues()):
             entity.save()

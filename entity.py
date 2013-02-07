@@ -32,11 +32,11 @@ class Entity(object):
             return instance
         else:
             instance = super(Entity, cls).__new__(cls)
+            instance._entity = value if isinstance(value, neo4j.PropertyContainer) else None
             return instance
 
     def __init__(self, value=None, **properties):
         if not self._initialized:
-            self._entity = value if isinstance(value, neo4j.PropertyContainer) else None
             for k, v in properties.iteritems():
                 if k in self._descriptors:
                     setattr(self, k, v)
