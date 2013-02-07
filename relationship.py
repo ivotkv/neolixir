@@ -62,8 +62,11 @@ class Relationship(Entity):
             return None
 
     def save(self):
-        if self.is_phantom():
-            if self.start is None or self.start.is_phantom() or\
+        if self.deleted:
+            if not self.is_phantom():
+                self._entity.delete()
+        elif self.is_phantom():
+            if self.start is None or self.start.is_phantom() or \
                 self.end is None or self.end.is_phantom():
                 return False
             self._entity = m.engine.create((self.start._entity, self.type, self.end._entity, self.properties))[0]
@@ -171,7 +174,10 @@ class RelationshipFilter(object):
             return outgoing.union(incoming)
 
     def filterfunc(self, rel):
-        return self.type is None or rel.type == self.type
+        if self.owner.deleted != rel.deleted:
+            return False
+        else:
+            return self.type is None or rel.type == self.type
 
     def nodefunc(self, rel):
         return rel.end if rel.start is self.owner else rel.start
@@ -209,11 +215,15 @@ class RelationshipFilter(object):
         return list(self.iternodes())
 
     def add(self, value):
-        self.map.add(self.relfunc(value))
+        rel = self.relfunc(value)
+        if rel.deleted:
+            rel.undelete()
 
     @property
     def append(self):
         return self.add
 
     def remove(self, value):
-        self.map.remove(self.relfunc(value))
+        rel = self.relfunc(value)
+        if rel in self:
+            rel.delete()

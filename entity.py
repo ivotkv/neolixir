@@ -23,6 +23,7 @@ class Entity(object):
     __metaclass__ = EntityMeta
 
     _initialized = False
+    _deleted = False
 
     def __new__(cls, value=None, **properties):
         if isinstance(value, cls):
@@ -68,6 +69,10 @@ class Entity(object):
         return self._entity.id if self._entity else None
 
     @property
+    def deleted(self):
+        return self._deleted
+
+    @property
     def descriptors(self):
         return self._descriptors
 
@@ -91,7 +96,9 @@ class Entity(object):
         return self._entity is None
 
     def is_dirty(self):
-        if not hasattr(self, '_properties'):
+        if self.deleted:
+            return True
+        elif not hasattr(self, '_properties'):
             return False
         else:
             return self.properties.is_dirty()
@@ -106,13 +113,22 @@ class Entity(object):
     def rollback(self):
         self.reload()
 
-    def save(self):
+    def delete(self):
+        self._deleted = True
         if self.is_phantom():
+            self.expunge()
+
+    def undelete(self):
+        self._deleted = False
+        if self.is_phantom():
+            m.session.add_entity(self)
+
+    def save(self):
+        if self.deleted:
+            if not self.is_phantom():
+                self._entity.delete()
+        elif self.is_phantom():
             raise NotImplementedError("generic Entity cannot create new entities")
         elif self.is_dirty():
             self.properties.save()
         return True
-
-    def delete(self):
-        if not self.is_phantom():
-            m.engine.delete(self._entity)

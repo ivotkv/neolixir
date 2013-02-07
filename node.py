@@ -42,8 +42,22 @@ class Node(Entity):
         if len(self._relfilters) > 0:
             self.relationships.reload()
 
+    def delete(self):
+        if len(self._relfilters) > 0 or not self.is_phantom():
+            for rel in self.relationships:
+                rel.delete()
+        super(Node, self).delete()
+
+    def undelete(self):
+        for rel in self.relationships:
+            rel.undelete()
+        super(Node, self).undelete()
+
     def save(self):
-        if self.is_phantom():
+        if self.deleted:
+            if not self.is_phantom():
+                self._entity.delete()
+        elif self.is_phantom():
             classnode = self.classnode
             self.set_entity(m.engine.create(self.properties, (0, "INSTANCE_OF", classnode))[0])
             m.session.add_entity(self)
