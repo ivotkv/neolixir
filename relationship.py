@@ -16,7 +16,10 @@ class Relationship(Entity):
                 raise ValueError("start node not found!")
             if value[2] is None:
                 raise ValueError("end node not found!")
-            # TODO: try to load exisiting relationship
+            if not value[0].is_phantom() and not value[2].is_phantom():
+                existing = value[0]._entity.get_relationships_with(value[2]._entity, 1, value[1])
+                if len(existing) > 0:
+                    value = existing[0]
         return super(Relationship, cls).__new__(cls, value, **properties)
 
     def __init__(self, value=None, **properties):
