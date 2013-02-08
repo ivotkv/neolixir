@@ -62,7 +62,7 @@ class Relationship(Entity):
             return None
 
     def save(self):
-        if self.deleted:
+        if self.is_deleted():
             if not self.is_phantom():
                 self._entity.delete()
                 self.expunge()
@@ -184,7 +184,7 @@ class RelationshipFilter(object):
             return outgoing.union(incoming)
 
     def filterfunc(self, rel):
-        if self.owner.deleted != rel.deleted:
+        if self.owner.is_deleted() != rel.is_deleted():
             return False
         else:
             return self.type is None or rel.type == self.type
@@ -226,7 +226,7 @@ class RelationshipFilter(object):
 
     def add(self, value):
         rel = self.relfunc(value)
-        if rel.deleted:
+        if rel.is_deleted():
             rel.undelete()
 
     @property

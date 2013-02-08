@@ -54,7 +54,7 @@ class Node(Entity):
         super(Node, self).undelete()
 
     def save(self):
-        if self.deleted:
+        if self.is_deleted():
             if not self.is_phantom():
                 self._entity.delete()
                 self.expunge()

@@ -69,10 +69,6 @@ class Entity(object):
         return self._entity.id if self._entity else None
 
     @property
-    def deleted(self):
-        return self._deleted
-
-    @property
     def descriptors(self):
         return self._descriptors
 
@@ -95,8 +91,11 @@ class Entity(object):
     def is_phantom(self):
         return self._entity is None
 
+    def is_deleted(self):
+        return self._deleted
+
     def is_dirty(self):
-        if self.deleted:
+        if self.is_deleted():
             return True
         elif not hasattr(self, '_properties'):
             return False
@@ -124,7 +123,7 @@ class Entity(object):
             m.session.add_entity(self)
 
     def save(self):
-        if self.deleted:
+        if self.is_deleted():
             if not self.is_phantom():
                 self._entity.delete()
                 self.expunge()
