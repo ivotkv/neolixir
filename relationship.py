@@ -146,6 +146,15 @@ class RelationshipMapper(object):
     def persisted(self):
         return self._ids.values()
 
+    def rollback(self):
+        while len(self._phantoms) > 0:
+            rel = self._phantoms.pop()
+            self._tuples.pop(rel.tuple, None)
+            self.start.setdefault(rel.start, set()).discard(rel)
+            self.end.setdefault(rel.end, set()).discard(rel)
+        for rel in self.iterpersisted():
+            rel.rollback()
+
     def load_node_rels(self, node):
         if not node.is_phantom():
             for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):

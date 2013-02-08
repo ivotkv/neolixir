@@ -81,13 +81,14 @@ class Session(object):
             self.nodes.pop(entity.id, None)
 
     def rollback(self):
-        for entity in chain(self.nodes.itervalues(), self.relmap.itervalues()):
-            entity.rollback()
-        self.clear()
+        self.relmap.rollback()
+        self.phantomnodes.clear()
+        for node in self.nodes.itervalues():
+            node.rollback()
 
     def commit(self):
         # TODO Batch-ify
-        while self.phantomnodes:
+        while len(self.phantomnodes) > 0:
             self.phantomnodes.pop().save()
         for entity in list(chain(self.nodes.itervalues(), self.relmap.itervalues())):
             entity.save()
