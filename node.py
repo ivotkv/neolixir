@@ -95,20 +95,17 @@ class Node(Entity):
             self.properties.save()
         return True
 
-    @classproperty
-    def _query(cls):
-        return 'start c=node({0}) match c<-[?:EXTENDS|INSTANCE_OF*..]-i where ()<-[:INSTANCE_OF]-i{{0}} return i'.format(cls.classnode.id)
+    @classmethod
+    def _query(cls, **kwargs):
+        q = 'start c=node({0}) match c<-[?:EXTENDS|INSTANCE_OF*..]-i where ()<-[:INSTANCE_OF]-i{{0}} return i'.format(cls.classnode.id)
+        return q.format("".join((" and i.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems())))
 
     @classmethod
     def query(cls, **kwargs):
-        return cls._query.format("".join((" and i.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems())))
-
-    @classmethod
-    def get_by(cls, **kwargs):
         results = []
         if 'id' in kwargs:
             results.append(cls(kwargs['id']))
         else:
-            for node in m.cypher(cls.query(**kwargs)):
-                results.append(cls(node))
+            for row in m.cypher(cls._query(**kwargs)):
+                results.append(cls(row[0]))
         return results

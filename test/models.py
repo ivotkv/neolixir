@@ -5,7 +5,7 @@ from properties import *
 from metadata import metadata as m
 
 class SubNode(Node):
-    pass
+    test_id = Integer()
 
 class SubSubNode(SubNode):
     pass
