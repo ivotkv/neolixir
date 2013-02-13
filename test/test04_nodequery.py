@@ -8,11 +8,11 @@ class TestNodeQuery(BaseTest):
         self.shared.test_id = randint(0, 2**30)
         n = SubNode(test_id=self.shared.test_id)
         n.save()
-        self.assertTrue(SubNode.query(test_id=self.shared.test_id)[0] is n)
+        self.assertTrue(SubNode.get_by(test_id=self.shared.test_id) is n)
     
     def test02_query_polymorphic(self):
-        n = Node.query(test_id=self.shared.test_id)[0]
+        n = Node.get_by(test_id=self.shared.test_id)
         self.assertTrue(isinstance(n, SubNode))
-        self.assertTrue(len(SubSubNode.query(test_id=self.shared.test_id)) == 0)
+        self.assertRaises(NoResultFound, SubSubNode.get_by, test_id=self.shared.test_id)
         n.delete()
         n.save()

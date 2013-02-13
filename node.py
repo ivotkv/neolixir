@@ -3,6 +3,7 @@ from util import classproperty
 from exc import *
 from metadata import metadata as m
 from entity import Entity
+from query import Query
 
 __all__ = ['Node']
 
@@ -95,17 +96,20 @@ class Node(Entity):
             self.properties.save()
         return True
 
-    @classmethod
-    def _query(cls, **kwargs):
-        q = 'start c=node({0}) match c<-[?:EXTENDS|INSTANCE_OF*..]-i where ()<-[:INSTANCE_OF]-i{{0}} return i'.format(cls.classnode.id)
-        return q.format("".join((" and i.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems())))
+    @classproperty
+    def query(cls):
+        q = Query().start(c=cls.classnode.id)
+        q = q.match('c<-[?:EXTENDS|INSTANCE_OF*..]-i')
+        q = q.where('()<-[:INSTANCE_OF]-i')
+        q = q.ret('i')
+        return q 
 
     @classmethod
-    def query(cls, **kwargs):
-        results = []
+    def get_by(cls, **kwargs):
         if 'id' in kwargs:
-            results.append(cls(kwargs['id']))
+            try:
+                return cls(kwargs['id'])
+            except ResourceNotFound:
+                raise NoResultFound()
         else:
-            for row in m.cypher(cls._query(**kwargs)):
-                results.append(cls(row[0]))
-        return results
+            return cls(cls.query.filter(*["i.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).one()[0])
