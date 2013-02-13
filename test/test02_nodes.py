@@ -28,4 +28,4 @@ class TestNodes(BaseTest):
         n.delete()
         self.assertTrue(n.is_deleted())
         n.save()
-        self.assertTrue(Node(self.shared.id) is None)
+        self.assertRaises(ResourceNotFound, Node, self.shared.id)

@@ -1,8 +1,8 @@
 import re
 from entity import *
 import entity as __m_entity__
-from exceptions import *
-import exceptions as __m_exceptions__
+from exc import *
+import exc as __m_exc__
 from index import *
 import index as __m_index__
 from metadata import *

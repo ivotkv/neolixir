@@ -1,6 +1,6 @@
 from py2neo import neo4j
 from metadata import metadata as m
-from exceptions import *
+from exc import *
 from entity import Entity
 from node import Node
 from relationship import Relationship

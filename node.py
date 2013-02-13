@@ -1,6 +1,6 @@
 from py2neo import neo4j
 from util import classproperty
-from exceptions import *
+from exc import *
 from metadata import metadata as m
 from entity import Entity
 
@@ -83,7 +83,10 @@ class Node(Entity):
     def save(self):
         if self.is_deleted():
             if not self.is_phantom():
-                self._entity.delete()
+                q = "start n=node({0}) ".format(self.id)
+                q += "match n-[rels*1]->() foreach(rel in rels: delete rel) "
+                q += "delete n"
+                m.cypher(q)
                 self.expunge()
         elif self.is_phantom():
             self._entity = m.engine.create(self.get_abstract(), (0, "INSTANCE_OF", self.classnode))[0]

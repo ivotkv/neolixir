@@ -1,5 +1,6 @@
 from itertools import ifilter, imap
 from py2neo import neo4j
+from exc import *
 from entity import Entity
 from metadata import metadata as m
 from node import Node
@@ -67,7 +68,10 @@ class Relationship(Entity):
     def save(self):
         if self.is_deleted():
             if not self.is_phantom():
-                self._entity.delete()
+                try:
+                    self._entity.delete()
+                except ResourceNotFound:
+                    pass
                 self.expunge()
         elif self.is_phantom():
             if self.start is None or self.start.is_phantom() or \
@@ -160,7 +164,7 @@ class RelationshipMapper(object):
     def load_node_rels(self, node):
         if not node.is_phantom():
             for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):
-                if row[0].type not in ('INSTANCE_OF', 'EXTENDS'):
+                if row[0].type != 'INSTANCE_OF':
                     self.add(Relationship(row[0]))
 
 class RelationshipFilter(object):
