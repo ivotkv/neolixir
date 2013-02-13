@@ -54,17 +54,17 @@ class NodeIndex(Index):
                     item.set_entity(n)
                     return item
                 else:
-                    return Node.get(n)
+                    return Node(n)
             else:
                 if self.add(key, value, item, if_none=True):
                     return item
                 else:
-                    return Node.get(super(NodeIndex, self).get(key, value)[0])
+                    return Node(super(NodeIndex, self).get(key, value)[0])
         else:
-            return map(Node.get, super(NodeIndex, self).get(key, value))
+            return map(Node, super(NodeIndex, self).get(key, value))
 
     def query(self, query):
-        return map(Node.get, super(NodeIndex, self).query(query))
+        return map(Node, super(NodeIndex, self).query(query))
 
 class RelationshipIndex(Index):
 

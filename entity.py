@@ -31,9 +31,20 @@ class Entity(object):
         instance = m.session.get_entity(value)
         if instance is not None:
             return instance
+        elif isinstance(value, neo4j.PropertyContainer):
+            properties = value.get_properties()
+            valcls = m.classes.get(properties.get('__class__'))
+            if not issubclass(valcls, cls):
+                raise TypeError("entity is not an instance of " + cls.__name__)
+            instance = super(Entity, cls).__new__(valcls)
+            instance._entity = value
+            instance._properties = PropertyContainer(instance, properties)
+            if valcls is not cls:
+                instance.__init__(value, **properties)
+            return instance
         else:
             instance = super(Entity, cls).__new__(cls)
-            instance._entity = value if isinstance(value, neo4j.PropertyContainer) else None
+            instance._entity = None
             return instance
 
     def __init__(self, value=None, **properties):
@@ -47,22 +58,13 @@ class Entity(object):
             m.session.add_entity(self)
 
     def _get_repr_data(self):
-        data = ["Id = {0}".format(self.id),
-                "Descriptors = {0}".format(self.descriptors)]
-        if m.debug:
-            data.append("Properties = {0}".format(self.properties))
-        return data
+        return ["Id = {0}".format(self.id),
+                "Descriptors = {0}".format(self.descriptors),
+                "Properties = {0}".format(self.properties)]
 
     def __repr__(self):
         return "<{0} (0x{1:x}): \n{2}\n>".format(self.__class__.__name__, id(self),
                                                  "\n".join(self._get_repr_data()))
-
-    def __str__(self):
-        return str(self._entity) if self._entity else '()'
-
-    @classproperty
-    def classnode(cls):
-        return m.classnode(cls)
 
     @property
     def id(self):
@@ -79,6 +81,10 @@ class Entity(object):
         except AttributeError:
             self._properties = PropertyContainer(self)
             return self._properties
+
+    def get_abstract(self):
+        self.properties.reset_class()
+        return self.properties
 
     def set_entity(self, entity):
         if self._entity is None:
@@ -123,12 +129,4 @@ class Entity(object):
             m.session.add_entity(self)
 
     def save(self):
-        if self.is_deleted():
-            if not self.is_phantom():
-                self._entity.delete()
-                self.expunge()
-        elif self.is_phantom():
-            raise NotImplementedError("generic Entity cannot create new entities")
-        elif self.is_dirty():
-            self.properties.save()
-        return True
+        raise NotImplementedError("cannot save through generic Entity class")

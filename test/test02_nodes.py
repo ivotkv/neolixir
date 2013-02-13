@@ -11,21 +11,21 @@ class TestNodes(BaseTest):
         self.shared.id = n.id
 
     def test02_load(self):
-        n = Node.get(self.shared.id)
+        n = Node(self.shared.id)
         self.assertEqual(n.id, self.shared.id)
         self.assertTrue(isinstance(n, SubNode))
-        n2 = Node.get(self.shared.id)
+        n2 = Node(self.shared.id)
         self.assertTrue(n2 is n)
 
     def test03_expunge(self):
-        n = Node.get(self.shared.id)
+        n = Node(self.shared.id)
         n.expunge()
-        n2 = Node.get(self.shared.id)
+        n2 = Node(self.shared.id)
         self.assertTrue(n2 is not n)
 
     def test04_delete(self):
-        n = Node.get(self.shared.id)
+        n = Node(self.shared.id)
         n.delete()
         self.assertTrue(n.is_deleted())
         n.save()
-        self.assertTrue(Node.get(self.shared.id) is None)
+        self.assertTrue(Node(self.shared.id) is None)

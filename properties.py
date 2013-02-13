@@ -5,11 +5,13 @@ __all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Arra
 
 class PropertyContainer(dict):
 
-    def __init__(self, owner):
+    def __init__(self, owner, data=None):
         super(PropertyContainer, self).__init__()
         self.owner = owner
-        self._dirty = False
-        self.reload()
+        self.reload(data)
+
+    def reset_class(self):
+        super(PropertyContainer, self).__setitem__('__class__', self.owner.__class__.__name__)
 
     def is_dirty(self):
         return self._dirty
@@ -17,14 +19,16 @@ class PropertyContainer(dict):
     def set_dirty(self, dirty=True):
         self._dirty = dirty
 
-    def reload(self):
+    def reload(self, data=None):
         super(PropertyContainer, self).clear()
-        if self.owner._entity:
-            for k, v in self.owner._entity.get_properties().iteritems():
-                super(PropertyContainer, self).__setitem__(k, v)
+        if data is None and self.owner._entity is not None:
+            data = self.owner._entity.get_properties()
+        if isinstance(data, dict):
+            super(PropertyContainer, self).update(data)
         self.set_dirty(False)
 
     def save(self):
+        self.reset_class()
         self.owner._entity.set_properties(self)
         self.set_dirty(False)
 
