@@ -89,6 +89,7 @@ class Node(Entity):
                 q += "delete n"
                 m.cypher(q)
                 self.expunge()
+                self._entity = None
         elif self.is_phantom():
             self._entity = m.engine.create(self.get_abstract(), (0, "INSTANCE_OF", self.classnode))[0]
             m.session.add_entity(self)

@@ -6,9 +6,11 @@ from metadata import metadata as m
 
 class SubNode(Node):
     test_id = Integer()
+    likes = RelOut('like')
+    liked_by = RelIn('like')
 
 class SubSubNode(SubNode):
-    pass
+    name = String()
 
 class SubRel(Relationship):
     pass

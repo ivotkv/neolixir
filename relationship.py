@@ -73,6 +73,7 @@ class Relationship(Entity):
                 except ResourceNotFound:
                     pass
                 self.expunge()
+                self._entity = None
         elif self.is_phantom():
             if self.start is None or self.start.is_phantom() or \
                 self.end is None or self.end.is_phantom():
