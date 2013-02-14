@@ -2,6 +2,7 @@ from exc import *
 from node import Node
 from relationship import Relationship
 from properties import *
+from index import *
 from metadata import metadata as m
 
 class SubNode(Node):
