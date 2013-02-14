@@ -39,15 +39,27 @@ class Relationship(Entity):
 
     @property
     def start(self):
-        return Node(self._entity.start_node) if self._entity is not None else self._start
+        try:
+            return self._start
+        except AttributeError:
+            self._start = Node(self._entity.start_node)
+            return self._start
 
     @property
     def end(self):
-        return Node(self._entity.end_node) if self._entity is not None else self._end
+        try:
+            return self._end
+        except AttributeError:
+            self._end = Node(self._entity.end_node)
+            return self._start
 
     @property
     def type(self):
-        return self._entity.type if self._entity is not None else self._type
+        try:
+            return self._type
+        except AttributeError:
+            self._type = self._entity.type
+            return self._type
 
     @property
     def tuple(self):
