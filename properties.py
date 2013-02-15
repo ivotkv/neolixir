@@ -205,10 +205,20 @@ class RelDescriptor(FieldDescriptor):
 
     direction = None
 
-    def __init__(self, type, cls=None, name=None):
+    def __init__(self, type_, cls=None, name=None):
         super(RelDescriptor, self).__init__(name)
-        self.type = type
-        self.cls = cls
+        from relationship import Relationship
+        if isinstance(type_, type) and issubclass(type_, Relationship):
+            if type_._type is not None:
+                self.type = type_._type
+                self.cls = type_
+            else:
+                raise ValueError("{0} does not define a type".format(type_.__name__))
+        elif isinstance(type_, basestring):
+            self.type = type_
+            self.cls = cls
+        else:
+            raise ValueError("please provide a valid type: {0}".format(type_))
 
     def __get__(self, instance, owner):
         if instance is None:

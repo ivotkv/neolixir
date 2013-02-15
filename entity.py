@@ -16,7 +16,7 @@ class EntityMeta(type):
                 cls._descriptors[k] = v
                 v.name = k
         
-        m.classes[name] = cls
+        m.classes.setdefault(name, cls)
 
 class Entity(object):
     
