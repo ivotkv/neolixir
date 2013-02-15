@@ -14,7 +14,9 @@ class Relationship(Entity):
 
     def __new__(cls, value, **properties):
         if isinstance(value, basestring):
-            # returns a re-typed "copy" of the class
+            # returns a typed "copy" of the class
+            if cls._type is not None:
+                raise TypeError("cannot change the type of a typed Relationship class: " + cls.__name__)
             key = cls.__name__ + ':' + value
             try:
                 return cls._typed_classes[key]
