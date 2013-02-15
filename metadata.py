@@ -42,12 +42,17 @@ class MetaData(object):
     def init(self, reset=False):
         from node import Node
         batch = self.batch()
+
+        if reset:
+            for cls in ifilter(lambda x: issubclass(x, Node), self.classes.itervalues()):
+                batch.cypher("start c=node({0}) match c-[r:EXTENDS]-() delete r".format(cls.classnode.id))
+            batch.submit()
+            batch.clear()
+
         for cls in ifilter(lambda x: issubclass(x, Node), self.classes.itervalues()):
-            n = cls.classnode
-            if reset:
-                batch.cypher("start n=node({0}) match n-[r:EXTENDS]-() delete r".format(n.id))
+            c = cls.classnode
             for b in (x.classnode for x in cls.__bases__ if issubclass(x, Node)):
-                batch.cypher("start n=node({0}), b=node({1}) create unique n-[r:EXTENDS]->b".format(n.id, b.id))
+                batch.cypher("start c=node({0}), b=node({1}) create unique c-[r:EXTENDS]->b".format(c.id, b.id))
         batch.submit()
 
 metadata = MetaData()

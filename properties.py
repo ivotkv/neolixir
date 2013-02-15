@@ -205,9 +205,10 @@ class RelDescriptor(FieldDescriptor):
 
     direction = None
 
-    def __init__(self, type, name=None):
+    def __init__(self, type, cls=None, name=None):
         super(RelDescriptor, self).__init__(name)
         self.type = type
+        self.cls = cls
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -217,7 +218,7 @@ class RelDescriptor(FieldDescriptor):
                 return instance._relfilters[self.name]
             except KeyError:
                 from relationship import RelationshipFilter
-                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type)
+                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type, self.cls)
                 if len(instance._relfilters) == 1:
                     instance._relfilters[self.name].reload()
                 return instance._relfilters[self.name]

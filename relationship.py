@@ -182,11 +182,12 @@ class RelationshipMapper(object):
 
 class RelationshipFilter(object):
 
-    def __init__(self, owner, direction=None, type=None):
+    def __init__(self, owner, direction=None, type=None, cls=None):
         self.map = m.session.relmap
         self.owner = owner
         self.direction = str(direction).upper()
         self.type = type
+        self.cls = cls or Relationship
 
     def reload(self):
         self.map.load_node_rels(self.owner)
@@ -212,17 +213,15 @@ class RelationshipFilter(object):
         return rel.end if rel.start is self.owner else rel.start
 
     def relfunc(self, value):
-        from relationship import Relationship
         if isinstance(value, Relationship):
             return value
         elif value is not None and self.direction in ('IN', 'OUT') and self.type is not None:
-            from node import Node
             other = Node(value)
             if other is not None:
                 if self.direction == 'OUT':
-                    return Relationship((self.owner, self.type, other))
+                    return self.cls((self.owner, self.type, other))
                 else:
-                    return Relationship((other, self.type, self.owner))
+                    return self.cls((other, self.type, self.owner))
             else:
                 raise ValueError("could not find other Node")
         else:
