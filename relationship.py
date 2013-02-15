@@ -254,10 +254,10 @@ class RelationshipFilter(object):
         return "[{0}]".format(", ".join(imap(repr, iter(self))))
 
     def iternodes(self):
-        return imap(self.nodefunc, iter(self))
+        return ((self.nodefunc(x), x) for x in self)
 
     def nodes(self):
-        return list(self.iternodes())
+        return dict(self.iternodes())
 
     def add(self, value):
         rel = self.relfunc(value)
