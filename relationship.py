@@ -177,7 +177,7 @@ class RelationshipMapper(object):
     def load_node_rels(self, node):
         if not node.is_phantom():
             for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):
-                if row[0].type != 'INSTANCE_OF':
+                if row[0].type != '__instance_of__':
                     self.add(Relationship(row[0]))
 
 class RelationshipFilter(object):

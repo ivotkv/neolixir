@@ -49,3 +49,9 @@ class Query(object):
             raise NoResultFound()
         else:
             raise MultipleResultsFound()
+
+class NodeQuery(Query):
+
+    def all(self):
+        from node import Node
+        return map(Node, (x[0] for x in super(NodeQuery, self).all()))

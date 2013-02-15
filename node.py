@@ -3,7 +3,7 @@ from util import classproperty
 from exc import *
 from metadata import metadata as m
 from entity import Entity
-from query import Query
+from query import NodeQuery
 
 __all__ = ['Node']
 
@@ -91,7 +91,7 @@ class Node(Entity):
                 self.expunge()
                 self._entity = None
         elif self.is_phantom():
-            self._entity = m.engine.create(self.get_abstract(), (0, "INSTANCE_OF", self.classnode))[0]
+            self._entity = m.engine.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
             m.session.add_entity(self)
         elif self.is_dirty():
             self.properties.save()
@@ -99,9 +99,9 @@ class Node(Entity):
 
     @classproperty
     def query(cls):
-        q = Query().start(c=cls.classnode.id)
-        q = q.match('c<-[?:EXTENDS|INSTANCE_OF*..]-i')
-        q = q.where('()<-[:INSTANCE_OF]-i')
+        q = NodeQuery().start(c=cls.classnode.id)
+        q = q.match('c<-[?:__extends__|__instance_of__*..]-i')
+        q = q.where('()<-[:__instance_of__]-i')
         q = q.ret('i')
         return q 
 
@@ -113,4 +113,4 @@ class Node(Entity):
             except ResourceNotFound:
                 raise NoResultFound()
         else:
-            return cls(cls.query.filter(*["i.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).one()[0])
+            return cls.query.filter(*["i.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).one()
