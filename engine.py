@@ -16,11 +16,38 @@ class Engine(object):
             self._threadlocal.instance = neo4j.GraphDatabaseService(self.url)
             return self._threadlocal.instance
 
-    def batch(self):
-        return WriteBatch(self.instance)
+    @property
+    def typemap(self):
+        try:
+            return self._typemap
+        except AttributeError:
+            from node import Node
+            from relationship import Relationship
+            self._typemap = {
+                neo4j.Node: Node,
+                neo4j.Relationship: Relationship,
+                neo4j.Path: self.mappath
+            }
+            return self._typemap
+
+    def mappath(self, path):
+        return [self.typemap[type(e)](e) for p in path for e in p]
 
     def cypher(self, *args, **kwargs):
-        return cypher.execute(self.instance, *args, **kwargs)[0]
+        automap = kwargs.pop('automap', True)
+        if automap:
+            results = []
+            for row in cypher.execute(self.instance, *args, **kwargs)[0]:
+                items = []
+                for item in row:
+                    items.append(self.typemap[type(item)](item))
+                results.append(items)
+            return results
+        else:
+            return cypher.execute(self.instance, *args, **kwargs)[0]
+
+    def batch(self):
+        return WriteBatch(self.instance)
 
 class WriteBatch(neo4j.WriteBatch):
 

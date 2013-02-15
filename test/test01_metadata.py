@@ -13,11 +13,11 @@ class TestMetadata(BaseTest):
     def test01_init(self):
         m.init()
         q = self.q + "match p=ss-[:__extends__]->s-[:__extends__]->n return p"
-        self.assertEqual(len(m.cypher(q)), 1)
+        self.assertEqual(len(m.cypher(q, automap=False)), 1)
 
     def test02_initreset(self):
         q = self.q + "create ss-[r:__extends__]->n return r"
-        self.assertEqual(len(m.cypher(q)), 1)
+        self.assertEqual(len(m.cypher(q, automap=False)), 1)
         m.init(reset=True)
         q = self.q + "match ss-[r:__extends__]->n return r"
-        self.assertEqual(len(m.cypher(q)), 0)
+        self.assertEqual(len(m.cypher(q, automap=False)), 0)

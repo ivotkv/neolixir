@@ -193,7 +193,7 @@ class RelationshipMapper(object):
 
     def load_node_rels(self, node):
         if not node.is_phantom():
-            for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id)):
+            for row in m.cypher("start n=node({0}) match n-[r]-() return r".format(node.id), automap=False):
                 if row[0].type != '__instance_of__':
                     self.add(Relationship(row[0]))
 

@@ -32,7 +32,7 @@ class Query(object):
         return self
 
     def all(self):
-        return m.cypher(self.q + self.r)
+        return [x[0] for x in m.cypher(self.q + self.r)]
 
     def first(self):
         all = self.all()
@@ -49,9 +49,3 @@ class Query(object):
             raise NoResultFound()
         else:
             raise MultipleResultsFound()
-
-class NodeQuery(Query):
-
-    def all(self):
-        from node import Node
-        return map(Node, (x[0] for x in super(NodeQuery, self).all()))

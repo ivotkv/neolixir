@@ -3,7 +3,7 @@ from util import classproperty
 from exc import *
 from metadata import metadata as m
 from entity import Entity
-from query import NodeQuery
+from query import Query
 
 __all__ = ['Node']
 
@@ -99,7 +99,7 @@ class Node(Entity):
 
     @classproperty
     def query(cls):
-        q = NodeQuery().start(c=cls.classnode.id)
+        q = Query().start(c=cls.classnode.id)
         q = q.match('c<-[?:__extends__|__instance_of__*..]-i')
         q = q.where('()<-[:__instance_of__]-i')
         q = q.ret('i')
