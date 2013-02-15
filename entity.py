@@ -1,7 +1,7 @@
 from py2neo import neo4j
 from util import classproperty
 from metadata import metadata as m
-from properties import PropertyContainer, Property
+from properties import PropertyContainer, FieldDescriptor
 
 __all__ = ['Entity']
 
@@ -10,10 +10,10 @@ class EntityMeta(type):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
-        cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else set()
+        cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else {}
         for k, v in dict_.iteritems():
-            if isinstance(v, Property):
-                cls._descriptors.add(k)
+            if isinstance(v, FieldDescriptor):
+                cls._descriptors[k] = v
                 v.name = k
         
         m.classes[name] = cls
@@ -59,7 +59,7 @@ class Entity(object):
 
     def _get_repr_data(self):
         return ["Id = {0}".format(self.id),
-                "Descriptors = {0}".format(self.descriptors),
+                "Descriptors = {0}".format(sorted(self.descriptors.keys())),
                 "Properties = {0}".format(self.properties)]
 
     def __repr__(self):
@@ -83,7 +83,7 @@ class Entity(object):
             return self._properties
 
     def get_abstract(self):
-        self.properties.reset_class()
+        self.properties.sanitize()
         return self.properties
 
     def set_entity(self, entity):

@@ -1,3 +1,5 @@
+from types import FunctionType
+from inspect import getargspec
 from decimal import Decimal
 from datetime import datetime
 
@@ -10,8 +12,13 @@ class PropertyContainer(dict):
         self.owner = owner
         self.reload(data)
 
-    def reset_class(self):
+    def sanitize(self):
         super(PropertyContainer, self).__setitem__('__class__', self.owner.__class__.__name__)
+        for name, descriptor in self.owner.descriptors.iteritems():
+            if isinstance(descriptor, Property) and self.get(name) is None:
+                default = descriptor.get_default(self.owner)
+                if default is not None:
+                    descriptor.__set__(self.owner, default)
 
     def is_dirty(self):
         return self._dirty
@@ -28,7 +35,7 @@ class PropertyContainer(dict):
         self.set_dirty(False)
 
     def save(self):
-        self.reset_class()
+        self.sanitize()
         self.owner._entity.set_properties(self)
         self.set_dirty(False)
 
@@ -61,7 +68,7 @@ class PropertyContainer(dict):
         self.set_dirty()
         return super(PropertyContainer, self).update(*args, **kwargs)
 
-class Property(object):
+class FieldDescriptor(object):
 
     def __init__(self, name=None):
         self._name = None
@@ -76,20 +83,20 @@ class Property(object):
         if self._name is None:
             self._name = name
 
-class FieldProperty(Property):
+class Property(FieldDescriptor):
 
     _type = None
 
     def __init__(self, name=None, default=None):
-        super(FieldProperty, self).__init__(name)
-        self.default = default
+        super(Property, self).__init__(name)
+        self._default = default
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
             value = instance.properties.get(self.name)
-            return self.normalize(value if value is not None else self.default)
+            return self.normalize(value if value is not None else self.get_default(instance))
     
     def __set__(self, instance, value):
         instance.properties[self.name] = self.normalize(value)
@@ -97,29 +104,38 @@ class FieldProperty(Property):
     def __delete__(self, instance):
         del instance.properties[self.name]
 
+    def get_default(self, instance):
+        if hasattr(self._default, '__call__'):
+            if isinstance(self._default, FunctionType) and len(getargspec(self._default).args) > 0:
+                return self._default(instance)
+            else:
+                return self._default()
+        else:
+            return self._default
+
     def normalize(self, value):
         if value is not None and self._type is not None:
             if not isinstance(value, self._type):
                 value = self._type(value)
         return value
 
-class Boolean(FieldProperty):
+class Boolean(Property):
 
     _type = bool
 
-class String(FieldProperty):
+class String(Property):
 
     _type = unicode
 
-class Integer(FieldProperty):
+class Integer(Property):
 
     _type = int
 
-class Float(FieldProperty):
+class Float(Property):
 
     _type = float
 
-class Numeric(FieldProperty):
+class Numeric(Property):
 
     _type = Decimal
 
@@ -138,7 +154,7 @@ class Numeric(FieldProperty):
             value = value.quantize(Decimal('1.' + '0' * self.scale))
         return value
 
-class DateTime(FieldProperty):
+class DateTime(Property):
 
     _type = datetime
 
@@ -152,14 +168,14 @@ class DateTime(FieldProperty):
                     value = datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
                 except ValueError:
                     value = None
-            return value if value is not None else self.default
+            return value if value is not None else self.get_default(instance)
     
     def __set__(self, instance, value):
         if value is not None:
             value = value.strftime("%Y-%m-%d %H:%M:%S")
         instance.properties[self.name] = value
 
-class Array(FieldProperty):
+class Array(Property):
 
     def __init__(self, type=None, name=None):
         super(Array, self).__init__(name=name)
@@ -185,12 +201,12 @@ class TypedList(list):
         super(TypedList, self).__init__(list or [])
         self._type = type
 
-class RelProperty(Property):
+class RelDescriptor(FieldDescriptor):
 
     direction = None
 
     def __init__(self, type, name=None):
-        super(RelProperty, self).__init__(name)
+        super(RelDescriptor, self).__init__(name)
         self.type = type
 
     def __get__(self, instance, owner):
@@ -206,10 +222,10 @@ class RelProperty(Property):
                     instance._relfilters[self.name].reload()
                 return instance._relfilters[self.name]
 
-class RelOut(RelProperty):
+class RelOut(RelDescriptor):
 
     direction = 'OUT'
 
-class RelIn(RelProperty):
+class RelIn(RelDescriptor):
 
     direction = 'IN'
