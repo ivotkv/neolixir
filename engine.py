@@ -40,7 +40,10 @@ class Engine(object):
             for row in cypher.execute(self.instance, *args, **kwargs)[0]:
                 items = []
                 for item in row:
-                    items.append(self.typemap[type(item)](item))
+                    try:
+                        items.append(self.typemap[type(item)](item))
+                    except KeyError:
+                        items.append(item)
                 results.append(items)
             return results
         else:
