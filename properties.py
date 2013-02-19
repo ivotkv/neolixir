@@ -164,16 +164,40 @@ class DateTime(Property):
         else:
             value = instance.properties.get(self.name)
             if value is not None and not isinstance(value, datetime):
-                try:
-                    value = datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    value = None
+                value = self.parse(value)
             return value if value is not None else self.get_default(instance)
     
     def __set__(self, instance, value):
-        if value is not None:
+        if isinstance(value, datetime):
             value = value.strftime("%Y-%m-%d %H:%M:%S")
         instance.properties[self.name] = value
+
+    @classmethod
+    def parse(cls, value):
+        if isinstance(value, basestring):
+            try:
+                return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                pass
+            try:
+                return datetime.strptime(value, "%Y-%m-%d %H:%M")
+            except ValueError:
+                pass
+            try:
+                return datetime.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                pass
+            try:
+                return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
+                pass
+            try:
+                return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
+            except ValueError:
+                pass
+        elif isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value)
+        return None
 
 class Array(Property):
 
