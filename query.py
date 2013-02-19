@@ -6,6 +6,7 @@ class Query(object):
     def __init__(self):
         self.q = ''
         self.r = ''
+        self.m = ''
 
     def start(self, **kwargs):
         self.q = 'start'
@@ -31,8 +32,23 @@ class Query(object):
         self.r = 'return ' + ', '.join(keys)
         return self
 
+    def order_by(self, *values):
+        self.m += ' order by ' + ', '.join(values)
+        return self
+
+    def offset(self, value):
+        self.m += ' skip ' + str(int(value))
+        return self
+
+    def limit(self, value):
+        self.m += ' limit ' + str(int(value))
+        return self
+
+    def count(self):
+        return m.cypher(self.q + 'return count(*)')[0][0]
+
     def all(self):
-        return [x[0] for x in m.cypher(self.q + self.r)]
+        return [x[0] for x in m.cypher(self.q + self.r + self.m)]
 
     def first(self):
         all = self.all()
