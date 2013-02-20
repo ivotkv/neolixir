@@ -9,23 +9,24 @@ __all__ = ['Relationship']
 
 class Relationship(Entity):
 
-    _type = None
+    __rel_type__ = None
+
     _typed_classes = {}
 
     def __new__(cls, value, **properties):
         if isinstance(value, basestring):
             # returns a typed "copy" of the class
-            if cls._type is not None:
+            if cls.__rel_type__ is not None:
                 raise TypeError("cannot change the type of a typed Relationship class: " + cls.__name__)
             key = cls.__name__ + ':' + value
             try:
                 return cls._typed_classes[key]
             except KeyError:
-                return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'_type': value}))
+                return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
         elif isinstance(value, int):
             value = m.engine.get_relationship(value)
         elif isinstance(value, tuple):
-            value = (Node(value[0]), cls._type or value[1], Node(value[2]))
+            value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
             if value[0] is None:
                 raise ValueError("start node not found!")
             if value[2] is None:
@@ -43,11 +44,11 @@ class Relationship(Entity):
             if self._entity is None:
                 if isinstance(value, tuple):
                     self._start = Node(value[0])
-                    self._type = self._type or value[1]
+                    self._type = self.__rel_type__ or value[1]
                     self._end = Node(value[2])
                 else:
                     raise ValueError("Relationship could not be initialized with value provided")
-            elif self._type is not None and self._entity.type != self._type:
+            elif self.__rel_type__ is not None and self._entity.type != self.__rel_type__:
                 raise TypeError("entity type does not match class type")
             super(Relationship, self).__init__(value, **properties)
 
@@ -72,10 +73,10 @@ class Relationship(Entity):
 
     @property
     def type(self):
-        if self._type is not None:
+        try:
             return self._type
-        else:
-            self._type = self._entity.type
+        except AttributeError:
+            self._type = self.__rel_type__ or self._entity.type
             return self._type
 
     @property
@@ -203,7 +204,7 @@ class RelationshipFilter(object):
         self.map = m.session.relmap
         self.owner = owner
         self.direction = str(direction).upper()
-        self.type = getattr(cls, '_type', None) or type
+        self.type = getattr(cls, '__rel_type__', None) or type
         self.cls = cls or Relationship
 
     def reload(self):

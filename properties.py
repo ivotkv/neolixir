@@ -85,7 +85,7 @@ class FieldDescriptor(object):
 
 class Property(FieldDescriptor):
 
-    _type = None
+    __value_type__ = None
 
     def __init__(self, name=None, default=None):
         super(Property, self).__init__(name)
@@ -114,30 +114,30 @@ class Property(FieldDescriptor):
             return self._default
 
     def normalize(self, value):
-        if value is not None and self._type is not None:
-            if not isinstance(value, self._type):
-                value = self._type(value)
+        if value is not None and self.__value_type__ is not None:
+            if not isinstance(value, self.__value_type__):
+                value = self.__value_type__(value)
         return value
 
 class Boolean(Property):
 
-    _type = bool
+    __value_type__ = bool
 
 class String(Property):
 
-    _type = unicode
+    __value_type__ = unicode
 
 class Integer(Property):
 
-    _type = int
+    __value_type__ = int
 
 class Float(Property):
 
-    _type = float
+    __value_type__ = float
 
 class Numeric(Property):
 
-    _type = Decimal
+    __value_type__ = Decimal
 
     def __init__(self, scale=None, name=None, default=None):
         super(Numeric, self).__init__(name=name, default=default)
@@ -156,7 +156,7 @@ class Numeric(Property):
 
 class DateTime(Property):
 
-    _type = datetime
+    __value_type__ = datetime
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -201,20 +201,22 @@ class DateTime(Property):
 
 class Array(Property):
 
+    __value_type__ = list
+
     def __init__(self, type=None, name=None):
         super(Array, self).__init__(name=name)
-        self._type = type
+        self._content_type = type
 
     def __get__(self, instance, owner):
         value = super(Array, self).__get__(instance, owner)
         if instance is not None and not isinstance(value, TypedList):
-            value = TypedList(value, type=self._type)
+            value = TypedList(value, type=self._content_type)
             super(Array, self).__set__(instance, value)
         return value
 
     def __set__(self, instance, value):
         if not isinstance(value, TypedList):
-            value = TypedList(value, type=self._type)
+            value = TypedList(value, type=self._content_type)
         super(Array, self).__set__(instance, value)
 
 class TypedList(list):
@@ -223,7 +225,7 @@ class TypedList(list):
 
     def __init__(self, list=None, type=None):
         super(TypedList, self).__init__(list or [])
-        self._type = type
+        self._content_type = type
 
 class RelDescriptor(FieldDescriptor):
 
@@ -233,8 +235,8 @@ class RelDescriptor(FieldDescriptor):
         super(RelDescriptor, self).__init__(name)
         from relationship import Relationship
         if isinstance(type_, type) and issubclass(type_, Relationship):
-            if type_._type is not None:
-                self.type = type_._type
+            if type_.__rel_type__ is not None:
+                self.type = type_.__rel_type__
                 self.cls = type_
             else:
                 raise ValueError("{0} does not define a type".format(type_.__name__))
