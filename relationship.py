@@ -1,3 +1,4 @@
+import re
 from itertools import ifilter, imap
 from py2neo import neo4j
 from exc import *
@@ -200,12 +201,13 @@ class RelationshipMapper(object):
 
 class RelationshipFilter(object):
 
-    def __init__(self, owner, direction=None, type=None, cls=None):
+    def __init__(self, owner, direction=None, type=None, cls=None, match=None):
         self.map = m.session.relmap
         self.owner = owner
         self.direction = str(direction).upper()
         self.type = getattr(cls, '__rel_type__', None) or type
         self.cls = cls or Relationship
+        self.match = match
 
     def reload(self):
         self.map.load_node_rels(self.owner)
@@ -224,8 +226,10 @@ class RelationshipFilter(object):
     def filterfunc(self, rel):
         if self.owner.is_deleted() != rel.is_deleted():
             return False
+        elif self.type is None:
+            return not self.match or re.match(self.match, rel.type)
         else:
-            return self.type is None or rel.type == self.type
+            return rel.type == self.type or (self.match and re.match(self.match, rel.type))
 
     def nodefunc(self, rel):
         return rel.end if rel.start is self.owner else rel.start

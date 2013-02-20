@@ -231,20 +231,21 @@ class RelDescriptor(FieldDescriptor):
 
     direction = None
 
-    def __init__(self, type_, cls=None, name=None):
+    def __init__(self, rel_type=None, cls=None, match=None, name=None):
         super(RelDescriptor, self).__init__(name)
         from relationship import Relationship
-        if isinstance(type_, type) and issubclass(type_, Relationship):
-            if type_.__rel_type__ is not None:
-                self.type = type_.__rel_type__
-                self.cls = type_
+        if isinstance(rel_type, type) and issubclass(rel_type, Relationship):
+            if rel_type.__rel_type__ is not None:
+                self.type = rel_type.__rel_type__
+                self.cls = rel_type
             else:
-                raise ValueError("{0} does not define a type".format(type_.__name__))
-        elif isinstance(type_, basestring):
-            self.type = type_
+                raise ValueError("{0} does not define a type".format(rel_type.__name__))
+        elif isinstance(rel_type, basestring) or match is not None:
+            self.type = rel_type
             self.cls = cls
         else:
-            raise ValueError("please provide a valid type: {0}".format(type_))
+            raise ValueError("please provide a valid type: {0}".format(rel_type))
+        self.match = match
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -254,7 +255,7 @@ class RelDescriptor(FieldDescriptor):
                 return instance._relfilters[self.name]
             except KeyError:
                 from relationship import RelationshipFilter
-                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type, self.cls)
+                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type, self.cls, self.match)
                 if len(instance._relfilters) == 1:
                     instance._relfilters[self.name].reload()
                 return instance._relfilters[self.name]
