@@ -6,11 +6,12 @@
 Welcome to Neolixir's documentation!
 ====================================
 
-Contents:
 
-.. toctree::
-   :maxdepth: 2
+``engine``
+==========
 
+.. automodule:: engine
+   :members:
 
 
 Indices and tables
