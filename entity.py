@@ -19,6 +19,20 @@ class EntityMeta(type):
         m.classes.setdefault(name, cls)
 
 class Entity(object):
+
+    """Base class for all Neolixir entities (Nodes and Relationships).
+    
+    Defines basic shared functionality and handles proper subclassing and 
+    instance initialization, instance registration and descriptor setup.
+
+    Should not be used directly, always use :class:`node.Node` or 
+    :class:`relationship.Relationship` instead.
+
+    :param value: A :class:`py2neo.neo4j.Node` or :class:`py2neo.neo4j.Relationship` instance, or None.
+    :param \*\*properties: Keyword arguments will be used to initialize the entity's properties.
+    :returns: An :class:`Entity` or a subclass thereof.
+    
+    """
     
     __metaclass__ = EntityMeta
 
