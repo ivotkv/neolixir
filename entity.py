@@ -1,7 +1,7 @@
 from py2neo import neo4j
 from util import classproperty
 from metadata import metadata as m
-from properties import PropertyContainer, FieldDescriptor
+from properties import Property, PropertyContainer, FieldDescriptor
 
 __all__ = ['Entity']
 
@@ -95,6 +95,19 @@ class Entity(object):
         except AttributeError:
             self._properties = PropertyContainer(self)
             return self._properties
+
+    def get_properties(self):
+        data = dict(((k, getattr(self, k)) for k, v in self._descriptors.iteritems() if isinstance(v, Property)))
+        for k, v in self.properties.iteritems():
+            data.setdefault(k, v)
+        return data
+
+    def set_properties(self, data):
+        for k, v in data.iteritems():
+            if k in self._descriptors:
+                setattr(self, k, v)
+            else:
+                self.properties[k] = v
 
     def get_abstract(self):
         self.properties.sanitize()
