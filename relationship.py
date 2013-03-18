@@ -276,6 +276,10 @@ class RelationshipFilter(object):
     def rels(self):
         return dict(self.iterrels())
 
+    def one(self):
+        for node, rel in self.iternodes():
+            return node
+
     def add(self, value):
         rel = self.relfunc(value)
         if rel.is_deleted():
