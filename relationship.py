@@ -252,6 +252,12 @@ class RelationshipFilter(object):
     def __iter__(self):
         return ifilter(self.filterfunc, self.data)
 
+    def __contains__(self, item):
+        if isinstance(item, Relationship):
+            return item in self.__iter__()
+        else:
+            return item in imap(self.nodefunc, self.__iter__())
+
     def __len__(self):
         return sum((1 for item in iter(self)))
 
@@ -274,10 +280,6 @@ class RelationshipFilter(object):
         rel = self.relfunc(value)
         if rel.is_deleted():
             rel.undelete()
-
-    @property
-    def append(self):
-        return self.add
 
     def remove(self, value):
         rel = self.relfunc(value)

@@ -27,7 +27,7 @@ class TestRelationships(BaseTest):
         self.assertTrue(r in n2.liked_by)
         self.assertTrue(n1 in n2.liked_by.nodes())
         r.delete()
-        n1.liked_by.append(n2)
+        n1.liked_by.add(n2)
         self.assertTrue(n2 in n1.liked_by.nodes())
         self.assertTrue(n1 in n2.likes.nodes())
         n2.likes.remove(n1)
