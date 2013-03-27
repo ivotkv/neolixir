@@ -162,9 +162,13 @@ class RelView(object):
             return self._data
         except AttributeError:
             if self.direction == OUT:
-                self._data = self.relmap.start.setdefault((self.owner, self.type), [])
+                if not self.relmap.start.has_key((self.owner, self.type)):
+                    self.relmap.start[(self.owner, self.type)] = RelList(OUT)
+                self._data = self.relmap.start[(self.owner, self.type)]
             else:
-                self._data = self.relmap.end.setdefault((self.owner, self.type), [])
+                if not self.relmap.end.has_key((self.owner, self.type)):
+                    self.relmap.end[(self.owner, self.type)] = RelList(IN)
+                self._data = self.relmap.end[(self.owner, self.type)]
             return self._data
 
     def _nodefunc(self, rel):
@@ -203,6 +207,12 @@ class RelView(object):
 
     def __delitem__(self, key):
         self.data[key].delete()
+
+    def iterrels(self):
+        return iter(self.data)
+
+    def rels(self):
+        return self.data
 
     def node(self, rel):
         return self._nodefunc(rel)
