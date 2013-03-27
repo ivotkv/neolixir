@@ -1,5 +1,8 @@
 """Contains various general utilities."""
 
+IN = -1
+OUT = 1
+
 class classproperty(object):
     """
     A decorator allowing the definition of class properties, e.g.::

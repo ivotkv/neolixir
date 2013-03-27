@@ -8,10 +8,9 @@ __all__ = ['metadata']
 
 class MetaData(object):
 
-    def __init__(self, url='http://localhost:7474/db/data/', debug=False):
+    def __init__(self, url='http://localhost:7474/db/data/'):
         self.url = url
         self.engine = url
-        self.debug = debug
         self._session = Session(metadata=self)
         self._classes = {}
 

@@ -44,42 +44,17 @@ class Node(Entity):
             self._relfilters = {}
             super(Node, self).__init__(value, **properties)
 
-    def _get_repr_data(self):
-        data = super(Node, self)._get_repr_data()
-        if m.debug:
-            data.append("Relationships = {0}".format(self.relationships))
-        return data
-
     @classproperty
     def classnode(cls):
         return ClassNode.get(cls)
 
-    @property
-    def relationships(self):
-        try:
-            return self._relfilters['_all']
-        except KeyError:
-            from relationship import RelationshipFilter
-            self._relfilters['_all'] = RelationshipFilter(self)
-            if len(self._relfilters) == 1:
-                self._relfilters['_all'].reload()
-            return self._relfilters['_all']
-
-    def reload(self):
-        super(Node, self).reload()
-        if len(self._relfilters) > 0:
-            self.relationships.reload()
-
     def delete(self):
-        if len(self._relfilters) > 0 or not self.is_phantom():
-            for rel in self.relationships:
-                rel.delete()
+        try:
+            while True:
+                m.session.relmap.node[self].pop().delete()
+        except KeyError:
+            pass
         super(Node, self).delete()
-
-    def undelete(self):
-        for rel in self.relationships:
-            rel.undelete()
-        super(Node, self).undelete()
 
     def save(self):
         if self.is_deleted():
@@ -92,7 +67,7 @@ class Node(Entity):
                 self._entity = None
         elif self.is_phantom():
             self._entity = m.engine.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
-            m.session.add_entity(self)
+            m.session.add(self)
         elif self.is_dirty():
             self.properties.save()
         return True

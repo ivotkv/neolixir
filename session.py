@@ -34,8 +34,8 @@ class Session(object):
         try:
             return self._threadlocal.relmap
         except AttributeError:
-            from relationship import RelationshipMapper
-            self._threadlocal.relmap = RelationshipMapper()
+            from relmap import RelMap
+            self._threadlocal.relmap = RelMap()
             return self._threadlocal.relmap
 
     @property
@@ -53,7 +53,7 @@ class Session(object):
     def is_dirty(self):
         return self.new + self.dirty > 0
 
-    def add_entity(self, entity):
+    def add(self, entity):
         from relationship import Relationship
         if isinstance(entity, Relationship):
             self.relmap.add(entity)
@@ -63,8 +63,9 @@ class Session(object):
             else:
                 self.phantomnodes.discard(entity)
                 self.nodes[entity.id] = entity
+        entity._session = self
 
-    def get_entity(self, value):
+    def get(self, value):
         if isinstance(value, neo4j.Node):
             return self.nodes.get(value.id)
         elif isinstance(value, (neo4j.Relationship, tuple)):
@@ -79,6 +80,7 @@ class Session(object):
         else:
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
+        entity._session = None
 
     def rollback(self):
         self.relmap.rollback()
@@ -90,5 +92,5 @@ class Session(object):
         # TODO Batch-ify
         while len(self.phantomnodes) > 0:
             self.phantomnodes.pop().save()
-        for entity in list(chain(self.nodes.itervalues(), self.relmap.itervalues())):
+        for entity in list(chain(self.nodes.itervalues(), self.relmap)):
             entity.save()

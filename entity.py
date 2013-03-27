@@ -42,7 +42,7 @@ class Entity(object):
     def __new__(cls, value=None, **properties):
         if isinstance(value, cls):
             return value
-        instance = m.session.get_entity(value)
+        instance = m.session.get(value)
         if instance is not None:
             return instance
         elif isinstance(value, neo4j.PropertyContainer):
@@ -69,7 +69,7 @@ class Entity(object):
                 else:
                     self.properties[k] = v
             self._initialized = True
-            m.session.add_entity(self)
+            m.session.add(self)
 
     def _get_repr_data(self):
         return ["Id = {0}".format(self.id),
@@ -97,7 +97,10 @@ class Entity(object):
             return self._properties
 
     def get_properties(self):
-        data = dict(((k, getattr(self, k)) for k, v in self._descriptors.iteritems() if isinstance(v, Property)))
+        data = {}
+        for k, v in self._descriptors.iteritems():
+            if isinstance(v, Property):
+                data[k] = getattr(self, k)
         for k, v in self.properties.iteritems():
             data.setdefault(k, v)
         return data
@@ -143,17 +146,13 @@ class Entity(object):
         m.session.expunge(self)
 
     def rollback(self):
+        self._deleted = False
         self.reload()
 
     def delete(self):
         self._deleted = True
         if self.is_phantom():
             self.expunge()
-
-    def undelete(self):
-        self._deleted = False
-        if self.is_phantom():
-            m.session.add_entity(self)
 
     def save(self):
         raise NotImplementedError("cannot save through generic Entity class")

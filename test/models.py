@@ -15,7 +15,7 @@ class SubSubRel(Relationship):
 class SubNode(Node):
     test_id = Integer()
     likes = RelOut(SubRel('like'))
-    liked_by = RelIn('like', SubRel)
+    liked_by = RelIn(SubRel('like'))
     knows = RelOut('know')
     date = DateTime(default=datetime.now)
 

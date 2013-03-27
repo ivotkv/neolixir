@@ -2,6 +2,7 @@ from types import FunctionType
 from inspect import getargspec
 from decimal import Decimal
 from datetime import datetime
+from util import IN, OUT
 
 __all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Array', 'RelOut', 'RelIn']
 
@@ -229,23 +230,10 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    direction = None
-
-    def __init__(self, rel_type=None, cls=None, match=None, name=None):
-        super(RelDescriptor, self).__init__(name)
-        from relationship import Relationship
-        if isinstance(rel_type, type) and issubclass(rel_type, Relationship):
-            if rel_type.__rel_type__ is not None:
-                self.type = rel_type.__rel_type__
-                self.cls = rel_type
-            else:
-                raise ValueError("{0} does not define a type".format(rel_type.__name__))
-        elif isinstance(rel_type, basestring) or match is not None:
-            self.type = rel_type
-            self.cls = cls
-        else:
-            raise ValueError("please provide a valid type: {0}".format(rel_type))
-        self.match = match
+    def __init__(self, direction, type, name=None):
+        super(RelDescriptor, self).__init__(name=name)
+        self.direction = direction
+        self.type = type
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -254,16 +242,16 @@ class RelDescriptor(FieldDescriptor):
             try:
                 return instance._relfilters[self.name]
             except KeyError:
-                from relationship import RelationshipFilter
-                instance._relfilters[self.name] = RelationshipFilter(instance, self.direction, self.type, self.cls, self.match)
-                if len(instance._relfilters) == 1:
-                    instance._relfilters[self.name].reload()
+                from relmap import RelView
+                instance._relfilters[self.name] = RelView(instance, self.direction, self.type)
                 return instance._relfilters[self.name]
 
 class RelOut(RelDescriptor):
 
-    direction = 'OUT'
+    def __init__(self, type, name=None):
+        super(RelOut, self).__init__(OUT, type=type, name=name)
 
 class RelIn(RelDescriptor):
 
-    direction = 'IN'
+    def __init__(self, type, name=None):
+        super(RelIn, self).__init__(IN, type=type, name=name)
