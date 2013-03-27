@@ -34,8 +34,6 @@ class RelList(list):
 
 class RelMap(object):
 
-    __default_cls__ = Relationship
-
     def __init__(self):
         self._ids = {}
         self._tuples = {}
@@ -142,12 +140,14 @@ class RelMap(object):
 
 class RelView(object):
 
+    __default_cls__ = Relationship
+
     def __init__(self, owner, direction, type_):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
-        self.cls = type_ if isinstance(type_, type) else self.relmap.__default_cls__
+        self.cls = type_ if isinstance(type_, type) else self.__default_cls__
 
         assert self.direction in (IN, OUT)
         assert isinstance(self.type, basestring)
