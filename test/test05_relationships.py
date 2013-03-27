@@ -35,7 +35,15 @@ class TestRelationships(BaseTest):
         self.assertTrue(n2 not in n1.liked_by)
         self.assertTrue(n1 not in n2.likes)
 
-    def test03_save(self):
+    def test03_index_map(self):
+        n1 = SubNode()
+        n2 = SubNode()
+        n1.likes.append(n2)
+        self.assertTrue(n1.likes[0] is n2)
+        self.assertTrue(isinstance(n1.likes.rel(n1.likes[0]), SubRel))
+        self.assertTrue(n1.likes.node(n1.likes.rel(n1.likes[0])) is n2)
+
+    def test04_save(self):
         n1 = SubNode()
         n2 = SubNode()
         r = SubRel((n1, 'test', n2))
@@ -43,7 +51,7 @@ class TestRelationships(BaseTest):
         self.assertTrue(r.id is not None)
         self.shared.id = r.id
 
-    def test04_load(self):
+    def test05_load(self):
         r = Relationship(self.shared.id)
         self.assertTrue(r.id == self.shared.id)
         self.assertTrue(isinstance(r, SubRel))
@@ -51,7 +59,7 @@ class TestRelationships(BaseTest):
         self.assertTrue(isinstance(r.start, SubNode))
         self.assertTrue(isinstance(r.end, SubNode))
 
-    def test05_delete(self):
+    def test06_delete(self):
         r = Relationship(self.shared.id)
         n1 = r.start
         n2 = r.end

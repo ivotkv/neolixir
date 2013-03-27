@@ -12,26 +12,23 @@ class RelList(list):
         self.direction = direction
         self.nodes = {}
         for rel in self:
-            self.nodes[self.nodefunc(rel)] = rel
+            self.nodes[self._nodefunc(rel)] = rel
 
-    def nodefunc(self, rel):
+    def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
 
-    def map(self, value):
-        if isinstance(value, Relationship):
-            return self.nodefunc(rel)
-        else:
-            return self.nodes.get(value, None)
+    def rel(self, node):
+        return self.nodes.get(node, None)
 
     def append(self, rel):
         if rel not in self:
             super(RelList, self).append(rel)
-            self.nodes[self.nodefunc(rel)] = rel
+            self.nodes[self._nodefunc(rel)] = rel
 
     def remove(self, rel):
         try:
             super(RelList, self).remove(rel)
-            del self.nodes[self.nodefunc(rel)]
+            del self.nodes[self._nodefunc(rel)]
         except ValueError:
             pass
 
@@ -145,19 +142,19 @@ class RelMap(object):
 
 class RelView(object):
 
-    def __init__(self, owner, direction, type):
-        self.map = m.session.relmap
+    def __init__(self, owner, direction, type_):
+        self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
-        self.type = getattr(type, '__rel_type__', type)
-        self.cls = type if isinstance(type, Relationship) else self.map.__default_cls__
+        self.type = getattr(type_, '__rel_type__', type_)
+        self.cls = type_ if isinstance(type_, type) else self.relmap.__default_cls__
 
         assert self.direction in (IN, OUT)
         assert isinstance(self.type, basestring)
         self.reload()
 
     def reload(self):
-        self.map.load_rels(self.owner, self.type)
+        self.relmap.load_rels(self.owner, self.type)
 
     @property
     def data(self):
@@ -165,15 +162,15 @@ class RelView(object):
             return self._data
         except AttributeError:
             if self.direction == OUT:
-                self._data = self.map.start.setdefault((self.owner, self.type), [])
+                self._data = self.relmap.start.setdefault((self.owner, self.type), [])
             else:
-                self._data = self.map.end.setdefault((self.owner, self.type), [])
+                self._data = self.relmap.end.setdefault((self.owner, self.type), [])
             return self._data
 
-    def nodefunc(self, rel):
+    def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
 
-    def relfunc(self, value):
+    def _relfunc(self, value):
         if isinstance(value, Relationship):
             return value
         else:
@@ -187,7 +184,7 @@ class RelView(object):
                 raise ValueError("could not find other Node")
 
     def __iter__(self):
-        return imap(self.nodefunc, self.data)
+        return imap(self._nodefunc, self.data)
 
     def __contains__(self, item):
         if isinstance(item, Relationship):
@@ -202,19 +199,22 @@ class RelView(object):
         return "[{0}]".format(", ".join(imap(repr, iter(self))))
 
     def __getitem__(self, key):
-        return self.nodefunc(self.data[key])
+        return self._nodefunc(self.data[key])
 
     def __delitem__(self, key):
         self.data[key].delete()
 
-    def map(self, value):
-        return self.data.map(value)
+    def node(self, rel):
+        return self._nodefunc(rel)
+
+    def rel(self, node):
+        return self.data.rel(node)
 
     def append(self, value):
-        self.relfunc(value)
+        self._relfunc(value)
 
     def remove(self, value):
         if value in self:
             if not isinstance(value, Relationship):
-                value = self.data.map(value)
+                value = self.data.rel(value)
             value.delete()
