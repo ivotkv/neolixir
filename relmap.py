@@ -221,7 +221,9 @@ class RelView(object):
         return self.data.rel(node)
 
     def append(self, value):
-        self._relfunc(value)
+        if value not in self:
+            return self._relfunc(value)
+        return None
 
     def remove(self, value):
         if value in self:
