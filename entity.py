@@ -48,7 +48,7 @@ class Entity(object):
         elif isinstance(value, neo4j.PropertyContainer):
             loaded_properties = value.get_properties()
             valcls = m.classes.get(loaded_properties.get('__class__'))
-            if not issubclass(valcls, cls):
+            if not valcls or not issubclass(valcls, cls):
                 raise TypeError("entity is not an instance of " + cls.__name__)
             instance = super(Entity, cls).__new__(valcls)
             instance._entity = value
