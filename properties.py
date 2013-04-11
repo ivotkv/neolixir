@@ -6,69 +6,6 @@ from util import IN, OUT
 
 __all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Array', 'RelOut', 'RelIn']
 
-class PropertyContainer(dict):
-
-    def __init__(self, owner, data=None):
-        super(PropertyContainer, self).__init__()
-        self.owner = owner
-        self.reload(data)
-
-    def sanitize(self):
-        super(PropertyContainer, self).__setitem__('__class__', self.owner.__class__.__name__)
-        for name, descriptor in self.owner.descriptors.iteritems():
-            if isinstance(descriptor, Property) and self.get(name) is None:
-                default = descriptor.get_default(self.owner)
-                if default is not None:
-                    descriptor.__set__(self.owner, default)
-
-    def is_dirty(self):
-        return self._dirty
-
-    def set_dirty(self, dirty=True):
-        self._dirty = dirty
-
-    def reload(self, data=None):
-        super(PropertyContainer, self).clear()
-        if data is None and self.owner._entity is not None:
-            data = self.owner._entity.get_properties()
-        if isinstance(data, dict):
-            super(PropertyContainer, self).update(data)
-        self.set_dirty(False)
-
-    def save(self):
-        self.sanitize()
-        self.owner._entity.set_properties(self)
-        self.set_dirty(False)
-
-    def __setitem__(self, key, value):
-        if self.get(key) != value:
-            self.set_dirty()
-        super(PropertyContainer, self).__setitem__(key, value)
-
-    def __delitem__(self, key):
-        self.set_dirty()
-        super(PropertyContainer, self).__delitem__(key)
-
-    def clear(self):
-        self.set_dirty()
-        super(PropertyContainer, self).clear()
-
-    def pop(self, key, default=None):
-        self.set_dirty()
-        return super(PropertyContainer, self).pop(key, default)
-
-    def popitem(self):
-        self.set_dirty()
-        return super(PropertyContainer, self).popitem()
-
-    def setdefault(self, key, default=None):
-        self.set_dirty()
-        return super(PropertyContainer, self).setdefault(key, default)
-
-    def update(self, *args, **kwargs):
-        self.set_dirty()
-        return super(PropertyContainer, self).update(*args, **kwargs)
-
 class FieldDescriptor(object):
 
     def __init__(self, name=None):

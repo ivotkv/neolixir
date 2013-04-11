@@ -151,9 +151,9 @@ class RelView(object):
 
         assert self.direction in (IN, OUT)
         assert isinstance(self.type, basestring)
-        self.reload()
+        self.load()
 
-    def reload(self):
+    def load(self):
         self.relmap.load_rels(self.owner, self.type)
 
     @property

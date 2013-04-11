@@ -1,7 +1,7 @@
 from py2neo import neo4j
 from util import classproperty
 from metadata import metadata as m
-from properties import Property, PropertyContainer, FieldDescriptor
+from properties import Property, FieldDescriptor
 
 __all__ = ['Entity']
 
@@ -46,13 +46,12 @@ class Entity(object):
         if instance is not None:
             return instance
         elif isinstance(value, neo4j.PropertyContainer):
-            loaded_properties = value.get_properties()
+            loaded_properties = m.session.propmap.get_properties(value)
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):
                 raise TypeError("entity is not an instance of " + cls.__name__)
             instance = super(Entity, cls).__new__(valcls)
             instance._entity = value
-            instance._properties = PropertyContainer(instance, loaded_properties)
             if valcls is not cls:
                 instance.__init__(value, **properties)
             return instance
@@ -93,7 +92,8 @@ class Entity(object):
         try:
             return self._properties
         except AttributeError:
-            self._properties = PropertyContainer(self)
+            self._properties = m.session.propmap.get_properties(self)
+            self._properties.owner = self
             return self._properties
 
     def get_properties(self):
@@ -119,7 +119,10 @@ class Entity(object):
     def set_entity(self, entity):
         if self._entity is None:
             self._entity = entity
-            self.reload()
+            try:
+                del self._properties
+            except AttributeError:
+                pass
             return True
         else:
             return False
@@ -138,16 +141,16 @@ class Entity(object):
         else:
             return self.properties.is_dirty()
 
-    def reload(self):
-        if hasattr(self, '_properties'):
-            self.properties.reload()
-
     def expunge(self):
-        m.session.expunge(self)
+        if getattr(self, '_session', None):
+            self._session.expunge(self)
 
     def rollback(self):
         self._deleted = False
-        self.reload()
+        try:
+            del self._properties
+        except AttributeError:
+            pass
 
     def delete(self):
         self._deleted = True

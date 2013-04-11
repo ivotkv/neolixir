@@ -12,6 +12,7 @@ class Session(object):
         self.nodes.clear()
         self.phantomnodes.clear()
         self.relmap.clear()
+        self.propmap.clear()
 
     @property
     def nodes(self):
@@ -37,6 +38,15 @@ class Session(object):
             from relmap import RelMap
             self._threadlocal.relmap = RelMap()
             return self._threadlocal.relmap
+
+    @property
+    def propmap(self):
+        try:
+            return self._threadlocal.propmap
+        except AttributeError:
+            from propmap import PropMap
+            self._threadlocal.propmap = PropMap()
+            return self._threadlocal.propmap
 
     @property
     def count(self):
@@ -80,9 +90,12 @@ class Session(object):
         else:
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
+        self.propmap.pop(entity, None)
+        self.propmap.pop(entity.id, None)
         entity._session = None
 
     def rollback(self):
+        self.propmap.clear()
         self.relmap.rollback()
         self.phantomnodes.clear()
         for node in self.nodes.itervalues():
