@@ -27,6 +27,10 @@ class MetaData(object):
         return self._engine.batch
 
     @property
+    def preload_properties(self):
+        return self._engine.preload_properties
+
+    @property
     def cypher(self):
         return self._engine.cypher
 

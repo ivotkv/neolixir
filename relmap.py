@@ -135,8 +135,8 @@ class RelMap(object):
 
     def load_rels(self, node, type):
         if not node.is_phantom():
-            for row in m.cypher("start n=node({0}) match n-[r:{1}]-() return r".format(node.id, type), automap=False):
-                self.add(Relationship(row[0]))
+            for row in m.cypher("start n=node({0}) match n-[r:{1}]-() return r".format(node.id, type)):
+                self.add(row[0])
 
 class RelView(object):
 

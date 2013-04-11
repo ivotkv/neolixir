@@ -5,7 +5,7 @@ class Engine(object):
 
     def __init__(self, url='http://localhost:7474/db/data/', metadata=None):
         self._threadlocal = threading.local()
-        self._metadata = metadata
+        self.metadata = metadata
         self.url = url
 
     @property
@@ -26,18 +26,52 @@ class Engine(object):
             self._typemap = {
                 neo4j.Node: Node,
                 neo4j.Relationship: Relationship,
-                neo4j.Path: self.mappath
+                neo4j.Path: self.mappath,
+                list: self.maplist
             }
             return self._typemap
 
     def mappath(self, path):
         return [self.typemap[type(e)](e) for p in path for e in p]
 
+    def maplist(self, list):
+        return [self.typemap[type(e)](e) for e in list]
+
+    def find_entities(self, data):
+        entities = {}
+        try:
+            for item in data:
+                if isinstance(item, neo4j.PropertyContainer):
+                    entities[str(item)] = item
+                    if isinstance(item, neo4j.Relationship):
+                        entities[str(item.start_node)] = item.start_node
+                        entities[str(item.end_node)] = item.end_node
+                elif isinstance(item, (list, tuple, neo4j.Path)):
+                    entities.update(self.find_entities(item))
+        except TypeError:
+            pass
+        return entities
+
+    def preload_properties(self, data):
+        entities = []
+        for e in self.find_entities(data).itervalues():
+            if e not in self.metadata.session.propmap:
+                entities.append(e)
+
+        properties = self.instance.get_properties(*entities)
+        if len(entities) == len(properties):
+            i = 0
+            while i < len(entities):
+                self.metadata.session.propmap[entities[i]] = properties[i]
+                i += 1
+
     def cypher(self, *args, **kwargs):
         automap = kwargs.pop('automap', True)
         if automap:
             results = []
-            for row in cypher.execute(self.instance, *args, **kwargs)[0]:
+            qres = cypher.execute(self.instance, *args, **kwargs)[0]
+            self.preload_properties(qres)
+            for row in qres:
                 items = []
                 for item in row:
                     try:

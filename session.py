@@ -6,7 +6,7 @@ class Session(object):
 
     def __init__(self, metadata=None):
         self._threadlocal = threading.local()
-        self._metadata = metadata
+        self.metadata = metadata
 
     def clear(self):
         self.nodes.clear()
