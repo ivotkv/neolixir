@@ -50,10 +50,6 @@ class Engine(object):
             for item in data:
                 if isinstance(item, neo4j.PropertyContainer):
                     entities[str(item)] = item
-                    # NOTE: seemed a good idea, but actually makes it slower
-                    #if isinstance(item, neo4j.Relationship):
-                    #    entities[str(item.start_node)] = item.start_node
-                    #    entities[str(item.end_node)] = item.end_node
                 elif isinstance(item, neo4j.Path):
                     entities.update(self.find_entities(item._nodes))
                     entities.update(self.find_entities(item._edges))

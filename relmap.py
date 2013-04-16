@@ -133,34 +133,38 @@ class RelMap(object):
         for rel in self._ids.itervalues():
             rel.rollback()
 
-    def load_rels(self, node, type):
+    def load_rels(self, node, direction, type):
         if not node.is_phantom():
-            for row in m.cypher("start n=node({0}) match n-[r:{1}]-() return r".format(node.id, type)):
-                self.add(row[0])
+            q = 'start n=node({node_id})'
+            if direction is OUT:
+                q += ' match n-[r:{0}]->o return r, o'.format(type)
+            else:
+                q += ' match n<-[r:{0}]-o return r, o'.format(type)
+
+            m.cypher(q, params={'node_id': node.id})
 
 class RelView(object):
 
     __default_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_):
+    def __init__(self, owner, direction, type_, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__default_cls__
-
-        assert self.direction in (IN, OUT)
-        assert isinstance(self.type, basestring)
-        self.load()
+        self.preloaded = preloaded
 
     def load(self):
-        self.relmap.load_rels(self.owner, self.type)
+        self.relmap.load_rels(self.owner, self.direction, self.type)
 
     @property
     def data(self):
         try:
             return self._data
         except AttributeError:
+            if not self.preloaded:
+                self.load()
             if self.direction == OUT:
                 if not self.relmap.start.has_key((self.owner, self.type)):
                     self.relmap.start[(self.owner, self.type)] = RelList(OUT)
