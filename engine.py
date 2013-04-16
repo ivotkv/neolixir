@@ -32,7 +32,14 @@ class Engine(object):
             return self._typemap
 
     def mappath(self, path):
-        return [self.typemap[type(e)](e) for p in path for e in p]
+        from node import Node
+        from relationship import Relationship
+        out = []
+        for i, edge in enumerate(path._edges):
+            out.append(Node(path._nodes[i]))
+            out.append(Relationship(edge))
+        out.append(Node(path._nodes[-1]))
+        return out
 
     def maplist(self, list):
         return [self.typemap[type(e)](e) for e in list]
@@ -47,7 +54,10 @@ class Engine(object):
                     #if isinstance(item, neo4j.Relationship):
                     #    entities[str(item.start_node)] = item.start_node
                     #    entities[str(item.end_node)] = item.end_node
-                elif isinstance(item, (list, tuple, neo4j.Path)):
+                elif isinstance(item, neo4j.Path):
+                    entities.update(self.find_entities(item._nodes))
+                    entities.update(self.find_entities(item._edges))
+                elif isinstance(item, list):
                     entities.update(self.find_entities(item))
         except TypeError:
             pass
