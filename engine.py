@@ -77,7 +77,8 @@ class Engine(object):
         if automap:
             results = []
             qres = cypher.execute(self.instance, *args, **kwargs)[0]
-            self.preload_properties(qres)
+            # NOTE: seems to be faster without preload
+            #self.preload_properties(qres)
             for row in qres:
                 items = []
                 for item in row:
