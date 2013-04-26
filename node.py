@@ -58,6 +58,7 @@ class Node(Entity):
 
     def save(self):
         if self.is_deleted():
+            m.session.propmap.remove(self)
             if not self.is_phantom():
                 q = "start n=node({0}) ".format(self.id)
                 q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "

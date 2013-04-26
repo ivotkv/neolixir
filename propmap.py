@@ -4,13 +4,22 @@ from properties import Property
 
 class PropMap(dict):
 
+    def get_key(self, value):
+        if not isinstance(value, neo4j.PropertyContainer):
+            if getattr(value, '_entity', None) is None:
+                return value
+            else:
+                value = value._entity
+        return "{0}:{1}".format(value.__class__.__name__, value.id)
+
     def get_properties(self, value):
+        key = self.get_key(value)
         if isinstance(value, neo4j.PropertyContainer):
             try:
-                return self[value.id]
+                return self[key]
             except KeyError:
-                self[value.id] = PropDict(value.get_properties())
-                return self[value.id]
+                self[key] = PropDict(value.get_properties())
+                return self[key]
         else:
             try:
                 return self[value]
@@ -19,10 +28,15 @@ class PropMap(dict):
                     return self.setdefault(value, PropDict())
                 else:
                     try:
-                        return self[value.id]
-                    except:
-                        self[value.id] = PropDict(value._entity.get_properties())
-                        return self[value.id]
+                        return self[key]
+                    except KeyError:
+                        self[key] = PropDict(value._entity.get_properties())
+                        return self[key]
+
+    def remove(self, value):
+        key = self.get_key(value)
+        self.pop(key, None)
+        self.pop(value, None)
 
 class PropDict(dict):
 

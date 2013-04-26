@@ -107,6 +107,7 @@ class Relationship(Entity):
 
     def save(self):
         if self.is_deleted():
+            m.session.propmap.remove(self)
             if not self.is_phantom():
                 try:
                     self._entity.delete()
