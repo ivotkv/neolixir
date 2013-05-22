@@ -36,29 +36,29 @@ class RelMap(object):
 
     def __init__(self):
         self._ids = {}
-        self._tuples = {}
+        self._phantoms = set()
         self.node = {}
         self.start = {}
         self.end = {}
 
     def clear(self):
         self._ids.clear()
-        self._tuples.clear()
+        self._phantoms.clear()
         self.node.clear()
         self.start.clear()
         self.end.clear()
 
     def _track(self, rel):
         if rel.id is not None:
-            self._tuples.pop(rel.tuple, None)
+            self._phantoms.discard(rel)
             self._ids[rel.id] = rel
         else:
-            self._tuples[rel.tuple] = rel
+            self._phantoms.add(rel)
         rel._relmap = self
 
     def _untrack(self, rel):
         self._ids.pop(rel.id, None)
-        self._tuples.pop(rel.tuple, None)
+        self._phantoms.discard(rel)
         rel._relmap = None
 
     def _map(self, rel):
@@ -106,19 +106,17 @@ class RelMap(object):
             return self._ids.get(value)
         elif isinstance(value, neo4j.Relationship):
             return self._ids.get(value.id)
-        elif isinstance(value, tuple):
-            return self._tuples.get(value)
         else:
             return None
 
     def __len__(self):
-        return len(self._ids) + len(self._tuples)
+        return len(self._ids) + len(self._phantoms)
 
     def __iter__(self):
-        return chain(self._ids.itervalues(), self._tuples.itervalues())
+        return chain(self._ids.itervalues(), iter(self._phantoms))
 
     def iterphantoms(self):
-        return self._tuples.itervalues()
+        return iter(self._phantoms)
 
     def iterpersisted(self):
         return self._ids.itervalues()
@@ -126,7 +124,7 @@ class RelMap(object):
     def rollback(self):
         try:
             while True:
-                rel = self._tuples.popitem()[1]
+                rel = self._phantoms.pop()
                 self._unmap(rel)
         except KeyError:
             pass

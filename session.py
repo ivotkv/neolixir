@@ -78,7 +78,7 @@ class Session(object):
     def get(self, value):
         if isinstance(value, neo4j.Node):
             return self.nodes.get(value.id)
-        elif isinstance(value, (neo4j.Relationship, tuple)):
+        elif isinstance(value, neo4j.Relationship):
             return self.relmap.get(value)
         else:
             return None

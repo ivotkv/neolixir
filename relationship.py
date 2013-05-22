@@ -30,10 +30,6 @@ class Relationship(Entity):
                 raise ValueError("start node not found!")
             if value[2] is None:
                 raise ValueError("end node not found!")
-            if not value[0].is_phantom() and not value[2].is_phantom():
-                existing = value[0]._entity.get_relationships_with(value[2]._entity, 1, value[1])
-                if len(existing) > 0:
-                    value = existing[0]
         elif not isinstance(value, (cls, neo4j.Relationship)):
             raise ValueError("Relationship can only be instantiated by id, entity or tuple")
         return super(Relationship, cls).__new__(cls, value, **properties)
@@ -49,6 +45,7 @@ class Relationship(Entity):
                     raise ValueError("Relationship could not be initialized with value provided")
             elif self.__rel_type__ is not None and self._entity.type != self.__rel_type__:
                 raise TypeError("entity type does not match class type")
+            self.tuple # NOTE: the tuple needs to be inited for some reason - why??
             super(Relationship, self).__init__(value, **properties)
 
     def __repr__(self):
