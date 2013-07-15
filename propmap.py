@@ -18,7 +18,15 @@ class PropMap(dict):
             try:
                 return self[key]
             except KeyError:
-                self[key] = PropDict(value.get_properties())
+                if value.__metadata__.has_key("data"):
+                    # from property cache
+                    props = value.__metadata__["data"]
+                else:
+                    # request from server
+                    # py2neo.neo4j.Node.get_properties() (inherited from PropertyContainer) ALWAYS sends
+                    # a request without any consideration of the cache
+                    props = value.get_properties()
+                self[key] = PropDict(props)
                 return self[key]
         else:
             try:

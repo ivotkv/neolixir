@@ -1,6 +1,8 @@
 import threading
 from py2neo import neo4j, cypher
 
+AUTOMAP_ORDER_FIX = True
+
 class Engine(object):
 
     def __init__(self, url='http://localhost:7474/db/data/', metadata=None):
@@ -30,6 +32,22 @@ class Engine(object):
                 list: self.maplist
             }
             return self._typemap
+            
+    # PASS 1
+    @property
+    def typemap1(self):
+        try:
+            return self._typemap1
+        except AttributeError:
+            from node import Node
+            from relationship import Relationship
+            self._typemap1 = {
+                neo4j.Node: Node,
+                #neo4j.Relationship: Relationship,
+                neo4j.Path: self.mappath1,
+                list: self.maplist1
+            }
+            return self._typemap1
 
     def mappath(self, path):
         from node import Node
@@ -40,9 +58,25 @@ class Engine(object):
             out.append(Relationship(edge))
         out.append(Node(path._nodes[-1]))
         return out
-
+        
+    # PASS 1
+    def mappath1(self, path):
+        from node import Node
+        #from relationship import Relationship
+        out = []
+        for i, edge in enumerate(path._edges):
+            out.append(Node(path._nodes[i]))
+            #out.append(Relationship(edge))
+            out.append(edge)
+        out.append(Node(path._nodes[-1]))
+        return out
+        
     def maplist(self, list):
         return [self.typemap[type(e)](e) for e in list]
+
+    # PASS 1
+    def maplist1(self, list):
+        return [self.typemap1[type(e)](e) for e in list]
 
     def find_entities(self, data):
         entities = {}
@@ -79,14 +113,34 @@ class Engine(object):
             qres = cypher.execute(self.instance, *args, **kwargs)[0]
             # NOTE: seems to be faster without preload
             #self.preload_properties(qres)
-            for row in qres:
-                items = []
-                for item in row:
-                    try:
-                        items.append(self.typemap[type(item)](item))
-                    except KeyError:
-                        items.append(item)
-                results.append(items)
+            if AUTOMAP_ORDER_FIX:
+                for row in qres:
+                    items = []
+                    for item in row:
+                        try:
+                            items.append(self.typemap1[type(item)](item))
+                        except KeyError:
+                            items.append(item)
+                    results.append(items)
+                from relationship import Relationship
+                def _2nd_pass_map(lst):
+                    for idx, item in enumerate(lst):
+                        if isinstance(item, neo4j.Relationship):
+                            lst[idx] = Relationship(item)
+                        elif isinstance(item, list):
+                            _2nd_pass_map(item)
+                    return lst
+                _2nd_pass_map(results)
+            else:
+                for row in qres:
+                    items = []
+                    for item in row:
+                        try:
+                            items.append(self.typemap[type(item)](item))
+                        except KeyError:
+                            items.append(item)
+                    results.append(items)
+
             return results
         else:
             return cypher.execute(self.instance, *args, **kwargs)[0]
