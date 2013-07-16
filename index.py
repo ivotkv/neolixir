@@ -53,12 +53,17 @@ class Index(object):
 
 class NodeIndex(Index):
 
-    def __init__(self, name, config=None):
+    def __init__(self, name, config=None, cls=None):
         super(NodeIndex, self).__init__(neo4j.Node, name, config)
+        self.cls = cls
 
     def get(self, key, value=None, item=None):
         if isinstance(item, dict):
-            return Node(super(NodeIndex, self).get(key, value, item))
+            if self.cls:
+                node = self.cls(value=None, **item)
+            else:
+                node = Node(value=None, **item)
+            return self.get(key, value, node)
         elif isinstance(item, Node):
             if item.is_phantom():
                 n = super(NodeIndex, self).get(key, value, item.get_abstract())
@@ -67,6 +72,7 @@ class NodeIndex(Index):
                     item.set_entity(n)
                     return item
                 else:
+                    item.expunge()
                     return Node(n)
             else:
                 if self.add(key, value, item, if_none=True):

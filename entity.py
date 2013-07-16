@@ -123,6 +123,8 @@ class Entity(object):
                 del self._properties
             except AttributeError:
                 pass
+            if getattr(self, '_session', None):
+                self._session.add(self)
             return True
         else:
             return False
@@ -144,6 +146,7 @@ class Entity(object):
     def expunge(self):
         if getattr(self, '_session', None):
             self._session.expunge(self)
+            self._session = None
 
     def rollback(self):
         self._deleted = False

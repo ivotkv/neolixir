@@ -48,6 +48,9 @@ class Session(object):
             self._threadlocal.propmap = PropMap()
             return self._threadlocal.propmap
 
+    def __len__(self):
+        return self.count
+
     @property
     def count(self):
         return len(self.nodes) + len(self.phantomnodes) + len(self.relmap)
