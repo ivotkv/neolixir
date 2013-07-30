@@ -183,7 +183,8 @@ class RelView(object):
         if getattr(self, '_noload', False):
             self._noload = False
             self.preloaded = False
-            delattr(self, '_data')
+            if hasattr(self, '_data'):
+                delattr(self, '_data')
 
     def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
