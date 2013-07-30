@@ -173,6 +173,18 @@ class RelView(object):
                 self._data = self.relmap.end[(self.owner, self.type)]
             return self._data
 
+    # using 'with' will prevent preloading within its context
+    def __enter__(self):
+        if not hasattr(self, '_data') and self.preloaded is False:
+            self._noload = True
+            self.preloaded = True
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if getattr(self, '_noload', False):
+            self._noload = False
+            self.preloaded = False
+            delattr(self, '_data')
+
     def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
 
@@ -209,6 +221,17 @@ class RelView(object):
 
     def __delitem__(self, key):
         self.data[key].delete()
+
+    def sorted(self):
+        return map(self._nodefunc, sorted(self.data,
+                                          cmp=self.cls.__sort_cmp__,
+                                          key=self.cls.__sort_key__))
+
+    def reversed(self):
+        return map(self._nodefunc, sorted(self.data,
+                                          cmp=self.cls.__sort_cmp__,
+                                          key=self.cls.__sort_key__,
+                                          reverse=True))
 
     def iterrels(self):
         return iter(self.data)

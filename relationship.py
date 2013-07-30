@@ -10,6 +10,9 @@ class Relationship(Entity):
 
     __rel_type__ = None
 
+    __sort_cmp__ = None
+    __sort_key__ = None
+
     _typed_classes = {}
 
     def __new__(cls, value, **properties):
