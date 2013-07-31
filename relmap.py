@@ -152,6 +152,7 @@ class RelView(object):
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__default_cls__
         self.preloaded = preloaded
+        self._noload = 0
 
     def load(self):
         self.relmap.load_rels(self.owner, self.direction, self.type)
@@ -175,16 +176,18 @@ class RelView(object):
 
     # using 'with' will prevent preloading within its context
     def __enter__(self):
-        if not hasattr(self, '_data') and self.preloaded is False:
-            self._noload = True
+        if not hasattr(self, '_data') and self.preloaded is False or self._noload > 0:
+            self._noload += 1
             self.preloaded = True
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if getattr(self, '_noload', False):
-            self._noload = False
+        if self._noload == 1:
+            self._noload = 0
             self.preloaded = False
             if hasattr(self, '_data'):
                 delattr(self, '_data')
+        elif self._noload > 1:
+            self._noload -= 1
 
     def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
