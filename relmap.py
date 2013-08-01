@@ -230,7 +230,7 @@ class RelView(object):
         if isinstance(item, Relationship):
             return item in self.data
         else:
-            return item in self.data.nodes
+            return item in iter(self)
 
     def __len__(self):
         return len(self.data)
