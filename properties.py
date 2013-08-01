@@ -174,16 +174,19 @@ class RelDescriptor(FieldDescriptor):
         self.type = type
         self.multiple = multiple
 
+    def get_relview(self, instance):
+        try:
+            return instance._relfilters[self.name]
+        except KeyError:
+            from relmap import RelView
+            instance._relfilters[self.name] = RelView(instance, self.direction, self.type, self.multiple)
+            return instance._relfilters[self.name]
+
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
         else:
-            try:
-                return instance._relfilters[self.name]
-            except KeyError:
-                from relmap import RelView
-                instance._relfilters[self.name] = RelView(instance, self.direction, self.type, self.multiple)
-                return instance._relfilters[self.name]
+            return self.get_relview(instance)
 
 class RelOut(RelDescriptor):
 
@@ -205,14 +208,14 @@ class RelDescriptorOne(RelDescriptor):
         if instance is None:
             return self
         else:
-            relview = super(RelDescriptorOne, self).__get__(instance, owner)
+            relview = self.get_relview(instance)
             try:
                 return relview[0]
             except IndexError:
                 return None
 
     def __set__(self, instance, value):
-        relview = super(RelDescriptorOne, self).__get__(instance)
+        relview = self.get_relview(instance)
         current = list(relview)
 
         if value is None:

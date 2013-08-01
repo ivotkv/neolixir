@@ -48,6 +48,10 @@ class Node(Entity):
     def classnode(cls):
         return ClassNode.get(cls)
 
+    def relview(self, name):
+        descriptor = getattr(self.__class__, name)
+        return descriptor.get_relview(self)
+
     def delete(self):
         try:
             while True:

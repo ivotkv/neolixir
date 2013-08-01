@@ -35,6 +35,13 @@ class TestRelationships(BaseTest):
         self.assertTrue(n2 not in n1.liked_by)
         self.assertTrue(n1 not in n2.likes)
 
+        # relview
+        self.assertTrue(n1.likes is n1.relview('likes'))
+        self.assertTrue(n1.liked_by is n1.relview('liked_by'))
+        self.assertTrue(n1.relview('likes') is not n1.relview('liked_by'))
+        self.assertTrue(n2.likes is n2.relview('likes'))
+        self.assertTrue(n1.relview('likes') is not n2.relview('likes'))
+
         # no multiples by default
         self.assertTrue(len(n1.likes) == 0)
         self.assertTrue(len(n2.liked_by) == 0)
@@ -110,6 +117,18 @@ class TestRelationships(BaseTest):
         n1.one_in = n1
         self.assertTrue(n1.one_in is n1)
         self.assertTrue(n1.one_out is n1)
+        n1.one_in = None
+        self.assertTrue(n1.one_in is None)
+        self.assertTrue(n1.one_out is None)
+
+        # relview
+        n1.one_in = None
+        self.assertTrue(n1.relview('one_in') is not n1.one_in)
+        self.assertTrue(len(n1.relview('one_in')) == 0)
+        n1.one_in = n2
+        self.assertTrue(n1.relview('one_in') is not n1.one_in)
+        self.assertTrue(len(n1.relview('one_in')) == 1)
+        self.assertTrue(n1.relview('one_in')[0] is n2)
 
     def test08_multiplerels(self):
         n1 = SubNode()
