@@ -12,25 +12,37 @@ class RelList(list):
         self.direction = direction
         self.nodes = {}
         for rel in self:
-            self.nodes[self._nodefunc(rel)] = rel
+            node = self._nodefunc(rel)
+            if node not in self.nodes:
+                self.nodes[node] = set([rel])
+            else:
+                self.nodes[node].add(rel)
 
     def _nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
 
     def rel(self, node):
-        return self.nodes.get(node, None)
+        return self.nodes.get(node, set())
 
     def append(self, rel):
-        if rel not in self:
-            super(RelList, self).append(rel)
-            self.nodes[self._nodefunc(rel)] = rel
+        super(RelList, self).append(rel)
+        node = self._nodefunc(rel)
+        if node not in self.nodes:
+            self.nodes[node] = set([rel])
+        else:
+            self.nodes[node].add(rel)
 
     def remove(self, rel):
         try:
             super(RelList, self).remove(rel)
-            del self.nodes[self._nodefunc(rel)]
         except ValueError:
             pass
+        else:
+            node = self._nodefunc(rel)
+            if node in self.nodes:
+                self.nodes[node].discard(rel)
+                if len(self.nodes[node]) == 0:
+                    del self.nodes[node]
 
 class RelMap(object):
 
@@ -145,12 +157,13 @@ class RelView(object):
 
     __default_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_, preloaded=False):
+    def __init__(self, owner, direction, type_, multiple=False, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__default_cls__
+        self.multiple = multiple
         self.preloaded = preloaded
         self._noload = 0
 
@@ -189,8 +202,13 @@ class RelView(object):
         elif self._noload > 1:
             self._noload -= 1
 
-    def _nodefunc(self, rel):
-        return rel.end if self.direction == OUT else rel.start
+    def _nodefunc(self, value):
+        if isinstance(value, Relationship):
+            return value.end if self.direction == OUT else value.start
+        elif isinstance(value, Node):
+            return value
+        else:
+            raise TypeError("unexpected type: " + value.__class__.__name__)
 
     def _relfunc(self, value):
         if isinstance(value, Relationship):
@@ -212,7 +230,7 @@ class RelView(object):
         if isinstance(item, Relationship):
             return item in self.data
         else:
-            return item in iter(self)
+            return item in self.data.nodes
 
     def __len__(self):
         return len(self.data)
@@ -247,15 +265,20 @@ class RelView(object):
         return self._nodefunc(rel)
 
     def rel(self, node):
-        return self.data.rel(node)
+        rels = list(self.data.rel(node))
+        if self.multiple:
+            return rels
+        else:
+            return rels[0]
 
     def append(self, value):
-        if value not in self:
+        if self.multiple or value not in self:
             return self._relfunc(value)
         return None
 
     def remove(self, value):
-        if value in self:
-            if not isinstance(value, Relationship):
-                value = self.data.rel(value)
+        if isinstance(value, Node):
+            for rel in list(self.data.rel(value)):
+                rel.delete()
+        elif isinstance(value, Relationship) and value in self:
             value.delete()

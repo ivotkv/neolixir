@@ -4,7 +4,8 @@ from decimal import Decimal
 from datetime import datetime
 from util import IN, OUT
 
-__all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime', 'Array', 'RelOut', 'RelIn']
+__all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime',
+           'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
 
 class FieldDescriptor(object):
 
@@ -29,7 +30,7 @@ class Property(FieldDescriptor):
         super(Property, self).__init__(name)
         self._default = default
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner=None):
         if instance is None:
             return self
         else:
@@ -96,7 +97,7 @@ class DateTime(Property):
 
     __value_type__ = datetime
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner=None):
         if instance is None:
             return self
         else:
@@ -145,7 +146,7 @@ class Array(Property):
         super(Array, self).__init__(name=name)
         self._content_type = type
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner=None):
         value = super(Array, self).__get__(instance, owner)
         if instance is not None and not isinstance(value, TypedList):
             value = TypedList(value, type=self._content_type)
@@ -167,12 +168,13 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    def __init__(self, direction, type, name=None):
+    def __init__(self, direction, type, name=None, multiple=False):
         super(RelDescriptor, self).__init__(name=name)
         self.direction = direction
         self.type = type
+        self.multiple = multiple
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner=None):
         if instance is None:
             return self
         else:
@@ -180,15 +182,62 @@ class RelDescriptor(FieldDescriptor):
                 return instance._relfilters[self.name]
             except KeyError:
                 from relmap import RelView
-                instance._relfilters[self.name] = RelView(instance, self.direction, self.type)
+                instance._relfilters[self.name] = RelView(instance, self.direction, self.type, self.multiple)
                 return instance._relfilters[self.name]
 
 class RelOut(RelDescriptor):
 
-    def __init__(self, type, name=None):
-        super(RelOut, self).__init__(OUT, type=type, name=name)
+    def __init__(self, *args, **kwargs):
+        super(RelOut, self).__init__(OUT, *args, **kwargs)
 
 class RelIn(RelDescriptor):
 
-    def __init__(self, type, name=None):
-        super(RelIn, self).__init__(IN, type=type, name=name)
+    def __init__(self, *args, **kwargs):
+        super(RelIn, self).__init__(IN, *args, **kwargs)
+
+class RelDescriptorOne(RelDescriptor):
+
+    def __init__(self, *args, **kwargs):
+        super(RelDescriptorOne, self).__init__(*args, **kwargs)
+        self.multiple = False
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self
+        else:
+            relview = super(RelDescriptorOne, self).__get__(instance, owner)
+            try:
+                return relview[0]
+            except IndexError:
+                return None
+
+    def __set__(self, instance, value):
+        relview = super(RelDescriptorOne, self).__get__(instance)
+        current = list(relview)
+
+        if value is None:
+            for item in current:
+                relview.remove(item)
+        elif len(current) == 0:
+            relview.append(value)
+        elif len(current) == 1 and current[0] is not value:
+            relview.remove(current[0])
+            relview.append(value)
+        elif len(current) > 1:
+            removed = []
+            for item in current:
+                if item is not value:
+                    relview.remove(item)
+                    removed.append(item)
+            if len(removed) == len(current):
+                relview.append(value)
+
+class RelOutOne(RelDescriptorOne):
+
+    def __init__(self, *args, **kwargs):
+        super(RelOutOne, self).__init__(OUT, *args, **kwargs)
+
+class RelInOne(RelDescriptorOne):
+
+    def __init__(self, *args, **kwargs):
+        super(RelInOne, self).__init__(IN, *args, **kwargs)

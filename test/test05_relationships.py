@@ -35,6 +35,28 @@ class TestRelationships(BaseTest):
         self.assertTrue(n2 not in n1.liked_by)
         self.assertTrue(n1 not in n2.likes)
 
+        # no multiples by default
+        self.assertTrue(len(n1.likes) == 0)
+        self.assertTrue(len(n2.liked_by) == 0)
+        n1.likes.append(n2)
+        self.assertTrue(len(n1.likes) == 1)
+        self.assertTrue(len(n2.liked_by) == 1)
+        n1.likes.append(n2)
+        n2.liked_by.append(n1)
+        self.assertTrue(len(n1.likes) == 1)
+        self.assertTrue(len(n2.liked_by) == 1)
+        n1.likes.remove(n2)
+        self.assertTrue(len(n1.likes) == 0)
+        self.assertTrue(len(n2.liked_by) == 0)
+
+        # self-reference
+        n1.likes.append(n1)
+        self.assertTrue(n1 in n1.likes)
+        self.assertTrue(n1 in n1.liked_by)
+        n1.likes.remove(n1)
+        self.assertTrue(n1 not in n1.likes)
+        self.assertTrue(n1 not in n1.liked_by)
+
     def test03_index_map(self):
         n1 = SubNode()
         n2 = SubNode()
@@ -69,3 +91,49 @@ class TestRelationships(BaseTest):
         n2.delete()
         m.session.commit()
         self.assertRaises(ResourceNotFound, Relationship, self.shared.id)
+
+    def test07_onerels(self):
+        n1 = SubNode()
+        n2 = SubNode()
+        self.assertTrue(n1.one_in is None)
+        self.assertTrue(n2.one_out is None)
+        n1.one_in = n2
+        self.assertTrue(n1.one_in is n2)
+        self.assertTrue(n2.one_out is n1)
+        n1.one_in = None
+        self.assertTrue(n1.one_in is None)
+        self.assertTrue(n2.one_out is None)
+        n1.one_in = n2
+        n2.one_out = None
+        self.assertTrue(n1.one_in is None)
+        self.assertTrue(n2.one_out is None)
+        n1.one_in = n1
+        self.assertTrue(n1.one_in is n1)
+        self.assertTrue(n1.one_out is n1)
+
+    def test08_multiplerels(self):
+        n1 = SubNode()
+        n2 = SubNode()
+        self.assertTrue(len(n1.multiple_in) is 0)
+        self.assertTrue(len(n2.multiple_out) is 0)
+        n1.multiple_in.append(n2)
+        self.assertTrue(len(n1.multiple_in) is 1)
+        self.assertTrue(len(n2.multiple_out) is 1)
+        n1.multiple_in.append(n2)
+        self.assertTrue(len(n1.multiple_in) is 2)
+        self.assertTrue(len(n2.multiple_out) is 2)
+        self.assertTrue(len(set(n1.multiple_in)) is 1)
+        self.assertTrue(len(set(n2.multiple_out)) is 1)
+        self.assertTrue(list(set(n1.multiple_in))[0] is n2)
+        self.assertTrue(list(set(n2.multiple_out))[0] is n1)
+        n1.multiple_in.remove(n1.multiple_in.rel(n2)[0])
+        self.assertTrue(len(n1.multiple_in) is 1)
+        self.assertTrue(len(n2.multiple_out) is 1)
+        n1.multiple_in.append(n2)
+        n2.multiple_out.append(n1)
+        self.assertTrue(len(n1.multiple_in) is 3)
+        self.assertTrue(len(n2.multiple_out) is 3)
+        self.assertTrue(n2 in n1.multiple_in)
+        self.assertTrue(n2 not in n1.multiple_out)
+        self.assertTrue(n1 in n2.multiple_out)
+        self.assertTrue(n1 not in n2.multiple_in)

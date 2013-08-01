@@ -17,6 +17,13 @@ class SubNode(Node):
     likes = RelOut(SubRel('like'))
     liked_by = RelIn(SubRel('like'))
     knows = RelOut('know')
+
+    one_in = RelInOne('one')
+    one_out = RelOutOne('one')
+
+    multiple_in = RelIn('multiple', multiple=True)
+    multiple_out = RelOut('multiple', multiple=True)
+
     date = DateTime(default=datetime.now)
 
 class SubSubNode(SubNode):
