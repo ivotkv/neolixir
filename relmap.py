@@ -12,13 +12,13 @@ class RelList(list):
         self.direction = direction
         self.nodes = {}
         for rel in self:
-            node = self._nodefunc(rel)
+            node = self.nodefunc(rel)
             if node not in self.nodes:
                 self.nodes[node] = set([rel])
             else:
                 self.nodes[node].add(rel)
 
-    def _nodefunc(self, rel):
+    def nodefunc(self, rel):
         return rel.end if self.direction == OUT else rel.start
 
     def rel(self, node):
@@ -26,7 +26,7 @@ class RelList(list):
 
     def append(self, rel):
         super(RelList, self).append(rel)
-        node = self._nodefunc(rel)
+        node = self.nodefunc(rel)
         if node not in self.nodes:
             self.nodes[node] = set([rel])
         else:
@@ -38,7 +38,7 @@ class RelList(list):
         except ValueError:
             pass
         else:
-            node = self._nodefunc(rel)
+            node = self.nodefunc(rel)
             if node in self.nodes:
                 self.nodes[node].discard(rel)
                 if len(self.nodes[node]) == 0:
@@ -202,7 +202,7 @@ class RelView(object):
         elif self._noload > 1:
             self._noload -= 1
 
-    def _nodefunc(self, value):
+    def nodefunc(self, value):
         if isinstance(value, Relationship):
             return value.end if self.direction == OUT else value.start
         elif isinstance(value, Node):
@@ -210,7 +210,7 @@ class RelView(object):
         else:
             raise TypeError("unexpected type: " + value.__class__.__name__)
 
-    def _relfunc(self, value):
+    def relfunc(self, value):
         if isinstance(value, Relationship):
             return value
         else:
@@ -224,7 +224,7 @@ class RelView(object):
                 raise ValueError("could not find other Node")
 
     def __iter__(self):
-        return imap(self._nodefunc, self.data)
+        return imap(self.nodefunc, self.data)
 
     def __contains__(self, item):
         if isinstance(item, Relationship):
@@ -239,18 +239,18 @@ class RelView(object):
         return "[{0}]".format(", ".join(imap(repr, iter(self))))
 
     def __getitem__(self, key):
-        return self._nodefunc(self.data[key])
+        return self.nodefunc(self.data[key])
 
     def __delitem__(self, key):
         self.data[key].delete()
 
     def sorted(self):
-        return map(self._nodefunc, sorted(self.data,
+        return map(self.nodefunc, sorted(self.data,
                                           cmp=self.cls.__sort_cmp__,
                                           key=self.cls.__sort_key__))
 
     def reversed(self):
-        return map(self._nodefunc, sorted(self.data,
+        return map(self.nodefunc, sorted(self.data,
                                           cmp=self.cls.__sort_cmp__,
                                           key=self.cls.__sort_key__,
                                           reverse=True))
@@ -262,7 +262,7 @@ class RelView(object):
         return self.data
 
     def node(self, rel):
-        return self._nodefunc(rel)
+        return self.nodefunc(rel)
 
     def rel(self, node):
         rels = list(self.data.rel(node))
@@ -273,7 +273,7 @@ class RelView(object):
 
     def append(self, value):
         if self.multiple or value not in self:
-            return self._relfunc(value)
+            return self.relfunc(value)
         return None
 
     def remove(self, value):
