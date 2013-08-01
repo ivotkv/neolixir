@@ -268,8 +268,10 @@ class RelView(object):
         rels = list(self.data.rel(node))
         if self.multiple:
             return rels
-        else:
+        elif rels:
             return rels[0]
+        else:
+            return None
 
     def append(self, value):
         if self.multiple or value not in self:
