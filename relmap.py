@@ -1,3 +1,5 @@
+from types import FunctionType
+from inspect import getargspec
 from itertools import chain, ifilter, imap
 from py2neo import neo4j
 from metadata import metadata as m
@@ -143,32 +145,49 @@ class RelMap(object):
         for rel in self._ids.itervalues():
             rel.rollback()
 
-    def load_rels(self, node, direction, type):
-        if not node.is_phantom():
+    def load_rels(self, node, direction, type, other=None):
+        # other=False will prevent the load
+        if not other is False and not node.is_phantom():
+            params = {'node_id': node.id}
             q = 'start n=node({node_id})'
+
+            if other is not None:
+                params['other_id'] = other if isinstance(other, int) else other.id
+                q += ', o=node({other_id})'
+
             if direction is OUT:
                 q += ' match n-[r:{0}]->o return r, o'.format(type)
             else:
                 q += ' match n<-[r:{0}]-o return r, o'.format(type)
 
-            m.cypher(q, params={'node_id': node.id})
+            m.cypher(q, params=params)
 
 class RelView(object):
 
     __default_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_, multiple=False, preloaded=False):
+    def __init__(self, owner, direction, type_, target=None, multiple=False, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__default_cls__
-        self.multiple = multiple
+        self.target = target
+        self.multiple = multiple if target is None else False
         self.preloaded = preloaded
         self._noload = 0
 
     def load(self):
-        self.relmap.load_rels(self.owner, self.direction, self.type)
+        self.relmap.load_rels(self.owner, self.direction, self.type, other=self.get_target())
+
+    def get_target(self):
+        if hasattr(self.target, '__call__'):
+            if isinstance(self.target, FunctionType) and len(getargspec(self.target).args) == 1:
+                return self.target(self.owner)
+            else:
+                return self.target()
+        else:
+            return self.target
 
     @property
     def data(self):

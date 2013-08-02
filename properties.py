@@ -45,7 +45,7 @@ class Property(FieldDescriptor):
 
     def get_default(self, instance):
         if hasattr(self._default, '__call__'):
-            if isinstance(self._default, FunctionType) and len(getargspec(self._default).args) > 0:
+            if isinstance(self._default, FunctionType) and len(getargspec(self._default).args) == 1:
                 return self._default(instance)
             else:
                 return self._default()
@@ -168,18 +168,21 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    def __init__(self, direction, type, name=None, multiple=False):
+    def __init__(self, direction, type, name=None, target=None, multiple=False):
         super(RelDescriptor, self).__init__(name=name)
         self.direction = direction
         self.type = type
-        self.multiple = multiple
+        self.target = target
+        self.multiple = multiple if target is None else False
 
     def get_relview(self, instance):
         try:
             return instance._relfilters[self.name]
         except KeyError:
             from relmap import RelView
-            instance._relfilters[self.name] = RelView(instance, self.direction, self.type, self.multiple)
+            instance._relfilters[self.name] = RelView(instance, self.direction, self.type,
+                                                      target=self.target,
+                                                      multiple=self.multiple)
             return instance._relfilters[self.name]
 
     def __get__(self, instance, owner=None):
