@@ -183,11 +183,15 @@ class RelView(object):
     def get_target(self):
         if hasattr(self.target, '__call__'):
             if isinstance(self.target, FunctionType) and len(getargspec(self.target).args) == 1:
-                return self.target(self.owner)
+                target = self.target(self.owner)
             else:
-                return self.target()
+                target = self.target()
         else:
-            return self.target
+            target = self.target
+        try:
+            return self.nodefunc(target)
+        except:
+            return target
 
     @property
     def data(self):
