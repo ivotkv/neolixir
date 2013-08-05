@@ -173,6 +173,7 @@ class RelDescriptor(FieldDescriptor):
         self.direction = direction
         self.type = type
         self.target = target
+        self.single = False
         self.multiple = multiple if target is None else False
 
     def get_relview(self, instance):
@@ -182,6 +183,7 @@ class RelDescriptor(FieldDescriptor):
             from relmap import RelView
             instance._relfilters[self.name] = RelView(instance, self.direction, self.type,
                                                       target=self.target,
+                                                      single=self.single,
                                                       multiple=self.multiple)
             return instance._relfilters[self.name]
 
@@ -205,6 +207,7 @@ class RelDescriptorOne(RelDescriptor):
 
     def __init__(self, *args, **kwargs):
         super(RelDescriptorOne, self).__init__(*args, **kwargs)
+        self.single = True
         self.multiple = False
 
     def __get__(self, instance, owner=None):

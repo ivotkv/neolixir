@@ -166,14 +166,15 @@ class RelView(object):
 
     __default_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_, target=None, multiple=False, preloaded=False):
+    def __init__(self, owner, direction, type_, target=None, single=False, multiple=False, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__default_cls__
         self.target = target
-        self.multiple = multiple if target is None else False
+        self.single = single
+        self.multiple = multiple if (target is None and single is False) else False
         self.preloaded = preloaded
         self._noload = 0
 
@@ -287,14 +288,21 @@ class RelView(object):
     def node(self, rel):
         return self.nodefunc(rel)
 
-    def rel(self, node):
-        rels = list(self.data.rel(node))
-        if self.multiple:
-            return rels
-        elif rels:
-            return rels[0]
+    def rel(self, node=None):
+        if self.single:
+            try:
+                return self.data[0]
+            except IndexError:
+                return None
         else:
-            return None
+            rels = list(self.data.rel(node))
+            if self.multiple:
+                return rels
+            else:
+                try:
+                    return rels[0]
+                except IndexError:
+                    return None
 
     def append(self, value):
         if self.multiple or value not in self:

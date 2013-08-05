@@ -9,7 +9,7 @@ from metadata import metadata as m
 class SubRel(Relationship):
     pass
 
-class SubSubRel(Relationship):
+class SubSubRel(SubRel):
     pass
 
 class SubNode(Node):
@@ -18,8 +18,8 @@ class SubNode(Node):
     liked_by = RelIn(SubRel('like'))
     knows = RelOut('know')
 
-    one_in = RelInOne('one')
-    one_out = RelOutOne('one')
+    one_in = RelInOne(SubRel('one'))
+    one_out = RelOutOne(SubRel('one'))
 
     multiple_in = RelIn('multiple', multiple=True)
     multiple_out = RelOut('multiple', multiple=True)

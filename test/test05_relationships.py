@@ -106,7 +106,10 @@ class TestRelationships(BaseTest):
         self.assertTrue(n2.one_out is None)
         n1.one_in = n2
         self.assertTrue(n1.one_in is n2)
+        self.assertTrue(isinstance(n1.relview('one_in').rel(), SubRel))
         self.assertTrue(n2.one_out is n1)
+        self.assertTrue(isinstance(n2.relview('one_out').rel(), SubRel))
+        self.assertTrue(n1.relview('one_in').rel() is n2.relview('one_out').rel())
         n1.one_in = None
         self.assertTrue(n1.one_in is None)
         self.assertTrue(n2.one_out is None)
