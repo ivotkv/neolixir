@@ -168,12 +168,12 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    def __init__(self, direction, type, name=None, multiple=False):
+    def __init__(self, direction, type, name=None, multiple=False, relview_cls=None):
         super(RelDescriptor, self).__init__(name=name)
         self.direction = direction
         self.type = type
-        self.single = False
         self.multiple = multiple
+        self.relview_cls = relview_cls
 
     @classproperty
     def __relview_cls__(cls):
@@ -184,10 +184,10 @@ class RelDescriptor(FieldDescriptor):
         try:
             return instance._relfilters[self.name]
         except KeyError:
-            instance._relfilters[self.name] = self.__relview_cls__(instance,
-                                                                   self.direction, self.type,
-                                                                   single=self.single,
-                                                                   multiple=self.multiple)
+            relview_cls = self.relview_cls or self.__relview_cls__
+            instance._relfilters[self.name] = relview_cls(instance,
+                                                          self.direction, self.type,
+                                                          multiple=self.multiple)
             return instance._relfilters[self.name]
 
     def __get__(self, instance, owner=None):
@@ -209,17 +209,17 @@ class RelIn(RelDescriptor):
 class RelDescriptorOne(RelDescriptor):
 
     def __init__(self, *args, **kwargs):
+        self.reverse = kwargs.pop('reverse', False)
         super(RelDescriptorOne, self).__init__(*args, **kwargs)
-        self.single = True
-        self.multiple = False
 
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
         else:
             relview = self.get_relview(instance)
+            data = relview.sorted(reverse=self.reverse) if self.multiple else relview
             try:
-                return relview[0]
+                return data[-1] # return the "latest" one if multiple
             except IndexError:
                 return None
 
@@ -230,7 +230,7 @@ class RelDescriptorOne(RelDescriptor):
         if value is None:
             for item in current:
                 relview.remove(item)
-        elif len(current) == 0:
+        elif self.multiple or len(current) == 0:
             relview.append(value)
         elif len(current) == 1 and current[0] is not value:
             relview.remove(current[0])

@@ -149,14 +149,13 @@ class RelView(object):
 
     __rel_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_, single=False, multiple=False, preloaded=False):
+    def __init__(self, owner, direction, type_, multiple=False, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__rel_cls__
-        self.single = single
-        self.multiple = multiple if not single else False
+        self.multiple = multiple
         self.preloaded = preloaded
         self._noload = 0
 
@@ -246,41 +245,36 @@ class RelView(object):
     def __delitem__(self, key):
         self.data[key].delete()
 
-    def sorted(self):
+    def sorted(self, reverse=False):
         return map(self.nodefunc, sorted(self.data,
-                                          cmp=self.cls.__sort_cmp__,
-                                          key=self.cls.__sort_key__))
+                                         cmp=self.cls.__sort_cmp__,
+                                         key=self.cls.__sort_key__,
+                                         reverse=reverse))
 
     def reversed(self):
-        return map(self.nodefunc, sorted(self.data,
-                                          cmp=self.cls.__sort_cmp__,
-                                          key=self.cls.__sort_key__,
-                                          reverse=True))
+        return self.sorted(reverse=True)
+
+    def nodes(self):
+        return list(self)
+
+    def rels(self):
+        return list(self.data)
 
     def iterrels(self):
         return iter(self.data)
 
-    def rels(self):
-        return self.data
-
     def node(self, rel):
         return self.nodefunc(rel)
 
-    def rel(self, node=None):
-        if self.single:
+    def rel(self, node=False):
+        rels = self.rels() if node is False else list(self.data.rel(node))
+        if self.multiple:
+            return rels
+        else:
             try:
-                return self.data[0]
+                return rels[0]
             except IndexError:
                 return None
-        else:
-            rels = list(self.data.rel(node))
-            if self.multiple:
-                return rels
-            else:
-                try:
-                    return rels[0]
-                except IndexError:
-                    return None
 
     def append(self, value):
         if self.multiple or value not in self:
