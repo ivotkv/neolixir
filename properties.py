@@ -2,7 +2,7 @@ from types import FunctionType
 from inspect import getargspec
 from decimal import Decimal
 from datetime import datetime
-from util import IN, OUT
+from util import IN, OUT, classproperty
 
 __all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime',
            'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
@@ -168,23 +168,26 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    def __init__(self, direction, type, name=None, target=None, multiple=False):
+    def __init__(self, direction, type, name=None, multiple=False):
         super(RelDescriptor, self).__init__(name=name)
         self.direction = direction
         self.type = type
-        self.target = target
         self.single = False
-        self.multiple = multiple if target is None else False
+        self.multiple = multiple
+
+    @classproperty
+    def __relview_cls__(cls):
+        from relmap import RelView
+        return RelView
 
     def get_relview(self, instance):
         try:
             return instance._relfilters[self.name]
         except KeyError:
-            from relmap import RelView
-            instance._relfilters[self.name] = RelView(instance, self.direction, self.type,
-                                                      target=self.target,
-                                                      single=self.single,
-                                                      multiple=self.multiple)
+            instance._relfilters[self.name] = self.__relview_cls__(instance,
+                                                                   self.direction, self.type,
+                                                                   single=self.single,
+                                                                   multiple=self.multiple)
             return instance._relfilters[self.name]
 
     def __get__(self, instance, owner=None):
