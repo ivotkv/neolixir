@@ -27,12 +27,13 @@ class RelList(list):
         return self.nodes.get(node, set())
 
     def append(self, rel):
-        super(RelList, self).append(rel)
-        node = self.nodefunc(rel)
-        if node not in self.nodes:
-            self.nodes[node] = set([rel])
-        else:
-            self.nodes[node].add(rel)
+        if rel not in self:
+            super(RelList, self).append(rel)
+            node = self.nodefunc(rel)
+            if node not in self.nodes:
+                self.nodes[node] = set([rel])
+            else:
+                self.nodes[node].add(rel)
 
     def remove(self, rel):
         try:
