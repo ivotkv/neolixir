@@ -4,51 +4,57 @@ from metadata import metadata as m
 class Query(object):
 
     def __init__(self):
-        self.q = ''
-        self.r = ''
-        self.m = ''
+        self.params = {}
+        self.string = ''
+        self._ret = ''
+        self._opt = ''
 
     def start(self, **kwargs):
-        self.q = 'start'
-        for k, v in kwargs.iteritems():
-            id = v if isinstance(v, int) else v.id
-            self.q += ' {0}=node({1}),'.format(k, id)
-        self.q = self.q[:-1] + ' ' if self.q[-1] == ',' else self.q + ' '
+        self.string = 'start'
+
+        for name, value in kwargs.iteritems():
+            key = "{0}_id".format(name)
+            id = value if isinstance(value, int) else value.id
+
+            self.string += ' {0}=node({{{1}}}),'.format(name, key)
+            self.params[key] = id
+
+        self.string = self.string[:-1] + ' ' if self.string[-1] == ',' else self.string + ' '
         return self
 
     def match(self, clause):
-        self.q += 'match {0} '.format(clause)
+        self.string += 'match {0} '.format(clause)
         return self
 
     def where(self, clause):
-        self.q += 'where {0} '.format(clause)
+        self.string += 'where {0} '.format(clause)
         return self
 
     def filter(self, *clauses):
-        self.q += 'and ' + ' and '.join(clauses) + ' '
+        self.string += 'and ' + ' and '.join(clauses) + ' '
         return self
 
     def ret(self, *keys):
-        self.r = 'return ' + ', '.join(keys)
+        self._ret = 'return ' + ', '.join(keys)
         return self
 
     def order_by(self, *values):
-        self.m += ' order by ' + ', '.join(values)
+        self._opt += ' order by ' + ', '.join(values)
         return self
 
     def offset(self, value):
-        self.m += ' skip ' + str(int(value))
+        self._opt += ' skip ' + str(int(value))
         return self
 
     def limit(self, value):
-        self.m += ' limit ' + str(int(value))
+        self._opt += ' limit ' + str(int(value))
         return self
 
     def count(self):
-        return m.cypher(self.q + 'return count(*)')[0][0]
+        return m.cypher(self.string + 'return count(*)', params=self.params)[0][0]
 
     def all(self):
-        return [x[0] for x in m.cypher(self.q + self.r + self.m)]
+        return [x[0] for x in m.cypher(self.string + self._ret + self._opt, params=self.params)]
 
     def first(self):
         all = self.all()
