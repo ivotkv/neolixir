@@ -20,10 +20,6 @@ class QueryFactory(object):
         q = q.ret('i')
         return q 
 
-    @classmethod
-    def create_unique(cls, pattern, params):
-        pass
-
 class BaseQuery(object):
 
     def __init__(self):
