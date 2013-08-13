@@ -1,18 +1,27 @@
 from exc import *
 from metadata import metadata as m
+from util import classproperty
 
 class QueryFactory(object):
 
-    @staticmethod
-    def node(nodecls):
-        q = SimpleQuery().start(c=nodecls.classnode.id)
+    @classproperty
+    def base(cls):
+        return BaseQuery()
+
+    @classproperty
+    def simple(cls):
+        return SimpleQuery()
+
+    @classmethod
+    def node(cls, nodecls):
+        q = cls.simple.start(c=nodecls.classnode.id)
         q = q.match('c<-[?:__extends__|__instance_of__*..]-i')
         q = q.where('()<-[:__instance_of__]-i')
         q = q.ret('i')
         return q 
 
-    @staticmethod
-    def create_unique(pattern, params):
+    @classmethod
+    def create_unique(cls, pattern, params):
         pass
 
 class BaseQuery(object):
