@@ -1,69 +1,71 @@
 from exc import *
 from metadata import metadata as m
 
-class Query(object):
+class QueryFactory(object):
+
+    @staticmethod
+    def node(nodecls):
+        q = SimpleQuery().start(c=nodecls.classnode.id)
+        q = q.match('c<-[?:__extends__|__instance_of__*..]-i')
+        q = q.where('()<-[:__instance_of__]-i')
+        q = q.ret('i')
+        return q 
+
+    @staticmethod
+    def create_unique(pattern, params):
+        pass
+
+class BaseQuery(object):
 
     def __init__(self):
-        self.params = {}
         self.string = ''
+        self.params = {}
+
+    def copy(self):
+        copy = self.__class__()
+        copy.string = self.string
+        copy.params = self.params.copy()
+        return copy
+
+    @property
+    def query(self):
+        return self.string
+
+    def execute(self):
+        return m.cypher(self.query, params=self.params)
+
+class SimpleQuery(BaseQuery):
+
+    def __init__(self):
+        super(SimpleQuery, self).__init__()
         self._ret = ''
-        self._opt = ''
+        self._opts = ''
 
-    def start(self, **kwargs):
-        self.string = 'start'
+    def copy(self):
+        copy = super(SimpleQuery, self).copy()
+        copy._ret = self._ret
+        copy._opts = self._opts
+        return copy
 
-        for name, value in kwargs.iteritems():
-            key = "{0}_id".format(name)
-            id = value if isinstance(value, int) else value.id
+    @property
+    def query(self):
+        return self.string + self._ret + self._opts
 
-            self.string += ' {0}=node({{{1}}}),'.format(name, key)
-            self.params[key] = id
-
-        self.string = self.string[:-1] + ' ' if self.string[-1] == ',' else self.string + ' '
-        return self
-
-    def match(self, clause):
-        self.string += 'match {0} '.format(clause)
-        return self
-
-    def where(self, clause):
-        self.string += 'where {0} '.format(clause)
-        return self
-
-    def filter(self, *clauses):
-        self.string += 'and ' + ' and '.join(clauses) + ' '
-        return self
-
-    def ret(self, *keys):
-        self._ret = 'return ' + ', '.join(keys)
-        return self
-
-    def order_by(self, *values):
-        self._opt += ' order by ' + ', '.join(values)
-        return self
-
-    def offset(self, value):
-        self._opt += ' skip ' + str(int(value))
-        return self
-
-    def limit(self, value):
-        self._opt += ' limit ' + str(int(value))
-        return self
+    def all(self):
+        return [x[0] for x in self.execute()]
 
     def count(self):
         return m.cypher(self.string + 'return count(*)', params=self.params)[0][0]
 
-    def all(self):
-        return [x[0] for x in m.cypher(self.string + self._ret + self._opt, params=self.params)]
-
     def first(self):
-        all = self.all()
-        if len(all) > 0:
-            return all[0]
-        else:
-            raise NoResultFound()
+        # NOTE: should be optimized with a limit in the query
+        try:
+            return self.all()[0]
+        except IndexError:
+            return None
 
     def one(self):
+        # NOTE: should be optimized with a limit + count in the query
         all = self.all()
         if len(all) == 1:
             return all[0]
@@ -71,3 +73,52 @@ class Query(object):
             raise NoResultFound()
         else:
             raise MultipleResultsFound()
+
+    def start(self, **kwargs):
+        copy = self.copy()
+        copy.string = 'start'
+
+        for name, value in kwargs.iteritems():
+            key = "{0}_id".format(name)
+            id = value if isinstance(value, int) else value.id
+
+            copy.string += ' {0}=node({{{1}}}),'.format(name, key)
+            copy.params[key] = id
+
+        copy.string = copy.string[:-1] + ' ' if copy.string[-1] == ',' else copy.string + ' '
+        return copy
+
+    def match(self, clause):
+        copy = self.copy()
+        copy.string += 'match {0} '.format(clause)
+        return copy
+
+    def where(self, clause):
+        copy = self.copy()
+        copy.string += 'where {0} '.format(clause)
+        return copy
+
+    def filter(self, *clauses):
+        copy = self.copy()
+        copy.string += 'and ' + ' and '.join(clauses) + ' '
+        return copy
+
+    def ret(self, *keys):
+        copy = self.copy()
+        copy._ret = 'return ' + ', '.join(keys)
+        return copy
+
+    def order_by(self, *values):
+        copy = self.copy()
+        copy._opts += ' order by ' + ', '.join(values)
+        return copy
+
+    def offset(self, value):
+        copy = self.copy()
+        copy._opts += ' skip ' + str(int(value))
+        return copy
+
+    def limit(self, value):
+        copy = self.copy()
+        copy._opts += ' limit ' + str(int(value))
+        return copy
