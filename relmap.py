@@ -170,6 +170,7 @@ class RelView(object):
             else:
                 q += ' match n<-[r:{0}]-o return r, o'.format(self.type)
 
+            q += ' order by id(r)'
             m.cypher(q, params=params)
 
     @property
