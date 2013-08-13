@@ -1,5 +1,6 @@
 from types import FunctionType
 from inspect import getargspec
+from collections import Iterable
 from decimal import Decimal
 from datetime import datetime
 from util import IN, OUT, classproperty
@@ -195,6 +196,13 @@ class RelDescriptor(FieldDescriptor):
             return self
         else:
             return self.get_relview(instance)
+
+    def __set__(self, instance, value):
+        relview = self.get_relview(instance)
+        items = value if isinstance(value, Iterable) else [value]
+
+        for item in items:
+            relview.append(item)
 
 class RelOut(RelDescriptor):
 
