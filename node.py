@@ -64,10 +64,10 @@ class Node(Entity):
         if self.is_deleted():
             m.session.propmap.remove(self)
             if not self.is_phantom():
-                q = "start n=node({0}) ".format(self.id)
+                q = "start n=node({n_id}) "
                 q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
                 q += "delete n"
-                m.cypher(q)
+                m.cypher(q, params={'n_id': self.id})
                 self.expunge()
                 self._entity = None
         elif self.is_phantom():
