@@ -287,5 +287,8 @@ class RelView(object):
         if isinstance(value, Node):
             for rel in list(self.data.rel(value)):
                 rel.delete()
-        elif isinstance(value, Relationship) and value in self:
-            value.delete()
+        elif isinstance(value, Relationship):
+            if value in self:
+                value.delete()
+        else:
+            raise TypeError("unexpected type: " + value.__class__.__name__)
