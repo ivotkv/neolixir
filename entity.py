@@ -70,6 +70,14 @@ class Entity(object):
             self._initialized = True
             m.session.add(self)
 
+    def __copy__(self):
+        # TODO: support copying?
+        return self
+
+    def __deepcopy__(self, memo):
+        # TODO: support deepcopying?
+        return self
+
     def _get_repr_data(self):
         return ["Id = {0}".format(self.id),
                 "Descriptors = {0}".format(sorted(self.descriptors.keys())),
