@@ -33,15 +33,15 @@ class Index(object):
         if isinstance(entity, Entity):
             entity = entity._entity
         func = self.index.add_if_none if if_none else self.index.add
-        return func(str(key), str(value), entity) is not None
+        return func(unicode(key), unicode(value), entity) is not None
 
     def get(self, key, value=None, abstract=None):
         if value is None:
             return self.index.query("{0}:*".format(key))
         elif abstract is None:
-            return self.index.get(str(key), str(value))
+            return self.index.get(unicode(key), unicode(value))
         else:
-            return self.index.get_or_create(str(key), str(value), abstract)
+            return self.index.get_or_create(unicode(key), unicode(value), abstract)
 
     def query(self, query):
         return self.index.query(query)
@@ -49,7 +49,7 @@ class Index(object):
     def remove(self, key=None, value=None, entity=None):
         if isinstance(entity, Entity):
             entity = entity._entity
-        self.index.remove(str(key), str(value), entity)
+        self.index.remove(unicode(key), unicode(value), entity)
 
 class NodeIndex(Index):
 
