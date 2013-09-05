@@ -26,12 +26,12 @@ class Query(BaseQuery):
 
     @string.setter
     def string(self, string):
-        self._clauses = re.split(re.compile(r'\s+return\s+', flags=re.I), string)[0].strip()
+        self._clauses = ''
         self._return = ''
         self._order = ''
         self._skip = ''
         self._limit = ''
-        self._set(string)
+        self._append(string)
 
     def _set(self, string):
         if re.search(re.compile(r'\breturn\b', flags=re.I), string):
@@ -55,7 +55,8 @@ class Query(BaseQuery):
         return copy
 
     def _append(self, string):
-        self._clauses += ' ' + string.strip()
+        self._clauses += re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
+        self._set(string)
 
     def append(self, string):
         copy = self.copy()
