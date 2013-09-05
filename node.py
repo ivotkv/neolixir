@@ -31,6 +31,8 @@ class ClassNode(object):
             return node
 
 class Node(Entity):
+    
+    __query_cls__ = Query
 
     def __new__(cls, value=None, **properties):
         if isinstance(value, int):
@@ -79,7 +81,7 @@ class Node(Entity):
 
     @classproperty
     def query(cls):
-        return Query.node(cls)
+        return cls.__query_cls__.node(cls)
 
     @classmethod
     def get_by(cls, **kwargs):
