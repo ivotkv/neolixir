@@ -55,7 +55,7 @@ class Query(BaseQuery):
         return copy
 
     def _append(self, string):
-        self._clauses += re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
+        self._clauses += ' ' + re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
         self._set(string)
 
     def append(self, string):
