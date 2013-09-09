@@ -61,6 +61,18 @@ class PropDict(dict):
     def set_dirty(self, dirty=True):
         self._dirty = dirty
 
+    @property
+    def cache(self):
+        try:
+            return self.owner._entity.__metadata__['data']
+        except:
+            return {}
+
+    def reset(self):
+        super(PropDict, self).clear()
+        super(PropDict, self).update(self.cache)
+        self.set_dirty(False)
+
     def reload(self):
         super(PropDict, self).clear()
         if self.owner and not self.owner.is_phantom():
