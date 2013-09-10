@@ -159,6 +159,9 @@ class RelView(object):
         self.multiple = multiple
         self.preloaded = preloaded
         self._noload = 0
+    
+    def is_loaded(self):
+        return self.preloaded or self._noload or self.owner.is_phantom()
 
     def load(self):
         if not self.owner.is_phantom():
