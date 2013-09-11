@@ -68,16 +68,34 @@ class PropDict(dict):
         except:
             return {}
 
-    def reset(self):
-        super(PropDict, self).clear()
-        super(PropDict, self).update(self.cache)
-        self.set_dirty(False)
+    def reset(self, clear=True):
+        """
+        Reset properties to py2neo-cached values
+        """
+        if clear:
+            super(PropDict, self).clear()
+            dirty = False
+        else:
+            dirty = self.is_dirty()
 
-    def reload(self):
-        super(PropDict, self).clear()
+        super(PropDict, self).update(self.cache)
+
+        self.set_dirty(dirty)
+
+    def reload(self, clear=True):
+        """
+        Reload properties from server
+        """
+        if clear:
+            super(PropDict, self).clear()
+            dirty = False
+        else:
+            dirty = self.is_dirty()
+
         if self.owner and not self.owner.is_phantom():
             super(PropDict, self).update(self.owner._entity.get_properties())
-        self.set_dirty(False)
+
+        self.set_dirty(dirty)
 
     def sanitize(self):
         super(PropDict, self).__setitem__('__class__', self.owner.__class__.__name__)
