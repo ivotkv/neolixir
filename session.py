@@ -93,8 +93,7 @@ class Session(object):
         else:
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
-        self.propmap.pop(entity, None)
-        self.propmap.pop(entity.id, None)
+        self.propmap.remove(entity)
         entity._session = None
 
     def rollback(self):
