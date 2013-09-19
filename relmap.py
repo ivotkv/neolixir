@@ -5,7 +5,7 @@ from py2neo import neo4j
 from metadata import metadata as m
 from relationship import Relationship
 from node import Node
-from util import IN, OUT
+from utils import IN, OUT
 
 class RelList(list):
 

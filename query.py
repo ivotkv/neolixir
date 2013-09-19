@@ -1,7 +1,7 @@
 import re
 from exc import *
 from metadata import metadata as m
-from util import classproperty
+from utils import classproperty
 
 class BaseQuery(object):
 

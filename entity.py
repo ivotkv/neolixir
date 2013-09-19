@@ -1,5 +1,5 @@
 from py2neo import neo4j
-from util import classproperty
+from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
 

@@ -3,7 +3,7 @@ from inspect import getargspec
 from collections import Iterable
 from decimal import Decimal
 from datetime import datetime
-from util import IN, OUT, classproperty
+from utils import IN, OUT, classproperty
 
 __all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime',
            'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
