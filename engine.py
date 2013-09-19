@@ -1,4 +1,5 @@
 import threading
+from utils import classproperty
 from py2neo import neo4j, cypher
 
 class Engine(object):
@@ -8,6 +9,24 @@ class Engine(object):
         self.metadata = metadata
         self.url = url
 
+    @classproperty
+    def Node(cls):
+        try:
+            return cls._Node
+        except AttributeError:
+            from node import Node
+            cls._Node = Node
+            return cls._Node
+
+    @classproperty
+    def Relationship(cls):
+        try:
+            return cls._Relationship
+        except AttributeError:
+            from node import Relationship
+            cls._Relationship = Relationship
+            return cls._Relationship
+
     @property
     def instance(self):
         try:
@@ -15,66 +34,50 @@ class Engine(object):
         except AttributeError:
             self._threadlocal.instance = neo4j.GraphDatabaseService(self.url)
             return self._threadlocal.instance
-            
-    @property
-    def typemap(self):
-        try:
-            return self._typemap
-        except AttributeError:
-            from node import Node
-            from relationship import Relationship
-            self._typemap = {
-                neo4j.Node: Node,
-                #neo4j.Relationship: Relationship,
-                neo4j.Path: self.mappath,
-                list: self.maplist
-            }
-            return self._typemap
-        
-    def mappath(self, path):
-        from node import Node
-        #from relationship import Relationship
-        out = []
-        for i, edge in enumerate(path._edges):
-            out.append(Node(path._nodes[i]))
-            #out.append(Relationship(edge))
-            out.append(edge)
-        out.append(Node(path._nodes[-1]))
-        return out
 
-    def maplist(self, list):
-        return [self.typemap[type(e)](e) for e in list]
+    def automap(self, data, mapRels=True):
+        mapped = []
+
+        for item in data:
+
+            if isinstance(item, neo4j.Node):
+                mapped.append(self.Node(item))
+
+            elif isinstance(item, neo4j.Relationship):
+                if mapRels:
+                    mapped.append(self.Relationship(item))
+                else:
+                    mapped.append(item)
+
+            elif isinstance(item, list):
+                mapped.append(self.automap(item, mapRels=mapRels))
+
+            elif isinstance(item, neo4j.Path):
+                path = []
+                for i, edge in enumerate(item._edges):
+                    path.append(self.Node(item._nodes[i]))
+                    if mapRels:
+                        path.append(self.Relationship(edge))
+                    else:
+                        path.append(edge)
+                path.append(self.Node(item._nodes[-1]))
+                mapped.append(path)
+
+            else:
+                mapped.append(item)
+
+        return mapped
 
     def cypher(self, *args, **kwargs):
         automap = kwargs.pop('automap', True)
+
+        results = cypher.execute(self.instance, *args, **kwargs)[0]
+
         if automap:
-            results = []
-            qres = cypher.execute(self.instance, *args, **kwargs)[0]
+            results = self.automap(results, mapRels=False)
+            results = self.automap(results, mapRels=True)
 
-            for row in qres:
-                items = []
-                for item in row:
-                    try:
-                        items.append(self.typemap[type(item)](item))
-                    except KeyError:
-                        items.append(item)
-                results.append(items)
-
-            from relationship import Relationship
-
-            def _2nd_pass_map(lst):
-                for idx, item in enumerate(lst):
-                    if isinstance(item, neo4j.Relationship):
-                        lst[idx] = Relationship(item)
-                    elif isinstance(item, list):
-                        _2nd_pass_map(item)
-                return lst
-
-            _2nd_pass_map(results)
-
-            return results
-        else:
-            return cypher.execute(self.instance, *args, **kwargs)[0]
+        return results
 
     def batch(self):
         return WriteBatch(self.instance)
