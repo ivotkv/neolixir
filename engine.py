@@ -9,6 +9,14 @@ class Engine(object):
         self.metadata = metadata
         self.url = url
 
+    @property
+    def instance(self):
+        try:
+            return self._threadlocal.instance
+        except AttributeError:
+            self._threadlocal.instance = neo4j.GraphDatabaseService(self.url)
+            return self._threadlocal.instance
+
     @classproperty
     def Node(cls):
         try:
@@ -27,40 +35,33 @@ class Engine(object):
             cls._Relationship = Relationship
             return cls._Relationship
 
-    @property
-    def instance(self):
-        try:
-            return self._threadlocal.instance
-        except AttributeError:
-            self._threadlocal.instance = neo4j.GraphDatabaseService(self.url)
-            return self._threadlocal.instance
-
-    def automap(self, data, mapRels=True):
+    @classmethod
+    def automap(cls, data, mapRels=True):
         mapped = []
 
         for item in data:
 
             if isinstance(item, neo4j.Node):
-                mapped.append(self.Node(item))
+                mapped.append(cls.Node(item))
 
             elif isinstance(item, neo4j.Relationship):
                 if mapRels:
-                    mapped.append(self.Relationship(item))
+                    mapped.append(cls.Relationship(item))
                 else:
                     mapped.append(item)
 
             elif isinstance(item, list):
-                mapped.append(self.automap(item, mapRels=mapRels))
+                mapped.append(cls.automap(item, mapRels=mapRels))
 
             elif isinstance(item, neo4j.Path):
                 path = []
                 for i, edge in enumerate(item._edges):
-                    path.append(self.Node(item._nodes[i]))
+                    path.append(cls.Node(item._nodes[i]))
                     if mapRels:
-                        path.append(self.Relationship(edge))
+                        path.append(cls.Relationship(edge))
                     else:
                         path.append(edge)
-                path.append(self.Node(item._nodes[-1]))
+                path.append(cls.Node(item._nodes[-1]))
                 mapped.append(path)
 
             else:
@@ -86,18 +87,27 @@ class WriteBatch(neo4j.WriteBatch):
 
     def cypher(self, query, params=None):
         self._post(self._cypher_uri, {"query": query, "params": params or {}})
+        self.requests[-1].multirow = True
 
-    def _resolve(self, data, status=200, id_=None):
-        # NOTE: this is a hacky workaround for arbitrary cypher queries
-        # TODO: should not rely on the AssertionError
-        try:
-            return [item for item in [self._graph_db._resolve(data, status, id_)] if item is not None]
-        except AssertionError:
-            return [self._graph_db._resolve(item, status, id_) for row in data["data"] for item in row]
+    def query(self, query):
+        self.cypher(query.string, params=query.params)
 
-    def submit(self):
-        # NOTE: copy of original changed to use batch's _resolve
-        return [
-            self._resolve(response.body, response.status, id_=response.id)
-            for response in self._submit()
-        ]
+    def submit(self, automap=True):
+        requests = self.requests
+        responses = self._submit()
+
+        results = []
+        for response in responses:
+            if getattr(requests[response.id], 'multirow', False):
+                results.append([
+                    self._graph_db._resolve(item, response.status, id_=response.id)
+                    for row in response.body["data"] for item in row
+                ])
+            else:
+                results.append(self._graph_db._resolve(response.body, response.status, id_=response.id))
+
+        if automap:
+            results = Engine.automap(results, mapRels=False)
+            results = Engine.automap(results, mapRels=True)
+
+        return results

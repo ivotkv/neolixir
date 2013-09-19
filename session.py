@@ -9,10 +9,19 @@ class Session(object):
         self.metadata = metadata
 
     def clear(self):
+        self.batch.clear()
         self.nodes.clear()
         self.phantomnodes.clear()
         self.relmap.clear()
         self.propmap.clear()
+
+    @property
+    def batch(self):
+        try:
+            return self._threadlocal.batch
+        except AttributeError:
+            self._threadlocal.batch = self.metadata.batch()
+            return self._threadlocal.batch
 
     @property
     def nodes(self):
@@ -97,6 +106,7 @@ class Session(object):
         entity._session = None
 
     def rollback(self):
+        self.batch.clear()
         self.propmap.clear()
         self.relmap.rollback()
         self.phantomnodes.clear()
@@ -104,8 +114,11 @@ class Session(object):
             node.rollback()
 
     def commit(self):
-        # TODO Batch-ify
+        self.batch.clear()
+
         while len(self.phantomnodes) > 0:
             self.phantomnodes.pop().save()
         for entity in list(chain(self.nodes.itervalues(), self.relmap)):
             entity.save()
+
+        self.batch.submit(automap=False)
