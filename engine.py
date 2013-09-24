@@ -238,10 +238,7 @@ class WriteBatch(neo4j.WriteBatch):
         for entity in entities:
             if isinstance(entity, (self.Node, self.Relationship)):
 
-                if isinstance(entity, self.Node) and entity.is_deleted() or \
-                   isinstance(entity, self.Relationship) and (entity.is_deleted() or \
-                                                              entity.start.is_deleted() or \
-                                                              entity.end.is_deleted()):
+                if entity.is_deleted():
                     self.delete(entity)
 
                 elif entity.is_phantom():

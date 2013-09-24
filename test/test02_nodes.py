@@ -6,7 +6,7 @@ class TestNodes(BaseTest):
     def test01_create(self):
         n = SubNode()
         self.assertTrue(n.id is None)
-        n.save()
+        m.session.commit()
         self.assertTrue(n.id is not None)
         self.shared.id = n.id
 
@@ -27,5 +27,5 @@ class TestNodes(BaseTest):
         n = Node(self.shared.id)
         n.delete()
         self.assertTrue(n.is_deleted())
-        n.save()
+        m.session.commit()
         self.assertRaises(ResourceNotFound, Node, self.shared.id)
