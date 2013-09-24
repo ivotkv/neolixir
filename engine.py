@@ -248,7 +248,8 @@ class WriteBatch(neo4j.WriteBatch):
                     if isinstance(entity, self.Node):
                         self.set_node_properties(entity._entity, entity.get_abstract())
                     else:
-                        self.set_relationship_properties(entity._entity, entity.get_abstract())
+                        abstract = super(self.Relationship, entity).get_abstract()
+                        self.set_relationship_properties(entity._entity, abstract)
 
                     def callback(entity, response):
                         entity.properties.set_dirty(False)
