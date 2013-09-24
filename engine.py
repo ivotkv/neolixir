@@ -278,8 +278,8 @@ class WriteBatch(neo4j.WriteBatch):
 
             if getattr(request, 'multirow', False):
                 resolved = [
-                    self._graph_db._resolve(item, response.status, id_=response.id)
-                    for row in response.body["data"] for item in row
+                    [self._graph_db._resolve(item, response.status, id_=response.id) for item in row]
+                    for row in response.body["data"]
                 ]
             else:
                 resolved = self._graph_db._resolve(response.body, response.status, id_=response.id)
