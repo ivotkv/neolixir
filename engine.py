@@ -139,6 +139,12 @@ class WriteBatch(neo4j.WriteBatch):
         self.deleted_nodes.clear()
         self._callbacks = []
 
+    def callback(self, func, *args):
+        if args:
+            self.callbacks.append(functools.partial(func, *args))
+        else:
+            self.callbacks.append(func)
+
     def request_callback(self, func, *args):
         if not hasattr(self.requests[-1], 'callbacks'):
             self.requests[-1].callbacks = []
@@ -147,12 +153,6 @@ class WriteBatch(neo4j.WriteBatch):
             self.requests[-1].callbacks.append(functools.partial(func, *args))
         else:
             self.requests[-1].callbacks.append(func)
-
-    def batch_callback(self, func, *args):
-        if args:
-            self.callbacks.append(functools.partial(func, *args))
-        else:
-            self.callbacks.append(func)
 
     @property
     def last(self):
@@ -206,11 +206,11 @@ class WriteBatch(neo4j.WriteBatch):
                     q = "start n=node({n_id}) "
                     q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
                     q += "delete n"
-                    self.cypher(q, params={'n_id': item.id})
+                    self.cypher(q, params={'n_id': item.id}, automap=False)
                     self.deleted_nodes[item] = self.last
                     self.request_callback(callback, item)
                 else:
-                    self.batch_callback(callback, item)
+                    self.callback(callback, item)
 
             elif isinstance(item, self.Relationship):
                 def callback(item, response):
@@ -223,7 +223,7 @@ class WriteBatch(neo4j.WriteBatch):
                     self.delete_relationship(item._entity)
                     self.request_callback(callback, item)
                 else:
-                    self.batch_callback(callback, item)
+                    self.callback(callback, item)
 
             elif isinstance(item, neo4j.Node):
                 self.delete_node(item)
@@ -261,14 +261,15 @@ class WriteBatch(neo4j.WriteBatch):
             else:
                 raise TypeError(u"cannot save entity: {0}".format(entity))
 
-    def cypher(self, query, params=None):
+    def cypher(self, query, params=None, automap=True):
         self._post(self._cypher_uri, {"query": query, "params": params or {}})
         self.requests[-1].multirow = True
+        self.requests[-1].automap = automap
 
-    def query(self, query):
-        self.cypher(query.string, params=query.params)
+    def query(self, query, automap=True):
+        self.cypher(query.string, params=query.params, automap=automap)
 
-    def submit(self, automap=True):
+    def submit(self, automap=False):
         requests = self.requests
         callbacks = self.callbacks
         responses = self._submit()
@@ -285,9 +286,15 @@ class WriteBatch(neo4j.WriteBatch):
             else:
                 resolved = self._graph_db._resolve(response.body, response.status, id_=response.id)
 
+            if getattr(request, 'automap', False):
+                resolved = Engine.automap(resolved, mapRels=False)
+                resolved = Engine.automap(resolved, mapRels=True)
+
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:
-                    callback(resolved)
+                    output = callback(resolved)
+                    if output is not None:
+                        resolved = output
 
             results.append(resolved)
 
@@ -296,6 +303,8 @@ class WriteBatch(neo4j.WriteBatch):
             results = Engine.automap(results, mapRels=True)
 
         for callback in callbacks:
-            callback(results)
+            output = callback(results)
+            if output is not None:
+                results = output
 
         return results
