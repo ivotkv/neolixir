@@ -113,12 +113,19 @@ class Session(object):
         for node in self.nodes.itervalues():
             node.rollback()
 
-    def commit(self):
-        self.batch.clear()
+    def commit(self, batched=True):
+        if batched:
+            self.batch.clear()
 
-        while len(self.phantomnodes) > 0:
-            self.phantomnodes.pop().save()
-        for entity in list(chain(self.nodes.itervalues(), self.relmap)):
-            entity.save()
+            while len(self.phantomnodes) > 0:
+                self.batch.save(self.phantomnodes.pop())
 
-        self.batch.submit(automap=False)
+            self.batch.save(*list(chain(self.nodes.itervalues(), self.relmap)))
+
+            self.batch.submit(automap=False)
+
+        else:
+            while len(self.phantomnodes) > 0:
+                self.phantomnodes.pop().save()
+            for entity in list(chain(self.nodes.itervalues(), self.relmap)):
+                entity.save()

@@ -62,21 +62,27 @@ class Node(Entity):
             pass
         super(Node, self).delete()
 
-    def save(self):
-        if self.is_deleted():
-            m.session.propmap.remove(self)
-            if not self.is_phantom():
-                q = "start n=node({n_id}) "
-                q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
-                q += "delete n"
-                m.cypher(q, params={'n_id': self.id})
+    def save(self, batch=None):
+        if batch:
+            batch.save(self)
+
+        else:
+            if self.is_deleted():
+                if not self.is_phantom():
+                    q = "start n=node({n_id}) "
+                    q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
+                    q += "delete n"
+                    m.cypher(q, params={'n_id': self.id})
                 self.expunge()
                 self._entity = None
-        elif self.is_phantom():
-            self._entity = m.engine.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
-            m.session.add(self)
-        elif self.is_dirty():
-            self.properties.save()
+
+            elif self.is_phantom():
+                self._entity = m.engine.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
+                m.session.add(self)
+
+            elif self.is_dirty():
+                self.properties.save()
+
         return True
 
     @classproperty

@@ -105,22 +105,28 @@ class Relationship(Entity):
         if getattr(self, '_relmap', None):
             self._relmap.update(self)
 
-    def save(self):
-        if self.is_deleted():
-            m.session.propmap.remove(self)
-            if not self.is_phantom():
-                try:
-                    self._entity.delete()
-                except ResourceNotFound:
-                    pass
+    def save(self, batch=None):
+        if batch:
+            batch.save(self)
+
+        else:
+            if self.is_deleted():
+                if not self.is_phantom():
+                    try:
+                        self._entity.delete()
+                    except ResourceNotFound:
+                        pass
                 self.expunge()
                 self._entity = None
-        elif self.is_phantom():
-            if self.start is None or self.start.is_phantom() or \
-                self.end is None or self.end.is_phantom():
-                return False
-            self._entity = m.engine.create(self.get_abstract())[0]
-            m.session.add(self)
-        elif self.is_dirty():
-            self.properties.save()
+
+            elif self.is_phantom():
+                if self.start is None or self.start.is_phantom() or \
+                    self.end is None or self.end.is_phantom():
+                    return False
+                self._entity = m.engine.create(self.get_abstract())[0]
+                m.session.add(self)
+
+            elif self.is_dirty():
+                self.properties.save()
+
         return True

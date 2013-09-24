@@ -168,5 +168,5 @@ class Entity(object):
         if self.is_phantom():
             self.expunge()
 
-    def save(self):
+    def save(self, batch=None):
         raise NotImplementedError("cannot save through generic Entity class")
