@@ -44,14 +44,15 @@ class MetaData(object):
 
         if reset:
             for cls in ifilter(lambda x: issubclass(x, Node), self.classes.itervalues()):
-                batch.cypher("start c=node({c_id}) match c-[r:__extends__]-() delete r", params={'c_id': cls.classnode.id})
-            batch.submit()
-            batch.clear()
+                batch.cypher("start c=node({c_id}) match c-[r:__extends__]-() delete r",
+                             params={'c_id': cls.classnode.id}, automap=False)
 
         for cls in ifilter(lambda x: issubclass(x, Node), self.classes.itervalues()):
             c = cls.classnode
             for b in (x.classnode for x in cls.__bases__ if issubclass(x, Node)):
-                batch.cypher("start c=node({c_id}), b=node({b_id}) create unique c-[r:__extends__]->b", params={'c_id': c.id, 'b_id': b.id})
+                batch.cypher("start c=node({c_id}), b=node({b_id}) create unique c-[r:__extends__]->b",
+                             params={'c_id': c.id, 'b_id': b.id}, automap=False)
+
         batch.submit()
 
 metadata = MetaData()
