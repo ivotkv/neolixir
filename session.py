@@ -122,7 +122,7 @@ class Session(object):
 
             self.batch.save(*list(chain(self.nodes.itervalues(), self.relmap)))
 
-            self.batch.submit(automap=False)
+            self.batch.submit()
 
         else:
             while len(self.phantomnodes) > 0:

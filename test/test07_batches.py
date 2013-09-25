@@ -66,3 +66,17 @@ class TestBatches(BaseTest):
 
         # test that __instance_of__ relationship was created
         self.assertTrue(n1 in SubNode.query.all())
+
+        # test indexed creates with relationships
+        n1 = SubNode()
+        n2 = SubNode()
+        rel = n1.likes.append(n2)
+        batch.create(n1)
+        batch.index(index, 'node', '6', n2)
+        batch.create(rel)
+        def callback(self, rel, response):
+            self.assertTrue(response is rel._entity)
+            self.assertTrue(response.start_node == n1._entity)
+            self.assertTrue(response.end_node == n2._entity)
+        batch.request_callback(callback, self, rel)
+        batch.submit()

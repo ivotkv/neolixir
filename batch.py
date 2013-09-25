@@ -10,6 +10,15 @@ class WriteBatch(neo4j.WriteBatch):
         self.metadata = metadata
 
     @classproperty
+    def Engine(cls):
+        try:
+            return cls._Engine
+        except AttributeError:
+            from engine import Engine
+            cls._Engine = Engine
+            return cls._Engine
+
+    @classproperty
     def Node(cls):
         try:
             return cls._Node
@@ -162,6 +171,7 @@ class WriteBatch(neo4j.WriteBatch):
 
             if item.is_phantom():
                 self.get_or_create_indexed_node(index.index, key, value, item.get_abstract())
+                self.phantom_nodes[item] = self.last
 
                 def callback(metadata, cls, item, response):
                     if len(metadata.cypher("""
@@ -228,7 +238,7 @@ class WriteBatch(neo4j.WriteBatch):
     def query(self, query, automap=True):
         self.cypher(query.string, params=query.params, automap=automap)
 
-    def submit(self, automap=False):
+    def submit(self, automap=True):
         requests = self.requests
         callbacks = self.callbacks
         responses = self._submit()
@@ -245,9 +255,9 @@ class WriteBatch(neo4j.WriteBatch):
             else:
                 resolved = self._graph_db._resolve(response.body, response.status, id_=response.id)
 
-            if getattr(request, 'automap', False):
-                resolved = Engine.automap(resolved, mapRels=False)
-                resolved = Engine.automap(resolved, mapRels=True)
+            if automap and getattr(request, 'automap', False):
+                resolved = self.Engine.automap(resolved, mapRels=False)
+                resolved = self.Engine.automap(resolved, mapRels=True)
 
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:
@@ -256,10 +266,6 @@ class WriteBatch(neo4j.WriteBatch):
                         resolved = output
 
             results.append(resolved)
-
-        if automap:
-            results = Engine.automap(results, mapRels=False)
-            results = Engine.automap(results, mapRels=True)
 
         for callback in callbacks:
             output = callback(results)
