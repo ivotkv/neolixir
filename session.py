@@ -117,11 +117,13 @@ class Session(object):
         if batched:
             self.batch.clear()
 
-            while len(self.phantomnodes) > 0:
-                self.batch.save(self.phantomnodes.pop())
+            nodes = list(chain(self.phantomnodes, self.nodes.itervalues()))
+            rels = list(self.relmap)
 
-            self.batch.save(*list(chain(self.nodes.itervalues(), self.relmap)))
+            self.batch.save(*nodes)
+            self.batch.submit()
 
+            self.batch.save(*rels)
             self.batch.submit()
 
         else:

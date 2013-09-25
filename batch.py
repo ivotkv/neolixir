@@ -45,14 +45,6 @@ class WriteBatch(neo4j.WriteBatch):
             return self._phantom_nodes
 
     @property
-    def deleted_nodes(self):
-        try:
-            return self._deleted_nodes
-        except AttributeError:
-            self._deleted_nodes = {}
-            return self._deleted_nodes
-
-    @property
     def callbacks(self):
         try:
             return self._callbacks
@@ -63,7 +55,6 @@ class WriteBatch(neo4j.WriteBatch):
     def clear(self):
         super(WriteBatch, self).clear()
         self.phantom_nodes.clear()
-        self.deleted_nodes.clear()
         self._callbacks = []
 
     def callback(self, func, *args):
@@ -93,6 +84,7 @@ class WriteBatch(neo4j.WriteBatch):
 
                 def callback(item, metadata, response):
                     item._entity = response
+                    metadata.session.phantomnodes.discard(item)
                     metadata.session.add(item)
 
                 self.request_callback(callback, item, self.metadata)
@@ -134,7 +126,6 @@ class WriteBatch(neo4j.WriteBatch):
                     q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
                     q += "delete n"
                     self.cypher(q, params={'n_id': item.id}, automap=False)
-                    self.deleted_nodes[item] = self.last
                     self.request_callback(callback, item)
                 else:
                     self.callback(callback, item)
@@ -145,8 +136,7 @@ class WriteBatch(neo4j.WriteBatch):
                     item._entity = None
 
                 if not (item.is_phantom() or \
-                        item.start in self.deleted_nodes or \
-                        item.end in self.deleted_nodes):
+                        item.start.is_deleted() or item.end.is_deleted()):
                     self.delete_relationship(item._entity)
                     self.request_callback(callback, item)
                 else:
