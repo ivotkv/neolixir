@@ -56,5 +56,13 @@ class TestBatches(BaseTest):
         batch.request_callback(callback, self, m, SubNode)
         batch.submit()
 
+        n2 = SubNode()
+        def callback(self, m, n2, response):
+            self.assertTrue(response is n2)
+            self.assertTrue(len(m.session.phantomnodes) == 0)
+        batch.index(index, 'node', '5', n2)
+        batch.request_callback(callback, self, m, n2)
+        batch.submit()
+
         # test that __instance_of__ relationship was created
         self.assertTrue(n1 in SubNode.query.all())
