@@ -234,6 +234,49 @@ class WriteBatch(neo4j.WriteBatch):
             else:
                 raise TypeError(u"cannot delete entity from: {0}".format(item))
 
+    def index(self, index, key, value, item):
+        if isinstance(item, dict):
+            cls = index.cls or self.Node
+            return self.index(index, key, value, cls(value=None, **item))
+
+        elif isinstance(item, self.Node):
+            cls = item.__class__
+
+            if item.is_phantom():
+                self.get_or_create_indexed_node(index.index, key, value, item.get_abstract())
+
+                def callback(metadata, cls, item, response):
+                    if len(metadata.cypher("""
+                        start n=node({n_id}), c=node({c_id})
+                        where not n-[:__instance_of__]->()
+                        create unique n-[r:__instance_of__]->c
+                        return r
+                        """, params = {
+                            'n_id': response.id,
+                            'c_id': cls.classnode.id
+                        }, automap=False)) > 0:
+                        item.set_entity(response)
+                        return item
+                    else:
+                        item.expunge()
+                        return cls(response)
+
+                self.request_callback(callback, self.metadata, cls, item)
+
+            else:
+                self.get_or_add_indexed_node(index.index, key, value, item._entity)
+
+                def callback(cls, item, response):
+                    if item.id == response.id:
+                        return item
+                    else:
+                        return cls(response)
+
+                self.request_callback(callback, cls, item)
+
+        else:
+            raise NotImplementedError("batch indexing not implemented for item type: {0}".format(item))
+
     def save(self, *entities):
         for entity in entities:
             if isinstance(entity, (self.Node, self.Relationship)):
