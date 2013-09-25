@@ -72,7 +72,8 @@ class TestBatches(BaseTest):
         n2 = SubNode()
         rel = n1.likes.append(n2)
         batch.create(n1)
-        batch.index(index, 'node', '6', n2)
+        #batch.index(index, 'node', '6', n1) # TODO: is there a workaround to make this work?
+        batch.index(index, 'node', '7', n2)
         batch.create(rel)
         def callback(self, rel, response):
             self.assertTrue(response is rel._entity)
