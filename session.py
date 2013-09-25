@@ -16,6 +16,18 @@ class Session(object):
         self.propmap.clear()
 
     @property
+    def committing(self):
+        try:
+            return self._threadlocal.committing
+        except AttributeError:
+            self._threadlocal.committing = False
+            return self._threadlocal.committing
+
+    @committing.setter
+    def committing(self, value):
+        self._threadlocal.committing = value
+
+    @property
     def batch(self):
         try:
             return self._threadlocal.batch
@@ -114,6 +126,8 @@ class Session(object):
             node.rollback()
 
     def commit(self, batched=True):
+        self.committing = True
+
         if batched:
             self.batch.clear()
 
@@ -131,3 +145,5 @@ class Session(object):
                 self.phantomnodes.pop().save()
             for entity in list(chain(self.nodes.itervalues(), self.relmap)):
                 entity.save()
+
+        self.committing = False

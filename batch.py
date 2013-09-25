@@ -8,6 +8,7 @@ class WriteBatch(neo4j.WriteBatch):
     def __init__(self, graph_db, metadata):
         super(WriteBatch, self).__init__(graph_db)
         self.metadata = metadata
+        self.resubmit = False
 
     @classproperty
     def Engine(cls):
@@ -163,23 +164,46 @@ class WriteBatch(neo4j.WriteBatch):
                 self.get_or_create_indexed_node(index.index, key, value, item.get_abstract())
                 self.phantom_nodes[item] = self.last
 
-                def callback(metadata, cls, item, response):
-                    if len(metadata.cypher("""
+                def callback(self, request, cls, item, response):
+                    query = """
                         start n=node({n_id}), c=node({c_id})
                         where not n-[:__instance_of__]->()
                         create unique n-[r:__instance_of__]->c
                         return r
-                        """, params = {
-                            'n_id': response.id,
-                            'c_id': cls.classnode.id
-                        }, automap=False)) > 0:
-                        item.set_entity(response)
-                        return item
-                    else:
-                        item.expunge()
-                        return cls(response)
+                    """
+                    params = {
+                        'n_id': response.id,
+                        'c_id': cls.classnode.id
+                    }
 
-                self.request_callback(callback, self.metadata, cls, item)
+                    if self.metadata.session.committing:
+                        self.cypher(query, params=params, automap=False)
+
+                        def callback2(cls, item, response1, response2):
+                            if len(response2) > 0:
+                                item.set_entity(response1)
+                                return item
+                            else:
+                                item.expunge()
+                                return cls(response1)
+
+                        self.request_callback(callback2, cls, item, response)
+
+                        for callback in request.callbacks[1:]:
+                            self.requests[-1].callbacks.append(callback)
+
+                        self.resubmit = True
+                        return False
+
+                    else:
+                        if len(self.metadata.cypher(query, params=params, automap=False)) > 0:
+                            item.set_entity(response)
+                            return item
+                        else:
+                            item.expunge()
+                            return cls(response)
+
+                self.request_callback(callback, self, self.requests[-1], cls, item)
 
             else:
                 self.get_or_add_indexed_node(index.index, key, value, item._entity)
@@ -252,14 +276,22 @@ class WriteBatch(neo4j.WriteBatch):
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:
                     output = callback(resolved)
-                    if output is not None:
+                    if output is False:
+                        break
+                    elif output is not None:
                         resolved = output
 
             results.append(resolved)
 
+        if self.resubmit:
+            self.resubmit = False
+            self.submit(automap=True)
+
         for callback in callbacks:
             output = callback(results)
-            if output is not None:
+            if output is False:
+                break
+            elif output is not None:
                 results = output
 
         return results
