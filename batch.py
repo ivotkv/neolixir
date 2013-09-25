@@ -285,7 +285,7 @@ class WriteBatch(neo4j.WriteBatch):
 
         if self.resubmit:
             self.resubmit = False
-            self.submit(automap=True)
+            self.submit(automap=automap)
 
         for callback in callbacks:
             output = callback(results)
