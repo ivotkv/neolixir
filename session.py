@@ -112,6 +112,8 @@ class Session(object):
         if isinstance(entity, Relationship):
             self.relmap.remove(entity)
         else:
+            for rel in list(self.relmap.node.get(entity, [])):
+                self.expunge(rel)
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
         self.propmap.remove(entity)

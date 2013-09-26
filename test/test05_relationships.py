@@ -159,3 +159,15 @@ class TestRelationships(BaseTest):
         self.assertTrue(n2 not in n1.multiple_out)
         self.assertTrue(n1 in n2.multiple_out)
         self.assertTrue(n1 not in n2.multiple_in)
+
+    def test09_expunge(self):
+        n1 = SubNode()
+        n2 = SubNode()
+        rel = n1.likes.append(n2)
+        self.assertTrue(n1 in m.session.phantomnodes)
+        self.assertTrue(n2 in m.session.phantomnodes)
+        self.assertTrue(rel in m.session.relmap)
+        n1.expunge()
+        self.assertTrue(n1 not in m.session.phantomnodes)
+        self.assertTrue(n2 in m.session.phantomnodes)
+        self.assertTrue(rel not in m.session.relmap)
