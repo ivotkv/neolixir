@@ -67,7 +67,7 @@ class Query(BaseQuery):
     def node(cls, nodecls):
         string = """
         start classnode=node({classnode_id})
-        match instance-[?:__extends__|__instance_of__*..]->classnode
+        match instance-[:__extends__|__instance_of__*..]->classnode
         where instance-[:__instance_of__]->()
         return instance
         """
