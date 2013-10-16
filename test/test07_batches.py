@@ -81,3 +81,20 @@ class TestBatches(BaseTest):
             self.assertTrue(response.end_node == n2._entity)
         batch.request_callback(callback, self, rel)
         batch.submit()
+
+    def test02_commit_batch_size(self):
+        nodes = [SubNode() for x in range(20)]
+        for idx, node in enumerate(nodes):
+            try:
+                node.likes.append(nodes[idx + 1])
+            except IndexError:
+                pass
+
+        m.session.commit(batched=True, batch_size=5)
+
+        for idx, node in enumerate(nodes):
+            self.assertTrue(not node.is_phantom())
+            try:
+                self.assertTrue(not node.likes.rel(nodes[idx + 1]).is_phantom())
+            except IndexError:
+                pass

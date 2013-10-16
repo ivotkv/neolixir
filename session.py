@@ -127,19 +127,32 @@ class Session(object):
         for node in self.nodes.itervalues():
             node.rollback()
 
-    def commit(self, batched=True):
+    def commit(self, batched=True, batch_size=100):
         self.committing = True
 
         if batched:
             self.batch.clear()
 
+            # get data to be saved
             nodes = list(chain(self.phantomnodes, self.nodes.itervalues()))
             rels = list(self.relmap)
 
-            self.batch.save(*nodes)
+            # submit nodes
+            count = 0
+            for node in nodes:
+                self.batch.save(node)
+                count += 1
+                if batch_size and count % batch_size == 0:
+                    self.batch.submit()
             self.batch.submit()
 
-            self.batch.save(*rels)
+            # submit rels
+            count = 0
+            for rel in rels:
+                self.batch.save(rel)
+                count += 1
+                if batch_size and count % batch_size == 0:
+                    self.batch.submit()
             self.batch.submit()
 
         else:
