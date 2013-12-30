@@ -1,9 +1,3 @@
-neolixir
-========
-
-Neo4j abstraction layer
-
-
 Dev & Test Notes
 ================
 
