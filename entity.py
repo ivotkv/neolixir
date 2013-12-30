@@ -10,7 +10,15 @@ class EntityMeta(type):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
+        # inherited descriptors
         cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else {}
+        for base in bases:
+            if hasattr(base, '_descriptors'):
+                for k, v in base._descriptors.iteritems():
+                    if k not in cls._descriptors:
+                        cls._descriptors[k] = v
+
+        # class-defined descriptors
         for k, v in dict_.iteritems():
             if isinstance(v, FieldDescriptor):
                 cls._descriptors[k] = v

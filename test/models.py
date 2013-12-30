@@ -1,5 +1,6 @@
 from datetime import datetime
 from exc import *
+from entity import Entity
 from node import Node
 from relationship import Relationship
 from properties import *
@@ -26,5 +27,8 @@ class SubNode(Node):
 
     date = DateTime(default=datetime.now)
 
-class SubSubNode(SubNode):
+class IField(Entity):
+    interface_field = String(default="interface_field_value")
+
+class SubSubNode(SubNode, IField):
     name = String()

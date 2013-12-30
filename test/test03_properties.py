@@ -14,7 +14,7 @@ class TestProperties(BaseTest):
         self.assertTrue(n.properties['test_property1'] == 'test_value1')
         self.assertTrue(n.properties['test_property2'] == 'test_value2')
 
-    def test01_rel_properties(self):
+    def test02_rel_properties(self):
         n1 = SubNode()
         n2 = SubNode()
         rel = n1.likes.append(n2)
@@ -26,3 +26,15 @@ class TestProperties(BaseTest):
         rel = Relationship(rel.id)
         self.assertTrue(rel.properties['test_property1'] == 'test_value1')
         self.assertTrue(rel.properties['test_property2'] == 'test_value2')
+
+    def test03_interface_fields(self):
+        self.assertTrue(hasattr(SubSubNode, 'interface_field'))
+        self.assertTrue('interface_field' in SubSubNode._descriptors)
+        self.assertTrue(SubSubNode.interface_field.name == 'interface_field')
+        n = SubSubNode()
+        self.assertTrue(hasattr(n, 'interface_field'))
+        self.assertTrue('interface_field' in n._descriptors)
+        self.assertTrue(n.interface_field == 'interface_field_value')
+        n.interface_field = 'new_value'
+        self.assertTrue(n.interface_field == 'new_value')
+        self.assertTrue(n.properties['interface_field'] == 'new_value')
