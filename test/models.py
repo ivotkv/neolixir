@@ -32,3 +32,5 @@ class IField(Entity):
 
 class SubSubNode(SubNode, IField):
     name = String()
+    
+    enum = Enum('value1', 'value2', 'default', default='default')

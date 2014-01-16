@@ -5,7 +5,7 @@ from decimal import Decimal
 from datetime import datetime
 from utils import IN, OUT, classproperty
 
-__all__ = ['Boolean', 'String', 'Integer', 'Float', 'Numeric', 'DateTime',
+__all__ = ['Boolean', 'String', 'Enum', 'Integer', 'Float', 'Numeric', 'DateTime',
            'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
 
 class FieldDescriptor(object):
@@ -66,6 +66,17 @@ class Boolean(Property):
 class String(Property):
 
     __value_type__ = unicode
+
+class Enum(String):
+
+    def __init__(self, *args, **kwargs):
+        super(Enum, self).__init__(name=kwargs.get('name'), default=kwargs.get('default'))
+        self.values = args
+    
+    def __set__(self, instance, value):
+        if value not in self.values:
+            raise ValueError(u"Invalid value for Enum: {0}".format(value))
+        super(Enum, self).__set__(instance, value)
 
 class Integer(Property):
 
