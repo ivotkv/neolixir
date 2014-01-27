@@ -254,12 +254,8 @@ class WriteBatch(neo4j.WriteBatch):
 
     def submit(self, automap=True):
         requests = self.requests
-
-        if len(requests) == 0:
-            return []
-
         callbacks = self.callbacks
-        responses = self._submit()
+        responses = self._submit() if len(requests) > 0 else []
 
         results = []
         for response in responses:
