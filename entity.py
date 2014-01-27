@@ -70,12 +70,12 @@ class Entity(object):
 
     def __init__(self, value=None, **properties):
         if not self._initialized:
+            self._initialized = True
             for k, v in properties.iteritems():
                 if k in self._descriptors:
                     setattr(self, k, v)
                 else:
                     self.properties[k] = v
-            self._initialized = True
             m.session.add(self)
 
     def __copy__(self):
