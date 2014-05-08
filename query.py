@@ -58,9 +58,11 @@ class Query(BaseQuery):
         self._clauses += ' ' + re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
         self._set(string)
 
-    def append(self, string):
+    def append(self, string, params=None):
         copy = self.copy()
         copy._append(string)
+        if params is not None:
+            copy.params.update(params)
         return copy
 
     @classmethod
