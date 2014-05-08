@@ -54,6 +54,19 @@ class Relationship(Entity):
     def __repr__(self):
         return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.properties, self.end.id)
 
+    def __cmp__(self, other):
+        if not isinstance(other, Relationship):
+            return cmp(id(self), id(other))
+        elif self.__sort_cmp__ is not None:
+            return self.__sort_cmp__(self, other)
+        elif self.__sort_key__ is not None:
+            return cmp(self.__sort_key__(self), self.__sort_key__(other))
+        else:
+            if self.id is not None:
+                return cmp(self.id, other.id)
+            else:
+                return cmp(id(self), id(other))
+
     @property
     def start(self):
         try:
