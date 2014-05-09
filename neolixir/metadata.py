@@ -14,6 +14,16 @@ class MetaData(object):
         self._session = Session(metadata=self)
         self._classes = {}
 
+    def add(self, cls):
+        self._classes.setdefault(cls.__name__, cls)
+
+    def get(self, name):
+        return self._classes.get(name)
+
+    def clear(self):
+        self._session = Session(metadata=self)
+        self._classes = {}
+
     @property
     def engine(self):
         return self._engine.instance
