@@ -21,11 +21,11 @@ In order to run the tests:
 1. Set up a neo4j instance running at localhost:7474
 2. Install virtualenv
 3. The first time, you will need to build the test virtualenv:
-```
-./virtualenv/build.sh
-```
+   ```
+   ./virtualenv/build.sh
+   ```
 4. From the repo root, activate the virtualenv and run the tests:
-```
-source ./virtualenv/py2neo14/bin/activate
-py.test tests
-```
+   ```
+   source virtualenv/py2neo14/bin/activate
+   py.test tests
+   ```
