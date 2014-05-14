@@ -18,11 +18,11 @@ Please make sure to run and update the tests if necessary after any development.
 
 In order to run the tests:
 
-1. Set up a neo4j instance running at localhost:7474. 
+1. Set up a neo4j instance running at localhost:7474
 
     **WARNING**: running the tests will clear the contents of this database.
 
-2. Make sure virtualenv is installed.
+2. Make sure pip and virtualenv are installed
 
 3. The first time, you will need to build the test virtualenv:
 
