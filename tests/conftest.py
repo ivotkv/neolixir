@@ -1,12 +1,12 @@
 import pytest
-import neolixir
-import models
 
 @pytest.fixture(scope='session')
 def metadata():
-    neolixir.metadata.engine.clear()
-    neolixir.metadata.init()
-    return neolixir.metadata
+    from neolixir import metadata
+    metadata.engine.clear()
+    import models
+    metadata.init()
+    return metadata
 
 @pytest.fixture()
 def m(metadata):
