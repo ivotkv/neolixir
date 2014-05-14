@@ -1,14 +1,31 @@
-Declarative ORM abstraction layer for Neo4j
+# Neolixir
 
-Dev & Test Notes
-================
+Declarative ORM abstraction layer for Neo4j.
 
-When developing, make sure to test and keep tests up to date.
+# Dependencies
 
-Tests are located in the 'test' directory.
+The current stable version requires py2neo 1.4.6.
 
-In order to run the tests, have a neo4j instance running at localhost:7474 and from neolixir/ run:
+Future versions will support the latest 1.6.* versions of py2neo.
 
+# Testing
+
+Tests are based on pytest and are located in the tests/ directory.
+
+Please make sure to run and update the tests if necessary after any development.
+
+## Running tests
+
+In order to run the tests:
+
+1. Set up a neo4j instance running at localhost:7474
+2. Install virtualenv
+3. The first time, you will need to build the test virtualenv:
 ```
-python test
+./virtualenv/build.sh
+```
+4. From the repo root, activate the virtualenv and run the tests:
+```
+source ./virtualenv/py2neo14/bin/activate
+py.test tests
 ```

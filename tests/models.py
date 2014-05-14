@@ -1,34 +1,20 @@
 from datetime import datetime
-from neolixir.entity import Entity
-from neolixir.node import Node
-from neolixir.relationship import Relationship
-from neolixir.properties import *
-from neolixir.index import *
+from neolixir import *
 
-class SubRel(Relationship):
+class TRel(Relationship):
     pass
 
-class SubSubRel(SubRel):
+class SubTRel(TRel):
     pass
 
-class SubNode(Node):
-    test_id = Integer()
-    likes = RelOut(SubRel('like'))
-    liked_by = RelIn(SubRel('like'))
-    knows = RelOut('know')
+class TNode(Node):
+    pass
 
-    one_in = RelInOne(SubRel('one'))
-    one_out = RelOutOne(SubRel('one'))
-
-    multiple_in = RelIn('multiple', multiple=True)
-    multiple_out = RelOut('multiple', multiple=True)
-
-    date = DateTime(default=datetime.now)
+class SubTNode(TNode):
+    pass
 
 class IField(Entity):
-    interface_field = String(default="interface_field_value")
+    ifield = String()
 
-class SubSubNode(SubNode, IField):
-    name = String()
-    
-    enum = Enum('value1', 'value2', 'default', default='default')
+class IFieldTNode(TNode, IField):
+    pass

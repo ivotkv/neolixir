@@ -13,7 +13,7 @@ setup(
     version=VERSION,
     packages=['neolixir'],
     install_requires=[
-        'py2neo >= 1.4.6'
+        'py2neo==1.4.6'
     ],
     test_requires=[
         'pytest'
