@@ -19,7 +19,9 @@ Please make sure to run and update the tests if necessary after any development.
 In order to run the tests:
 
 1. Set up a neo4j instance running at localhost:7474
+
 2. Install virtualenv
+
 3. The first time, you will need to build the test virtualenv:
 
     ```
