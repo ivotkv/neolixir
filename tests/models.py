@@ -8,7 +8,7 @@ class SubTRel(TRel):
     pass
 
 class TNode(Node):
-    pass
+    string = String()
 
 class SubTNode(TNode):
     pass
