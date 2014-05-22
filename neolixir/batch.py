@@ -85,6 +85,7 @@ class WriteBatch(neo4j.WriteBatch):
 
                 def callback(item, metadata, response):
                     item._entity = response
+                    item.properties.set_dirty(False)
                     metadata.session.phantomnodes.discard(item)
                     metadata.session.add(item)
 
@@ -102,6 +103,7 @@ class WriteBatch(neo4j.WriteBatch):
 
                 def callback(item, metadata, response):
                     item._entity = response
+                    item.properties.set_dirty(False)
                     metadata.session.add(item)
 
                 self.request_callback(callback, item, self.metadata)
