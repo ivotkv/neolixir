@@ -53,3 +53,15 @@ def test_string(m):
     assert n1.is_dirty() == False
     assert n1.string == None
     assert n1.default_string == 'default'
+
+def test_enum(m):
+    n1 = TNode()
+    assert n1.is_dirty() == False
+    assert n1.enum == None
+    assert n1.default_enum == 'value1'
+
+    n1.enum = 'value1'
+    assert n1.enum == 'value1'
+    with raises(ValueError):
+        n1.enum = 'invalid'
+    assert n1.enum == 'value1'

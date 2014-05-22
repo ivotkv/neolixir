@@ -11,7 +11,7 @@ class SubTRel(TRel):
 class TNode(Node):
     boolean = Boolean()
     string = String()
-    enum = Enum('enum1', 'enum2')
+    enum = Enum('value1', 'value2')
     integer = Integer()
     float = Float()
     numeric = Numeric()
@@ -19,7 +19,7 @@ class TNode(Node):
 
     default_boolean = Boolean(default=True)
     default_string = String(default='default')
-    default_enum = Enum('enum1', 'enum2', default='enum1')
+    default_enum = Enum('value1', 'value2', default='value1')
     default_integer = Integer(default=1)
     default_float = Float(default=1.0)
     default_numeric = Numeric(default=Decimal('1.00'))
