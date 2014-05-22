@@ -1,4 +1,4 @@
-from models import *
+from common import *
 
 def test_get(m):
     assert m.get('TNode') is TNode

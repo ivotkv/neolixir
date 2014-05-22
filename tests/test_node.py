@@ -1,5 +1,4 @@
-import pytest
-from models import *
+from common import *
 
 def test_delete(m):
     # phantom nodes
@@ -20,5 +19,5 @@ def test_delete(m):
     assert m.session.dirty == 1
     m.session.commit()
     assert m.session.count == 0
-    with pytest.raises(ResourceNotFound):
+    with raises(ResourceNotFound):
         Node(n1_id)

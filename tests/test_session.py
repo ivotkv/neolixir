@@ -1,4 +1,4 @@
-from models import *
+from common import *
 
 def test_clear(m):
     assert m.session.count == 0
