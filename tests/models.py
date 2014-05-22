@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime as datetime_
 from decimal import Decimal
 from neolixir import *
 
@@ -23,7 +23,7 @@ class TNode(Node):
     default_integer = Integer(default=1)
     default_float = Float(default=1.0)
     default_numeric = Numeric(default=Decimal('1.00'))
-    #default_datetime = DateTime(default=datetime(2010, 10, 10))
+    default_datetime = DateTime(default=datetime_(2010, 10, 10))
 
     rel_out = RelOut('rel_out')
     rel_in = RelIn('rel_in')
