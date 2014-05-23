@@ -25,14 +25,20 @@ class TNode(Node):
     default_numeric = Numeric(default=Decimal('1.00'))
     default_datetime = DateTime(default=datetime_(2010, 10, 10))
 
-    rel_out = RelOut('rel_out')
-    rel_in = RelIn('rel_in')
+    rel_out = RelOut('rel')
+    rel_in = RelIn('rel')
 
-    rel_out_one = RelOutOne('rel_out_one')
-    rel_in_one = RelInOne('rel_in_one')
+    trel_out = RelOut(TRel('trel'))
+    trel_in = RelIn(TRel('trel'))
 
-    rel_out_multiple = RelOutOne('rel_out_multiple', multiple=True)
-    rel_in_multiple = RelInOne('rel_in_multiple', multiple=True)
+    subtrel_out = RelOut(SubTRel('subtrel'))
+    subtrel_in = RelIn(SubTRel('subtrel'))
+
+    rel_out_one = RelOutOne('rel_one')
+    rel_in_one = RelInOne('rel_one')
+
+    rel_out_multiple = RelOut('rel_multiple', multiple=True)
+    rel_in_multiple = RelIn('rel_multiple', multiple=True)
 
 class SubTNode(TNode):
     substring = String()
