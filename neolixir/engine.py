@@ -1,6 +1,6 @@
 import threading
 from utils import classproperty
-from py2neo import neo4j, cypher
+from py2neo import neo4j
 from batch import WriteBatch
 
 class Engine(object):
@@ -72,10 +72,9 @@ class Engine(object):
 
         return mapped
 
-    def cypher(self, *args, **kwargs):
-        automap = kwargs.pop('automap', True)
-
-        results = cypher.execute(self.instance, *args, **kwargs)[0]
+    def cypher(self, query, params=None, automap=True):
+        query = neo4j.CypherQuery(self.instance, query)
+        results = [list(record) for record in query.execute(**params or {})]
 
         if automap:
             results = self.automap(results, mapRels=False)

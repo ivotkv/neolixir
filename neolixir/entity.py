@@ -1,7 +1,11 @@
+import py2neo
 from py2neo import neo4j
 from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
+
+if py2neo.__version__ >= '1.6':
+    neo4j._Entity.id = property(lambda self: self._id)
 
 __all__ = ['Entity']
 
@@ -53,7 +57,7 @@ class Entity(object):
         instance = m.session.get(value)
         if instance is not None:
             return instance
-        elif isinstance(value, neo4j.PropertyContainer):
+        elif isinstance(value, neo4j._Entity):
             loaded_properties = m.session.propmap.get_properties(value)
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):

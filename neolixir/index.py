@@ -23,7 +23,10 @@ class Index(object):
             return self._index
 
     def clear(self):
-        m.engine.delete_index(self.type, self.name)
+        try:
+            m.engine.delete_index(self.type, self.name)
+        except LookupError:
+            pass
         try:
             delattr(self, '_index')
         except AttributeError:

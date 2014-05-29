@@ -1,6 +1,12 @@
 """Defines standard Neolixir exceptions and imports ``py2neo`` exceptions."""
 
-from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError
+try:
+    from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError
+except ImportError:
+    BadRequest = Exception
+    ResourceNotFound = Exception
+    ResourceConflict = Exception
+    SocketError = Exception
 from py2neo.cypher import CypherError
 
 __all__ = ['NeolixirError', 'QueryError', 'NoResultFound',

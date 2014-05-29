@@ -26,7 +26,7 @@ class Relationship(Entity):
             except KeyError:
                 return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
         elif isinstance(value, int):
-            value = m.engine.get_relationship(value)
+            value = m.engine.relationship(value)
         elif isinstance(value, tuple):
             value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
             if value[0] is None:

@@ -36,7 +36,7 @@ class Node(Entity):
 
     def __new__(cls, value=None, **properties):
         if isinstance(value, int):
-            value = m.engine.get_node(value)
+            value = m.engine.node(value)
         elif value is not None and not isinstance(value, (cls, neo4j.Node)):
             raise ValueError("Node can only be instantiated by id, entity or None")
         return super(Node, cls).__new__(cls, value, **properties)

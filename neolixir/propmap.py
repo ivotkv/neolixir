@@ -5,7 +5,7 @@ from properties import Property
 class PropMap(dict):
 
     def get_key(self, value):
-        if not isinstance(value, neo4j.PropertyContainer):
+        if not isinstance(value, neo4j._Entity):
             if getattr(value, '_entity', None) is None:
                 return value
             else:
@@ -14,19 +14,11 @@ class PropMap(dict):
 
     def get_properties(self, value):
         key = self.get_key(value)
-        if isinstance(value, neo4j.PropertyContainer):
+        if isinstance(value, neo4j._Entity):
             try:
                 return self[key]
             except KeyError:
-                if value.__metadata__.has_key("data"):
-                    # from property cache
-                    props = value.__metadata__["data"]
-                else:
-                    # request from server
-                    # py2neo.neo4j.Node.get_properties() (inherited from PropertyContainer) ALWAYS sends
-                    # a request without any consideration of the cache
-                    props = value.get_properties()
-                self[key] = PropDict(props)
+                self[key] = PropDict(value.get_cached_properties())
                 return self[key]
         else:
             try:

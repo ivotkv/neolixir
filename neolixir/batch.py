@@ -1,6 +1,7 @@
 import functools
 from collections import Iterable
 from utils import classproperty
+import py2neo
 from py2neo import neo4j
 
 class WriteBatch(neo4j.WriteBatch):
@@ -36,6 +37,10 @@ class WriteBatch(neo4j.WriteBatch):
             from relationship import Relationship
             cls._Relationship = Relationship
             return cls._Relationship
+
+    @property
+    def requests(self):
+        return self._requests
 
     @property
     def phantom_nodes(self):
@@ -80,7 +85,7 @@ class WriteBatch(neo4j.WriteBatch):
     def create(self, *items):
         for item in items:
             if isinstance(item, self.Node):
-                self.create_node(item.get_abstract())
+                super(WriteBatch, self).create(py2neo.node(item.get_abstract()))
                 self.phantom_nodes[item] = self.last
 
                 def callback(item, metadata, response):
@@ -90,7 +95,7 @@ class WriteBatch(neo4j.WriteBatch):
                     metadata.session.add(item)
 
                 self.request_callback(callback, item, self.metadata)
-                self.create_relationship(self.last, "__instance_of__", item.classnode)
+                super(WriteBatch, self).create(py2neo.rel(self.last, "__instance_of__", item.classnode))
 
             elif isinstance(item, self.Relationship):
                 abstract = [
@@ -99,7 +104,7 @@ class WriteBatch(neo4j.WriteBatch):
                     self.phantom_nodes[item.end] if item.end.is_phantom() else item.end._entity,
                     super(self.Relationship, item).get_abstract()
                 ]
-                self.create_relationship(*abstract)
+                super(WriteBatch, self).create(py2neo.rel(*abstract))
 
                 def callback(item, metadata, response):
                     item._entity = response
@@ -109,10 +114,10 @@ class WriteBatch(neo4j.WriteBatch):
                 self.request_callback(callback, item, self.metadata)
 
             elif isinstance(item, dict):
-                self.create_node(item)
+                super(WriteBatch, self).create(py2neo.node(item))
 
             elif isinstance(item, Iterable):
-                self.create_relationship(*item)
+                super(WriteBatch, self).create(py2neo.rel(*item))
 
             else:
                 raise TypeError(u"cannot create entity from: {0}".format(item))
@@ -163,7 +168,7 @@ class WriteBatch(neo4j.WriteBatch):
             cls = item.__class__
 
             if item.is_phantom():
-                self.get_or_create_indexed_node(index.index, key, value, item.get_abstract())
+                self.get_or_create_in_index(neo4j.Node, index.index, key, value, item.get_abstract())
                 self.phantom_nodes[item] = self.last
 
                 def callback(self, request, cls, item, response):
@@ -208,7 +213,7 @@ class WriteBatch(neo4j.WriteBatch):
                 self.request_callback(callback, self, self.requests[-1], cls, item)
 
             else:
-                self.get_or_add_indexed_node(index.index, key, value, item._entity)
+                self.get_or_add_to_index(neo4j.Node, index.index, key, value, item._entity)
 
                 def callback(cls, item, response):
                     if item.id == response.id:
@@ -233,10 +238,10 @@ class WriteBatch(neo4j.WriteBatch):
 
                 elif entity.is_dirty():
                     if isinstance(entity, self.Node):
-                        self.set_node_properties(entity._entity, entity.get_abstract())
+                        self.set_properties(entity._entity, entity.get_abstract())
                     else:
                         abstract = super(self.Relationship, entity).get_abstract()
-                        self.set_relationship_properties(entity._entity, abstract)
+                        self.set_properties(entity._entity, abstract)
 
                     def callback(entity, response):
                         entity.properties.set_dirty(False)
@@ -247,8 +252,7 @@ class WriteBatch(neo4j.WriteBatch):
                 raise TypeError(u"cannot save entity: {0}".format(entity))
 
     def cypher(self, query, params=None, automap=True):
-        self._post(self._cypher_uri, {"query": query, "params": params or {}})
-        self.requests[-1].multirow = True
+        self.append_cypher(query, params=params)
         self.requests[-1].automap = automap
 
     def query(self, query, automap=True):
@@ -257,33 +261,26 @@ class WriteBatch(neo4j.WriteBatch):
     def submit(self, automap=True):
         requests = self.requests
         callbacks = self.callbacks
-        responses = self._submit() if len(requests) > 0 else []
+        responses = super(WriteBatch, self).submit() if len(requests) > 0 else []
+        self.clear()
 
         results = []
-        for response in responses:
-            request = requests[response.id]
-
-            if getattr(request, 'multirow', False):
-                resolved = [
-                    [self._graph_db._resolve(item, response.status, id_=response.id) for item in row]
-                    for row in response.body["data"]
-                ]
-            else:
-                resolved = self._graph_db._resolve(response.body, response.status, id_=response.id)
+        for idx, response in enumerate(responses):
+            request = requests[idx]
 
             if automap and getattr(request, 'automap', False):
-                resolved = self.Engine.automap(resolved, mapRels=False)
-                resolved = self.Engine.automap(resolved, mapRels=True)
+                response = self.Engine.automap(response, mapRels=False)
+                response = self.Engine.automap(response, mapRels=True)
 
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:
-                    output = callback(resolved)
+                    output = callback(response)
                     if output is False:
                         break
                     elif output is not None:
-                        resolved = output
+                        response = output
 
-            results.append(resolved)
+            results.append(response)
 
         if self.resubmit:
             self.resubmit = False
