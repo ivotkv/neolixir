@@ -3,10 +3,11 @@
 try:
     from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError
 except ImportError:
-    BadRequest = Exception
-    ResourceNotFound = Exception
-    ResourceConflict = Exception
-    SocketError = Exception
+    from py2neo.packages.httpstream.http import SocketError
+    from py2neo.exceptions import ServerException, ClientError, ServerError
+    BadRequest = ClientError
+    ResourceNotFound = ClientError
+    ResourceConflict = ClientError
 from py2neo.cypher import CypherError
 
 __all__ = ['NeolixirError', 'CommitError',
