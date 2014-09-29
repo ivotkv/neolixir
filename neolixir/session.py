@@ -1,6 +1,9 @@
+import re
 import threading
+from copy import copy
 from itertools import chain
 from py2neo import neo4j
+from exc import *
 
 class Session(object):
 
@@ -130,35 +133,112 @@ class Session(object):
     def commit(self, batched=True, batch_size=100):
         self.committing = True
 
+        from node import Node
+        from relationship import Relationship
+
+        retry = True
+        while retry:
+            retry = False
+            try:
+                self._commit(batched=batched, batch_size=batch_size)
+            except CommitError as e:
+                msg = unicode(e).split('\n')[0]
+                if re.search('DeadlockDetectedException', msg):
+                    retry = True
+                    continue
+                elif re.search('EntityNotFoundException', msg):
+                    if re.search(r'Node \d+ not found', msg):
+                        id = re.sub(r'^.*Node (\d+) not found.*$', r'\1', msg)
+                        if id.isdigit():
+                            node = Node(int(id))
+                            if node.is_deleted():
+                                node.expunge()
+                                retry = True
+                                continue
+                    elif re.search(r'Relationship \d+ not found', msg):
+                        id = re.sub(r'^.*Relationship (\d+) not found.*$', r'\1', msg)
+                        if id.isdigit():
+                            rel = Relationship(int(id))
+                            if rel.is_deleted():
+                                rel.expunge()
+                                retry = True
+                                continue
+                elif re.search('ResourceNotFound', msg):
+                    if re.search(r'/node/\d+', msg):
+                        id = re.sub(r'^.*/node/(\d+)\D*$', r'\1', msg)
+                        if id.isdigit():
+                            node = Node(int(id))
+                            if node.is_deleted():
+                                node.expunge()
+                                retry = True
+                                continue
+                    elif re.search(r'/relationship/\d+', msg):
+                        id = re.sub(r'^.*/relationship/(\d+)\D*$', r'\1', msg)
+                        if id.isdigit():
+                            rel = Relationship(int(id))
+                            if rel.is_deleted():
+                                rel.expunge()
+                                retry = True
+                                continue
+                raise e
+
+        self.committing = False
+
+    def _commit(self, batched=True, batch_size=100):
         if batched:
+            # clear batch and track requests
             self.batch.clear()
+            saved = []
+            pending = []
 
             # get data to be saved
             nodes = list(chain(self.phantomnodes, self.nodes.itervalues()))
             rels = list(self.relmap)
 
             # submit nodes
-            count = 0
-            for node in nodes:
-                self.batch.save(node)
-                count += 1
-                if batch_size and count % batch_size == 0:
-                    self.batch.submit()
-            self.batch.submit()
+            try:
+                count = 0
+                for node in nodes:
+                    if node.is_phantom() or node.is_dirty():
+                        self.batch.save(node)
+                        count += 1
+                    if batch_size and count % batch_size == 0:
+                        pending = copy(self.batch.requests)
+                        responses = self.batch.submit()
+                        for idx, request in enumerate(pending):
+                            saved.append((request, responses[idx]))
+                        pending = []
+                pending = copy(self.batch.requests)
+                responses = self.batch.submit()
+                for idx, request in enumerate(pending):
+                    saved.append((request, responses[idx]))
+                pending = []
+            except Exception as e:
+                raise CommitError(e, saved, pending)
 
             # submit rels
-            count = 0
-            for rel in rels:
-                self.batch.save(rel)
-                count += 1
-                if batch_size and count % batch_size == 0:
-                    self.batch.submit()
-            self.batch.submit()
+            try:
+                count = 0
+                for rel in rels:
+                    if rel.is_phantom() or rel.is_dirty():
+                        self.batch.save(rel)
+                        count += 1
+                    if batch_size and count % batch_size == 0:
+                        pending = copy(self.batch.requests)
+                        responses = self.batch.submit()
+                        for idx, request in enumerate(pending):
+                            saved.append((request, responses[idx]))
+                        pending = []
+                pending = copy(self.batch.requests)
+                responses = self.batch.submit()
+                for idx, request in enumerate(pending):
+                    saved.append((request, responses[idx]))
+                pending = []
+            except Exception as e:
+                raise CommitError(e, saved, pending)
 
         else:
             while len(self.phantomnodes) > 0:
                 self.phantomnodes.pop().save()
             for entity in list(chain(self.nodes.itervalues(), self.relmap)):
                 entity.save()
-
-        self.committing = False
