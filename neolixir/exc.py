@@ -1,5 +1,7 @@
 """Defines standard Neolixir exceptions and imports ``py2neo`` exceptions."""
 
+import traceback
+
 try:
     from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError
 except ImportError:
@@ -22,8 +24,9 @@ class NeolixirError(Exception):
 class CommitError(NeolixirError):
     """Triggered when an error occurred during session commit."""
 
-    def __init__(self, e, saved, pending):
-        msg = u'{0}: {1}'.format(e.__class__.__name__, e)
+    def __init__(self, exc_info, saved, pending):
+        self.trace = traceback.format_exception(*exc_info)
+        msg = u''.join(self.trace)
         for request, response in saved:
             msg += u'\nSAVED: {0} {1} {2} -> {3}'.format(request.method, request.uri, request.body, response)
         for request in pending:

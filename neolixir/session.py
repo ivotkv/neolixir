@@ -1,4 +1,5 @@
 import re
+import sys
 import threading
 from copy import copy
 from itertools import chain
@@ -142,38 +143,38 @@ class Session(object):
             try:
                 self._commit(batched=batched, batch_size=batch_size)
             except CommitError as e:
-                msg = unicode(e).split('\n')[0]
-                if re.search('DeadlockDetectedException', msg):
+                error = unicode(e.trace[-1])
+                if re.search('DeadlockDetectedException', error):
                     retry = True
                     continue
-                elif re.search('EntityNotFoundException', msg):
-                    if re.search(r'Node \d+ not found', msg):
-                        id = re.sub(r'^.*Node (\d+) not found.*$', r'\1', msg)
+                elif re.search('EntityNotFoundException', error):
+                    if re.search(r'Node \d+ not found', error):
+                        id = re.sub(r'^.*Node (\d+) not found.*$', r'\1', error)
                         if id.isdigit():
                             node = Node(int(id))
                             if node.is_deleted():
                                 node.expunge()
                                 retry = True
                                 continue
-                    elif re.search(r'Relationship \d+ not found', msg):
-                        id = re.sub(r'^.*Relationship (\d+) not found.*$', r'\1', msg)
+                    elif re.search(r'Relationship \d+ not found', error):
+                        id = re.sub(r'^.*Relationship (\d+) not found.*$', r'\1', error)
                         if id.isdigit():
                             rel = Relationship(int(id))
                             if rel.is_deleted():
                                 rel.expunge()
                                 retry = True
                                 continue
-                elif re.search('ResourceNotFound', msg):
-                    if re.search(r'/node/\d+', msg):
-                        id = re.sub(r'^.*/node/(\d+)\D*$', r'\1', msg)
+                elif re.search('ResourceNotFound', error):
+                    if re.search(r'/node/\d+', error):
+                        id = re.sub(r'^.*/node/(\d+)\D*$', r'\1', error)
                         if id.isdigit():
                             node = Node(int(id))
                             if node.is_deleted():
                                 node.expunge()
                                 retry = True
                                 continue
-                    elif re.search(r'/relationship/\d+', msg):
-                        id = re.sub(r'^.*/relationship/(\d+)\D*$', r'\1', msg)
+                    elif re.search(r'/relationship/\d+', error):
+                        id = re.sub(r'^.*/relationship/(\d+)\D*$', r'\1', error)
                         if id.isdigit():
                             rel = Relationship(int(id))
                             if rel.is_deleted():
@@ -186,17 +187,18 @@ class Session(object):
 
     def _commit(self, batched=True, batch_size=100):
         if batched:
-            # clear batch and track requests
+            # clear batch just in case
             self.batch.clear()
-            saved = []
-            pending = []
 
             # get data to be saved
             nodes = list(chain(self.phantomnodes, self.nodes.itervalues()))
             rels = list(self.relmap)
 
-            # submit nodes
+            saved = []
+            pending = []
+
             try:
+                # submit nodes
                 count = 0
                 for node in nodes:
                     if node.is_phantom() or node.is_dirty():
@@ -213,11 +215,8 @@ class Session(object):
                 for idx, request in enumerate(pending):
                     saved.append((request, responses[idx]))
                 pending = []
-            except Exception as e:
-                raise CommitError(e, saved, pending)
 
-            # submit rels
-            try:
+                # submit rels
                 count = 0
                 for rel in rels:
                     if rel.is_phantom() or rel.is_dirty():
@@ -234,8 +233,9 @@ class Session(object):
                 for idx, request in enumerate(pending):
                     saved.append((request, responses[idx]))
                 pending = []
-            except Exception as e:
-                raise CommitError(e, saved, pending)
+
+            except:
+                raise CommitError(sys.exc_info(), saved, pending)
 
         else:
             while len(self.phantomnodes) > 0:
