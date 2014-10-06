@@ -4,8 +4,8 @@ from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
 
-if py2neo.__version__ >= '1.6':
-    neo4j._Entity.id = property(lambda self: self._id)
+if py2neo.__version__ >= '1.6' and not hasattr(neo4j._Entity, 'id'):
+    neo4j._Entity.id = neo4j._Entity._id
 
 __all__ = ['Entity']
 
