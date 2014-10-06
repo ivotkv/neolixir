@@ -187,7 +187,8 @@ class WriteBatch(neo4j.WriteBatch):
                         self.cypher(query, params=params, automap=False)
 
                         def callback2(cls, item, response1, response2):
-                            if len(response2) > 0:
+                            if isinstance(response2, list) and len(response2) > 0 or \
+                               isinstance(response2, neo4j.Relationship):
                                 item.set_entity(response1)
                                 return item
                             else:

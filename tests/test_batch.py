@@ -6,12 +6,16 @@ def test_index(m):
     index.clear()
 
     # test creating and uniqueness
-    batch.index(index, 'node', '1', TNode())
+    n1 = TNode()
+    assert n1.is_phantom()
+    assert len(m.session.phantomnodes) == 1
+    assert len(m.session.nodes) == 0
+    batch.index(index, 'node', '1', n1)
     batch.submit()
-    n1 = index.get('node', '1')[0]
+    assert not n1.is_phantom()
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.nodes) == 1
-    assert isinstance(n1, TNode)
+    assert index.get('node', '1')[0] is n1
 
     batch.index(index, 'node', '1', TNode())
     batch.submit()
@@ -72,12 +76,20 @@ def test_index(m):
     #batch.index(index, 'node', '6', n1) # TODO: is there a workaround to make this work?
     batch.index(index, 'node', '7', n2)
     batch.create(rel)
-    def callback(rel, response):
+    def callback(batch, rel, response):
+        # need to resubmit if needed to fake during-commit behaviour
+        if batch.resubmit:
+            batch.submit()
         assert response is rel._entity
         assert response.start_node == n1._entity
         assert response.end_node == n2._entity
-    batch.request_callback(callback, rel)
+    batch.request_callback(callback, batch, rel)
     batch.submit()
+
+def test_index_committing(m):
+    m.session.committing = True
+    test_index(m)
+    m.session.committing = False    
 
 def test_commit_batch_size(m):
     nodes = [TNode() for x in range(20)]
