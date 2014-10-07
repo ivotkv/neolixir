@@ -1,6 +1,7 @@
 import functools
 from collections import Iterable
 from utils import classproperty
+import overrides
 import py2neo
 from py2neo import neo4j
 
@@ -187,8 +188,7 @@ class WriteBatch(neo4j.WriteBatch):
                         self.cypher(query, params=params, automap=False)
 
                         def callback2(cls, item, response1, response2):
-                            if isinstance(response2, list) and len(response2) > 0 or \
-                               isinstance(response2, neo4j.Relationship):
+                            if len(response2) > 0:
                                 item.set_entity(response1)
                                 return item
                             else:

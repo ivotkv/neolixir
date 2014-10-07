@@ -1,5 +1,6 @@
 import threading
 from utils import classproperty
+import overrides
 from py2neo import neo4j
 from batch import WriteBatch
 

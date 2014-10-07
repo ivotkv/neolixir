@@ -1,5 +1,6 @@
 import threading
 from itertools import ifilter
+import overrides
 from py2neo import neo4j
 from engine import Engine
 from session import Session

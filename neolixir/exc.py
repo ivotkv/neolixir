@@ -1,6 +1,7 @@
 """Defines standard Neolixir exceptions and imports ``py2neo`` exceptions."""
 
 import traceback
+import overrides
 
 try:
     from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError

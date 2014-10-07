@@ -1,3 +1,4 @@
+import overrides
 from py2neo import neo4j
 from utils import classproperty
 from exc import *

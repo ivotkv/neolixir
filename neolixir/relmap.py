@@ -1,6 +1,7 @@
 from types import FunctionType
 from inspect import getargspec
 from itertools import chain, ifilter, imap
+import overrides
 from py2neo import neo4j
 from metadata import metadata as m
 from relationship import Relationship

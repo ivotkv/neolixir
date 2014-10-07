@@ -1,11 +1,9 @@
+import overrides
 import py2neo
 from py2neo import neo4j
 from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
-
-if py2neo.__version__ >= '1.6' and not hasattr(neo4j._Entity, 'id'):
-    neo4j._Entity.id = neo4j._Entity._id
 
 __all__ = ['Entity']
 

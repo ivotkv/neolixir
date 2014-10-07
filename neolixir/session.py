@@ -3,6 +3,7 @@ import sys
 import threading
 from copy import copy
 from itertools import chain
+import overrides
 from py2neo import neo4j
 from exc import *
 
