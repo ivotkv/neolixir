@@ -146,16 +146,13 @@ class WriteBatch(neo4j.WriteBatch):
 
                 if not (item.is_phantom() or \
                         item.start.is_deleted() or item.end.is_deleted()):
-                    self.delete_relationship(item._entity)
+                    super(WriteBatch, self).delete(item._entity)
                     self.request_callback(callback, item)
                 else:
                     self.callback(callback, item)
 
-            elif isinstance(item, neo4j.Node):
-                self.delete_node(item)
-
-            elif isinstance(item, neo4j.Relationship):
-                self.delete_relationship(item)
+            elif isinstance(item, (neo4j.Node, neo4j.Relationship)):
+                super(WriteBatch, self).delete(item)
 
             else:
                 raise TypeError(u"cannot delete entity from: {0}".format(item))
