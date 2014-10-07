@@ -60,6 +60,22 @@ if py2neo.__version__ in ('1.6.4',):
             return self.__hydrated
 
     neo4j.BatchResponse = BatchResponse
+    
+    """
+    This ensures that loaded paths contain the real relationships and not just abstract data.
+    """
+    from py2neo.neo4j import _rel
+    
+    class Path(neo4j.Path):
+
+        def __init__(self, node, *rels_and_nodes):
+            super(Path, self).__init__(node, *rels_and_nodes)
+            try:
+                self._real_rels = [_rel(r) for r in rels_and_nodes[0::2]]
+            except:
+                pass
+
+    neo4j.Path = Path
 
 else:
     raise ImportError("Untested version of py2neo ({0}), please check overrides.".format(py2neo.__version__))
