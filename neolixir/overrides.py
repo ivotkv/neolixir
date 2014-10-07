@@ -63,17 +63,25 @@ if py2neo.__version__ in ('1.6.4',):
     
     """
     This ensures that loaded paths contain the real relationships and not just abstract data.
+    Also skips default init on hydration for performance reasons (_UnboundRelationship.cast()).
     """
     from py2neo.neo4j import _rel
     
     class Path(neo4j.Path):
 
-        def __init__(self, node, *rels_and_nodes):
-            super(Path, self).__init__(node, *rels_and_nodes)
-            try:
-                self._real_rels = [_rel(r) for r in rels_and_nodes[0::2]]
-            except:
-                pass
+        @classmethod
+        def _hydrated(cls, data):
+            path = cls()
+            path._nodes = [Node(item) for item in  data["nodes"]]
+            path._relationships = [Relationship(item) for item in data["relationships"]]
+            return path
+
+        def __init__(self, *args):
+            if len(args) > 0:
+                super(Path, self).__init__(*args)
+            else:
+                self._nodes = []
+                self._relationships = []
 
     neo4j.Path = Path
 

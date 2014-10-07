@@ -59,7 +59,7 @@ class Engine(object):
 
             elif isinstance(item, neo4j.Path):
                 path = []
-                for i, rel in enumerate(item._real_rels):
+                for i, rel in enumerate(item._relationships):
                     path.append(cls.Node(item._nodes[i]))
                     if mapRels:
                         path.append(cls.Relationship(rel))
