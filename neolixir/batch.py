@@ -269,9 +269,11 @@ class WriteBatch(neo4j.WriteBatch):
         for idx, response in enumerate(responses):
             request = requests[idx]
 
-            if automap and getattr(request, 'automap', False):
-                response = self.Engine.automap(response, mapRels=False)
-                response = self.Engine.automap(response, mapRels=True)
+            if hasattr(request, 'automap'):
+                response = [list(record) for record in response]
+                if automap and request.automap:
+                    response = self.Engine.automap(response, mapRels=False)
+                    response = self.Engine.automap(response, mapRels=True)
 
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:
