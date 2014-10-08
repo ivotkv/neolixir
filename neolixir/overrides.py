@@ -72,7 +72,7 @@ if py2neo.__version__ in ('1.6.4',):
         @classmethod
         def _hydrated(cls, data):
             path = cls()
-            path._nodes = [Node(item) for item in  data["nodes"]]
+            path._nodes = [Node(item) for item in data["nodes"]]
             path._relationships = [Relationship(item) for item in data["relationships"]]
             return path
 
