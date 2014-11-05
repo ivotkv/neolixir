@@ -27,7 +27,7 @@ class Relationship(Entity):
             except KeyError:
                 return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
         elif isinstance(value, int):
-            value = m.engine.relationship(value)
+            value = m.graph.relationship(value)
         elif isinstance(value, tuple):
             value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
             if value[0] is None:
@@ -137,7 +137,7 @@ class Relationship(Entity):
                 if self.start is None or self.start.is_phantom() or \
                     self.end is None or self.end.is_phantom():
                     return False
-                self._entity = m.engine.create(self.get_abstract())[0]
+                self._entity = m.graph.create(self.get_abstract())[0]
                 m.session.add(self)
 
             elif self.is_dirty():

@@ -13,15 +13,6 @@ class WriteBatch(neo4j.WriteBatch):
         self.resubmit = False
 
     @classproperty
-    def Engine(cls):
-        try:
-            return cls._Engine
-        except AttributeError:
-            from engine import Engine
-            cls._Engine = Engine
-            return cls._Engine
-
-    @classproperty
     def Node(cls):
         try:
             return cls._Node
@@ -269,8 +260,8 @@ class WriteBatch(neo4j.WriteBatch):
             if hasattr(request, 'automap'):
                 response = [list(record) for record in response]
                 if automap and request.automap:
-                    response = self.Engine.automap(response, mapRels=False)
-                    response = self.Engine.automap(response, mapRels=True)
+                    response = self.metadata.automap(response, mapRels=False)
+                    response = self.metadata.automap(response, mapRels=True)
 
             if hasattr(request, 'callbacks'):
                 for callback in request.callbacks:

@@ -20,12 +20,12 @@ class Index(object):
         try:
             return self._index
         except AttributeError:
-            self._index = m.engine.get_or_create_index(self.type, self.name, self.config)
+            self._index = m.legacy.get_or_create_index(self.type, self.name, self.config)
             return self._index
 
     def clear(self):
         try:
-            m.engine.delete_index(self.type, self.name)
+            m.legacy.delete_index(self.type, self.name)
         except LookupError:
             pass
         try:

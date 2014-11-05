@@ -207,11 +207,11 @@ def test_get(m):
     m.session.commit()
 
     assert m.session.get(n1._entity) is n1
-    assert m.session.get(m.engine.node(n1.id)) is n1
+    assert m.session.get(m.graph.node(n1.id)) is n1
     assert m.session.get(n2._entity) is n2
-    assert m.session.get(m.engine.node(n2.id)) is n2
+    assert m.session.get(m.graph.node(n2.id)) is n2
     assert m.session.get(r._entity) is r
-    assert m.session.get(m.engine.relationship(r.id)) is r
+    assert m.session.get(m.graph.relationship(r.id)) is r
 
 def test_expunge(m):
     n1 = TNode()

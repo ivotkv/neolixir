@@ -3,20 +3,16 @@
 import traceback
 import overrides
 
-try:
-    from py2neo.rest import BadRequest, ResourceNotFound, ResourceConflict, SocketError
-except ImportError:
-    from py2neo.packages.httpstream.http import SocketError
-    from py2neo.exceptions import ServerException, ClientError, ServerError
-    BadRequest = ClientError
-    ResourceNotFound = ClientError
-    ResourceConflict = ClientError
+from py2neo.core import ClientError, ServerError
+BadRequest = ClientError
+ResourceNotFound = ClientError
+ResourceConflict = ClientError
 from py2neo.cypher import CypherError
 
 __all__ = ['NeolixirError', 'CommitError',
            'QueryError', 'NoResultFound', 'MultipleResultsFound',
            'CypherError','BadRequest', 'ResourceNotFound',
-           'ResourceConflict', 'SocketError']
+           'ResourceConflict']
 
 class NeolixirError(Exception):
     """Base class for all Neolixir exceptions."""

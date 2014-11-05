@@ -1,53 +1,107 @@
 import threading
 from itertools import ifilter
+from utils import classproperty
 import overrides
 from py2neo import neo4j
-from engine import Engine
+from py2neo.core import Graph
+from py2neo.legacy.core import LegacyResource
 from session import Session
+from batch import WriteBatch
 
 __all__ = ['metadata']
 
 class MetaData(object):
 
+    __batch_cls__ = WriteBatch
+
     def __init__(self, url='http://localhost:7474/db/data/'):
         self.url = url
-        self.engine = url
-        self._session = Session(metadata=self)
-        self._classes = {}
+        self.session = Session(metadata=self)
+        self.classes = {}
+
+    @property
+    def url(self):
+        return self._url
+
+    @url.setter
+    def url(self, url):
+        self._url = url
+        self._threadlocal = threading.local()
+
+    @property
+    def graph(self):
+        try:
+            return self._threadlocal.graph
+        except AttributeError:
+            self._threadlocal.graph = Graph(self.url)
+            return self._threadlocal.graph
+
+    @property
+    def legacy(self):
+        try:
+            return self._threadlocal.legacy
+        except AttributeError:
+            self._threadlocal.legacy = LegacyResource(self.url)
+            return self._threadlocal.legacy
 
     def add(self, cls):
-        self._classes.setdefault(cls.__name__, cls)
+        self.classes.setdefault(cls.__name__, cls)
 
     def get(self, name):
-        return self._classes.get(name)
+        return self.classes.get(name)
 
     def clear(self):
-        self._session = Session(metadata=self)
-        self._classes = {}
+        self.session = Session(metadata=self)
+        self.classes = {}
 
-    @property
-    def engine(self):
-        return self._engine.instance
+    def cypher(self, query, params=None, automap=True):
+        results = [list(record) for record in self.graph.cypher.execute(query, params or {})]
 
-    @engine.setter
-    def engine(self, url):
-        self._engine = Engine(url=url, metadata=self)
+        if automap:
+            results = self.automap(results, mapRels=False)
+            results = self.automap(results, mapRels=True)
 
-    @property
+        return results
+
     def batch(self):
-        return self._engine.batch
+        return self.__batch_cls__(self.graph, self)
 
-    @property
-    def cypher(self):
-        return self._engine.cypher
+    @classmethod
+    def automap(cls, data, mapRels=True):
+        mapped = []
 
-    @property
-    def session(self):
-        return self._session
+        from node import Node
+        from relationship import Relationship
 
-    @property
-    def classes(self):
-        return self._classes
+        for item in data:
+
+            if isinstance(item, neo4j.Node):
+                mapped.append(cls.Node(item))
+
+            elif isinstance(item, neo4j.Relationship):
+                if mapRels:
+                    mapped.append(cls.Relationship(item))
+                else:
+                    mapped.append(item)
+
+            elif isinstance(item, list):
+                mapped.append(cls.automap(item, mapRels=mapRels))
+
+            elif isinstance(item, neo4j.Path):
+                path = []
+                for i, rel in enumerate(item._relationships):
+                    path.append(cls.Node(item._nodes[i]))
+                    if mapRels:
+                        path.append(cls.Relationship(rel))
+                    else:
+                        path.append(rel)
+                path.append(cls.Node(item._nodes[-1]))
+                mapped.append(path)
+
+            else:
+                mapped.append(item)
+
+        return mapped
 
     def init(self, reset=False):
         from node import Node

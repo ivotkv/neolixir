@@ -1,8 +1,9 @@
-from py2neo.neo4j import *
-from py2neo import neo4j
 import py2neo
 
 if py2neo.__version__ in ('1.6.4',):
+
+    from py2neo.neo4j import *
+    from py2neo import neo4j
 
     """
     This restores the id property for consistency with previous versions.
@@ -84,6 +85,15 @@ if py2neo.__version__ in ('1.6.4',):
                 self._relationships = []
 
     neo4j.Path = Path
+
+elif py2neo.__version__ in ('2.0.beta',):
+
+    """
+    This restores the id property for consistency with previous versions.
+    """
+    from py2neo.core import Node, Relationship
+    Node.id = Node._id
+    Relationship.id = Relationship._id
 
 else:
     raise ImportError("Untested version of py2neo ({0}), please check overrides.".format(py2neo.__version__))

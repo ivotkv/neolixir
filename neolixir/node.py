@@ -37,7 +37,7 @@ class Node(Entity):
 
     def __new__(cls, value=None, **properties):
         if isinstance(value, int):
-            value = m.engine.node(value)
+            value = m.graph.node(value)
         elif value is not None and not isinstance(value, (cls, neo4j.Node)):
             raise ValueError("Node can only be instantiated by id, entity or None")
         return super(Node, cls).__new__(cls, value, **properties)
@@ -78,7 +78,7 @@ class Node(Entity):
                 self._entity = None
 
             elif self.is_phantom():
-                self._entity = m.engine.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
+                self._entity = m.graph.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
                 m.session.add(self)
 
             elif self.is_dirty():
