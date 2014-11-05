@@ -6,13 +6,10 @@ from py2neo import neo4j
 from py2neo.core import Graph
 from py2neo.legacy.core import LegacyResource
 from session import Session
-from batch import WriteBatch
 
 __all__ = ['metadata']
 
 class MetaData(object):
-
-    __batch_cls__ = WriteBatch
 
     def __init__(self, url='http://localhost:7474/db/data/'):
         self.url = url
@@ -64,23 +61,24 @@ class MetaData(object):
         return results
 
     def batch(self):
-        return self.__batch_cls__(self.graph, self)
+        from batch import WriteBatch
+        return WriteBatch(self.graph, self)
 
     @classmethod
     def automap(cls, data, mapRels=True):
-        mapped = []
-
         from node import Node
         from relationship import Relationship
+
+        mapped = []
 
         for item in data:
 
             if isinstance(item, neo4j.Node):
-                mapped.append(cls.Node(item))
+                mapped.append(Node(item))
 
             elif isinstance(item, neo4j.Relationship):
                 if mapRels:
-                    mapped.append(cls.Relationship(item))
+                    mapped.append(Relationship(item))
                 else:
                     mapped.append(item)
 
@@ -90,12 +88,12 @@ class MetaData(object):
             elif isinstance(item, neo4j.Path):
                 path = []
                 for i, rel in enumerate(item._relationships):
-                    path.append(cls.Node(item._nodes[i]))
+                    path.append(Node(item._nodes[i]))
                     if mapRels:
-                        path.append(cls.Relationship(rel))
+                        path.append(Relationship(rel))
                     else:
                         path.append(rel)
-                path.append(cls.Node(item._nodes[-1]))
+                path.append(Node(item._nodes[-1]))
                 mapped.append(path)
 
             else:
@@ -105,6 +103,7 @@ class MetaData(object):
 
     def init(self, reset=False):
         from node import Node
+
         batch = self.batch()
 
         if reset:

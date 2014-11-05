@@ -55,7 +55,7 @@ class Entity(object):
         instance = m.session.get(value)
         if instance is not None:
             return instance
-        elif isinstance(value, neo4j._Entity):
+        elif isinstance(value, (neo4j.Node, neo4j.Relationship)):
             loaded_properties = m.session.propmap.get_properties(value)
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):

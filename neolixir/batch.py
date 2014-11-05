@@ -4,56 +4,24 @@ from utils import classproperty
 import overrides
 import py2neo
 from py2neo import neo4j
+from py2neo.batch import CypherJob
+from py2neo.legacy.batch import LegacyWriteBatch
+from node import Node
+from relationship import Relationship
 
-class WriteBatch(neo4j.WriteBatch):
+class WriteBatch(LegacyWriteBatch):
 
     def __init__(self, graph_db, metadata):
         super(WriteBatch, self).__init__(graph_db)
         self.metadata = metadata
+        self.phantom_nodes = {}
+        self.callbacks = []
         self.resubmit = False
 
-    @classproperty
-    def Node(cls):
-        try:
-            return cls._Node
-        except AttributeError:
-            from node import Node
-            cls._Node = Node
-            return cls._Node
-
-    @classproperty
-    def Relationship(cls):
-        try:
-            return cls._Relationship
-        except AttributeError:
-            from relationship import Relationship
-            cls._Relationship = Relationship
-            return cls._Relationship
-
-    @property
-    def requests(self):
-        return self._requests
-
-    @property
-    def phantom_nodes(self):
-        try:
-            return self._phantom_nodes
-        except AttributeError:
-            self._phantom_nodes = {}
-            return self._phantom_nodes
-
-    @property
-    def callbacks(self):
-        try:
-            return self._callbacks
-        except AttributeError:
-            self._callbacks = []
-            return self._callbacks
-
     def clear(self):
-        super(WriteBatch, self).clear()
+        self.jobs = []
         self.phantom_nodes.clear()
-        self._callbacks = []
+        self.callbacks = []
 
     def callback(self, func, *args):
         if args:
@@ -62,21 +30,21 @@ class WriteBatch(neo4j.WriteBatch):
             self.callbacks.append(func)
 
     def request_callback(self, func, *args):
-        if not hasattr(self.requests[-1], 'callbacks'):
-            self.requests[-1].callbacks = []
+        if not hasattr(self.jobs[-1], 'callbacks'):
+            self.jobs[-1].callbacks = []
 
         if args:
-            self.requests[-1].callbacks.append(functools.partial(func, *args))
+            self.jobs[-1].callbacks.append(functools.partial(func, *args))
         else:
-            self.requests[-1].callbacks.append(func)
+            self.jobs[-1].callbacks.append(func)
 
     @property
     def last(self):
-        return len(self.requests) - 1
+        return len(self.jobs) - 1
 
     def create(self, *items):
         for item in items:
-            if isinstance(item, self.Node):
+            if isinstance(item, Node):
                 super(WriteBatch, self).create(py2neo.node(item.get_abstract()))
                 self.phantom_nodes[item] = self.last
 
@@ -89,12 +57,12 @@ class WriteBatch(neo4j.WriteBatch):
                 self.request_callback(callback, item, self.metadata)
                 super(WriteBatch, self).create(py2neo.rel(self.last, "__instance_of__", item.classnode))
 
-            elif isinstance(item, self.Relationship):
+            elif isinstance(item, Relationship):
                 abstract = [
                     self.phantom_nodes[item.start] if item.start.is_phantom() else item.start._entity,
                     item.type,
                     self.phantom_nodes[item.end] if item.end.is_phantom() else item.end._entity,
-                    super(self.Relationship, item).get_abstract()
+                    super(Relationship, item).get_abstract()
                 ]
                 super(WriteBatch, self).create(py2neo.rel(*abstract))
 
@@ -116,7 +84,7 @@ class WriteBatch(neo4j.WriteBatch):
 
     def delete(self, *items):
         for item in items:
-            if isinstance(item, self.Node):
+            if isinstance(item, Node):
                 def callback(item, response):
                     item.expunge()
                     item._entity = None
@@ -130,7 +98,7 @@ class WriteBatch(neo4j.WriteBatch):
                 else:
                     self.callback(callback, item)
 
-            elif isinstance(item, self.Relationship):
+            elif isinstance(item, Relationship):
                 def callback(item, response):
                     item.expunge()
                     item._entity = None
@@ -150,10 +118,10 @@ class WriteBatch(neo4j.WriteBatch):
 
     def index(self, index, key, value, item):
         if isinstance(item, dict):
-            cls = index.cls or self.Node
+            cls = index.cls or Node
             return self.index(index, key, value, cls(value=None, **item))
 
-        elif isinstance(item, self.Node):
+        elif isinstance(item, Node):
             cls = item.__class__
 
             if item.is_phantom():
@@ -186,7 +154,7 @@ class WriteBatch(neo4j.WriteBatch):
                         self.request_callback(callback2, cls, item, response)
 
                         for callback in request.callbacks[1:]:
-                            self.requests[-1].callbacks.append(callback)
+                            self.jobs[-1].callbacks.append(callback)
 
                         self.resubmit = True
                         return False
@@ -199,7 +167,7 @@ class WriteBatch(neo4j.WriteBatch):
                             item.expunge()
                             return cls(response)
 
-                self.request_callback(callback, self, self.requests[-1], cls, item)
+                self.request_callback(callback, self, self.jobs[-1], cls, item)
 
             else:
                 self.get_or_add_to_index(neo4j.Node, index.index, key, value, item._entity)
@@ -217,7 +185,7 @@ class WriteBatch(neo4j.WriteBatch):
 
     def save(self, *entities):
         for entity in entities:
-            if isinstance(entity, (self.Node, self.Relationship)):
+            if isinstance(entity, (Node, Relationship)):
 
                 if entity.is_deleted():
                     self.delete(entity)
@@ -226,10 +194,10 @@ class WriteBatch(neo4j.WriteBatch):
                     self.create(entity)
 
                 elif entity.is_dirty():
-                    if isinstance(entity, self.Node):
+                    if isinstance(entity, Node):
                         self.set_properties(entity._entity, entity.get_abstract())
                     else:
-                        abstract = super(self.Relationship, entity).get_abstract()
+                        abstract = super(Relationship, entity).get_abstract()
                         self.set_properties(entity._entity, abstract)
 
                     def callback(entity, response):
@@ -241,21 +209,21 @@ class WriteBatch(neo4j.WriteBatch):
                 raise TypeError(u"cannot save entity: {0}".format(entity))
 
     def cypher(self, query, params=None, automap=True):
-        self.append_cypher(query, params=params)
-        self.requests[-1].automap = automap
+        self.append(CypherJob(query, parameters=params))
+        self.jobs[-1].automap = automap
 
     def query(self, query, automap=True):
         self.cypher(query.string, params=query.params, automap=automap)
 
     def submit(self, automap=True):
-        requests = self.requests
+        jobs = self.jobs
         callbacks = self.callbacks
-        responses = super(WriteBatch, self).submit() if len(requests) > 0 else []
+        responses = super(WriteBatch, self).submit() if len(jobs) > 0 else []
         self.clear()
 
         results = []
         for idx, response in enumerate(responses):
-            request = requests[idx]
+            request = jobs[idx]
 
             if hasattr(request, 'automap'):
                 response = [list(record) for record in response]

@@ -13,7 +13,7 @@ def test_index(m):
     assert len(m.session.nodes) == 0
     batch.index(index, 'node', '1', n1)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
     assert not n1.is_phantom()
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.nodes) == 1
@@ -21,7 +21,7 @@ def test_index(m):
 
     batch.index(index, 'node', '1', TNode())
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
     assert len(index.get('node', '1')) == 1
     assert index.get('node', '1')[0] is n1
     assert len(m.session.phantomnodes) == 0
@@ -30,7 +30,7 @@ def test_index(m):
     # test indexing an existing node
     batch.index(index, 'node', '2', n1)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
     assert n1 in m.session.nodes.values()
     assert len(index.get('node', '2')) == 1
     assert index.get('node', '2')[0] is n1
@@ -38,7 +38,7 @@ def test_index(m):
     batch.index(index, 'node', '2', n1)
     batch.index(index, 'node', '2', TNode())
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.nodes) == 1
     assert n1 in m.session.nodes.values()
@@ -53,7 +53,7 @@ def test_index(m):
     batch.index(index, 'node', '3', TNode())
     batch.request_callback(callback, n1)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
 
     def callback(m, cls, response):
         assert isinstance(response, cls)
@@ -62,7 +62,7 @@ def test_index(m):
     batch.index(index, 'node', '4', TNode())
     batch.request_callback(callback, m, TNode)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
 
     n2 = TNode()
     def callback(m, n2, response):
@@ -71,7 +71,7 @@ def test_index(m):
     batch.index(index, 'node', '5', n2)
     batch.request_callback(callback, m, n2)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
 
     # test that __instance_of__ relationship was created
     assert n1 in TNode.query.all()
@@ -93,7 +93,7 @@ def test_index(m):
         assert response.end_node == n2._entity
     batch.request_callback(callback, batch, rel)
     batch.submit()
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
 
 def test_index_committing(m):
     m.session.committing = True
@@ -116,7 +116,7 @@ def test_cypher(m):
     assert isinstance(result[0][0], neo4j.Node)
     assert result[0][0] == n1._entity
 
-    assert len(batch.requests) == 0
+    assert len(batch.jobs) == 0
 
     batch.cypher("start n=node({n_id}) return n", params={'n_id': n1.id}, automap=True)
     result = batch.submit()[0]

@@ -206,12 +206,12 @@ class Session(object):
                         self.batch.save(node)
                         count += 1
                     if batch_size and count % batch_size == 0:
-                        pending = copy(self.batch.requests)
+                        pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
                         for idx, request in enumerate(pending):
                             saved.append((request, responses[idx]))
                         pending = []
-                pending = copy(self.batch.requests)
+                pending = copy(self.batch.jobs)
                 responses = self.batch.submit()
                 for idx, request in enumerate(pending):
                     saved.append((request, responses[idx]))
@@ -224,12 +224,12 @@ class Session(object):
                         self.batch.save(rel)
                         count += 1
                     if batch_size and count % batch_size == 0:
-                        pending = copy(self.batch.requests)
+                        pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
                         for idx, request in enumerate(pending):
                             saved.append((request, responses[idx]))
                         pending = []
-                pending = copy(self.batch.requests)
+                pending = copy(self.batch.jobs)
                 responses = self.batch.submit()
                 for idx, request in enumerate(pending):
                     saved.append((request, responses[idx]))

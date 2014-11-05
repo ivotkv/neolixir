@@ -6,7 +6,7 @@ from properties import Property
 class PropMap(dict):
 
     def get_key(self, value):
-        if not isinstance(value, neo4j._Entity):
+        if not isinstance(value, (neo4j.Node, neo4j.Relationship)):
             if getattr(value, '_entity', None) is None:
                 return value
             else:
@@ -15,7 +15,7 @@ class PropMap(dict):
 
     def get_properties(self, value):
         key = self.get_key(value)
-        if isinstance(value, neo4j._Entity):
+        if isinstance(value, (neo4j.Node, neo4j.Relationship)):
             try:
                 return self[key]
             except KeyError:
