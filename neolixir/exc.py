@@ -3,10 +3,10 @@
 import traceback
 import overrides
 
-from py2neo.core import ClientError, ServerError
-BadRequest = ClientError
-ResourceNotFound = ClientError
-ResourceConflict = ClientError
+from py2neo.error import GraphError
+BadRequest = GraphError
+ResourceNotFound = GraphError
+ResourceConflict = GraphError
 from py2neo.cypher import CypherError
 
 __all__ = ['NeolixirError', 'CommitError',

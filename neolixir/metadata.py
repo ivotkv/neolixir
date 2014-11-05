@@ -87,13 +87,13 @@ class MetaData(object):
 
             elif isinstance(item, neo4j.Path):
                 path = []
-                for i, rel in enumerate(item._relationships):
-                    path.append(Node(item._nodes[i]))
+                for i, rel in enumerate(item.relationships):
+                    path.append(Node(item.nodes[i]))
                     if mapRels:
                         path.append(Relationship(rel))
                     else:
                         path.append(rel)
-                path.append(Node(item._nodes[-1]))
+                path.append(Node(item.nodes[-1]))
                 mapped.append(path)
 
             else:
