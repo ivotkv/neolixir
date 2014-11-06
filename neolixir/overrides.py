@@ -1,72 +1,14 @@
 import py2neo
 
 if py2neo.__version__ in ('1.6.4',):
-
-    from py2neo.neo4j import *
-    from py2neo import neo4j
-
-    """
-    This restores the id property for consistency with previous versions.
-    """
-    neo4j._Entity.id = neo4j._Entity._id
-
-    """
-    This ensures consistent cypher result format for batches (see __hydrate()).
-    Redefined in full since the name-mangled __hydrate makes it difficult to override cleanly.
-    """
-    from py2neo.neo4j import _hydrated
-
-    class BatchResponse(object):
-
-        @classmethod
-        def __hydrate(cls, result, hydration_cache=None):
-            body = result.get("body")
-            if isinstance(body, dict):
-                if has_all(body, CypherResults.signature):
-                    return CypherResults._hydrated(body, hydration_cache)
-                elif has_all(body, ("exception", "stacktrace")):
-                    err = ServerException(body)
-                    try:
-                        CustomBatchError = type(err.exception, (BatchError,), {})
-                    except TypeError:
-                        # for Python 2.x
-                        CustomBatchError = type(str(err.exception), (BatchError,), {})
-                    raise CustomBatchError(err)
-                else:
-                    return _hydrated(body, hydration_cache)
-            else:
-                return _hydrated(body, hydration_cache)
-
-        def __init__(self, result, raw=False, hydration_cache=None):
-            self.id_ = result.get("id")
-            self.uri = result.get("from")
-            self.body = result.get("body")
-            self.status_code = result.get("status", 200)
-            self.location = URI(result.get("location"))
-            if __debug__:
-                batch_log.debug("<<< {{{0}}} {1} {2} {3}".format(self.id_, self.status_code, self.location, self.body))
-            # We need to hydrate on construction to catch any errors in the batch
-            # responses contained in the body
-            if raw:
-                self.__hydrated = None
-            else:
-                self.__hydrated = self.__hydrate(result, hydration_cache)
-
-        @property
-        def __uri__(self):
-            return self.uri
-
-        @property
-        def hydrated(self):
-            return self.__hydrated
-
-    neo4j.BatchResponse = BatchResponse
     
     """
     This ensures that loaded paths contain the real relationships and not just abstract data.
     Also skips default init on hydration for performance reasons (_UnboundRelationship.cast()).
     """
+    from py2neo.neo4j import *
     from py2neo.neo4j import _rel
+    from py2neo import neo4j
     
     class Path(neo4j.Path):
 
@@ -94,6 +36,32 @@ elif py2neo.__version__ in ('2.0.beta',):
     from py2neo.core import Node, Relationship
     Node.id = Node._id
     Relationship.id = Relationship._id
+
+    """
+    This ensures consistent cypher result format for batches (see __hydrate()).
+    Redefined in full since the name-mangled __hydrate makes it difficult to override cleanly.
+    """
+    from py2neo.batch.core import JobResult, GraphError, BatchError, ustr, raise_from
+
+    def hydrate(cls, data, batch):
+        graph = getattr(batch, "graph", None)
+        job_id = data["id"]
+        uri = data["from"]
+        status_code = data.get("status")
+        location = data.get("location")
+        if graph is None or batch[job_id].raw_result:
+            body = data.get("body")
+        else:
+            body = None
+            try:
+                body = graph.hydrate(data.get("body"))
+            except GraphError as error:
+                message = "Batch job %s failed with %s\n%s" % (
+                    job_id, error.__class__.__name__, ustr(error))
+                raise_from(BatchError(message, batch, job_id, status_code, uri, location), error)
+        return cls(batch, job_id, uri, status_code, location, body)
+
+    JobResult.hydrate = classmethod(hydrate)
 
 else:
     raise ImportError("Untested version of py2neo ({0}), please check overrides.".format(py2neo.__version__))

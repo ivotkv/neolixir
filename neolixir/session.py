@@ -19,6 +19,9 @@ class Session(object):
         self.phantomnodes.clear()
         self.relmap.clear()
         self.propmap.clear()
+        neo4j.Node.cache.clear()
+        neo4j.Relationship.cache.clear()
+        neo4j.Rel.cache.clear()
 
     @property
     def committing(self):
@@ -116,11 +119,16 @@ class Session(object):
         from relationship import Relationship
         if isinstance(entity, Relationship):
             self.relmap.remove(entity)
+            if entity._entity is not None:
+                neo4j.Relationship.cache.pop(entity._entity.uri, None)
+                neo4j.Rel.cache.pop(entity._entity.uri, None)
         else:
             for rel in list(self.relmap.node.get(entity, [])):
                 self.expunge(rel)
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
+            if entity._entity is not None:
+                neo4j.Node.cache.pop(entity._entity.uri, None)
         self.propmap.remove(entity)
         entity._session = None
 

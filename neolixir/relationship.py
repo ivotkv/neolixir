@@ -27,7 +27,12 @@ class Relationship(Entity):
             except KeyError:
                 return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
         elif isinstance(value, int):
-            value = m.graph.relationship(value)
+            try:
+                value = m.graph.relationship(value)
+            except ValueError as e:
+                if str(e).find('not found') > 0:
+                    raise ResourceNotFound(str(e))
+                raise e
         elif isinstance(value, tuple):
             value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
             if value[0] is None:

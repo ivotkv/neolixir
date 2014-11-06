@@ -98,6 +98,16 @@ class Entity(object):
                                                  "\n".join(self._get_repr_data()))
 
     @property
+    def _entity(self):
+        return self.__entity
+
+    @_entity.setter
+    def _entity(self, value):
+        self.__entity = value
+        if value is not None:
+            value.pull()
+
+    @property
     def id(self):
         return self._entity.id if self._entity else None
 
