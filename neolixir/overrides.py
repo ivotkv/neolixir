@@ -33,9 +33,31 @@ elif py2neo.__version__ in ('2.0.beta',):
     """
     This restores the id property for consistency with previous versions.
     """
-    from py2neo.core import Node, Relationship
+    from py2neo import Node, Relationship
     Node.id = Node._id
     Relationship.id = Relationship._id
+
+    """
+    Thread safety for py2neo caches
+    """
+    import threading
+    from weakref import WeakValueDictionary
+    from py2neo import Node, Relationship, Rel
+    from utils import classproperty
+
+    def cache(cls):
+        try:
+            return cls._threadlocal.cache
+        except AttributeError:
+            cls._threadlocal.cache = WeakValueDictionary()
+            return cls._threadlocal.cache
+
+    Node._threadlocal = threading.local()
+    Node.cache = classproperty(cache)
+    Relationship._threadlocal = threading.local()
+    Relationship.cache = classproperty(cache)
+    Rel._threadlocal = threading.local()
+    Rel.cache = classproperty(cache)
 
     """
     This ensures consistent cypher result format for batches (see __hydrate()).
