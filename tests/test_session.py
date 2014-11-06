@@ -1,6 +1,7 @@
 from Queue import Queue
 from threading import Thread
 from common import *
+from py2neo import neo4j
 
 def test_counts_and_clear(m):
     assert m.session.count == 0
@@ -11,6 +12,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 0
+    assert len(neo4j.Node.cache) == 0
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
     n1 = TNode()
     assert m.session.count == 1
@@ -21,6 +25,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 1
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 0
+    assert len(neo4j.Node.cache) == 0
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
     m.session.commit()
     assert m.session.count == 1
@@ -31,6 +38,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 1
+    assert len(neo4j.Node.cache) == 1
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
     n1.string = "test"
     assert m.session.count == 1
@@ -41,6 +51,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 1
+    assert len(neo4j.Node.cache) == 1
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
     
     n2 = TNode()
     assert m.session.count == 2
@@ -51,6 +64,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 1
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 1
+    assert len(neo4j.Node.cache) == 1
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
     r = n1.trel_out.append(n2)
     assert m.session.count == 3
@@ -61,6 +77,9 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 1
     assert len(m.session.relmap) == 1
     assert len(m.session.propmap) == 1
+    assert len(neo4j.Node.cache) == 1
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
     m.session.clear()
     assert m.session.count == 0
@@ -71,6 +90,38 @@ def test_counts_and_clear(m):
     assert len(m.session.phantomnodes) == 0
     assert len(m.session.relmap) == 0
     assert len(m.session.propmap) == 0
+    assert len(neo4j.Node.cache) == 0
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
+
+    n1 = TNode()
+    n2 = TNode()
+    r = n1.trel_out.append(n2)
+    m.session.commit()
+    assert m.session.count == 3
+    assert m.session.new == 0
+    assert m.session.dirty == 0
+    assert not m.session.is_dirty()
+    assert len(m.session.nodes) == 2
+    assert len(m.session.phantomnodes) == 0
+    assert len(m.session.relmap) == 1
+    assert len(m.session.propmap) == 3
+    assert len(neo4j.Node.cache) == 2
+    assert len(neo4j.Relationship.cache) == 1
+    assert len(neo4j.Rel.cache) == 1
+
+    m.session.clear()
+    assert m.session.count == 0
+    assert m.session.new == 0
+    assert m.session.dirty == 0
+    assert not m.session.is_dirty()
+    assert len(m.session.nodes) == 0
+    assert len(m.session.phantomnodes) == 0
+    assert len(m.session.relmap) == 0
+    assert len(m.session.propmap) == 0
+    assert len(neo4j.Node.cache) == 0
+    assert len(neo4j.Relationship.cache) == 0
+    assert len(neo4j.Rel.cache) == 0
 
 def test_new_and_dirty(m):
     assert m.session.new == 0
@@ -349,3 +400,38 @@ def test_threadsafe(m):
     assert len(m.session.phantomnodes) == 1
     assert len(m.session.relmap) == 1
     assert len(m.session.propmap) == 1
+
+def test_py2neo_threadsafe(m):
+    # initial state
+    n1 = TNode()
+    n2 = TNode()
+    n1.trel_out.append(n2)
+    m.session.commit()
+    assert m.session.count == 3
+    assert len(neo4j.Node.cache) == 2
+    assert len(neo4j.Relationship.cache) == 1
+    assert len(neo4j.Rel.cache) == 1
+    
+    # verify that subthread has separate session
+    def test(q, m):
+        try:
+            assert m.session.count == 0
+            assert len(neo4j.Node.cache) == 0
+            assert len(neo4j.Relationship.cache) == 0
+            assert len(neo4j.Rel.cache) == 0
+        except Exception as e:
+            q.put(e)
+        finally:
+            m.session.clear()
+    q = Queue()
+    t = Thread(target=test, args=(q, m))
+    t.start()
+    t.join()
+    if not q.empty():
+        raise q.get()
+
+    # verify subthread's m.session.clear() has not affected state
+    assert m.session.count == 3
+    assert len(neo4j.Node.cache) == 2
+    assert len(neo4j.Relationship.cache) == 1
+    assert len(neo4j.Rel.cache) == 1
