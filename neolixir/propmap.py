@@ -19,7 +19,7 @@ class PropMap(dict):
             try:
                 return self[key]
             except KeyError:
-                self[key] = PropDict(value.get_cached_properties())
+                self[key] = PropDict(value.properties)
                 return self[key]
         else:
             try:
@@ -31,7 +31,7 @@ class PropMap(dict):
                     try:
                         return self[key]
                     except KeyError:
-                        self[key] = PropDict(value._entity.get_properties())
+                        self[key] = PropDict(value._entity.properties)
                         return self[key]
 
     def remove(self, value):
