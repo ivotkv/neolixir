@@ -1,34 +1,6 @@
 import py2neo
 
-if py2neo.__version__ in ('1.6.4',):
-    
-    """
-    This ensures that loaded paths contain the real relationships and not just abstract data.
-    Also skips default init on hydration for performance reasons (_UnboundRelationship.cast()).
-    """
-    from py2neo.neo4j import *
-    from py2neo.neo4j import _rel
-    from py2neo import neo4j
-    
-    class Path(neo4j.Path):
-
-        @classmethod
-        def _hydrated(cls, data):
-            path = cls()
-            path._nodes = [Node(item) for item in data["nodes"]]
-            path._relationships = [Relationship(item) for item in data["relationships"]]
-            return path
-
-        def __init__(self, *args):
-            if len(args) > 0:
-                super(Path, self).__init__(*args)
-            else:
-                self._nodes = []
-                self._relationships = []
-
-    neo4j.Path = Path
-
-elif py2neo.__version__ in ('2.0.beta',):
+if py2neo.__version__ in ('2.0.beta',):
 
     """
     This restores the id property for consistency with previous versions.
