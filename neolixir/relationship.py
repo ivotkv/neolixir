@@ -68,10 +68,16 @@ class Relationship(Entity):
         elif self.__sort_key__ is not None:
             return cmp(self.__sort_key__(self), self.__sort_key__(other))
         else:
-            if self.id is not None:
+            if self._entity is not None or other._entity is not None:
                 return cmp(self.id, other.id)
             else:
                 return cmp(id(self), id(other))
+
+    def __eq__(self, other):
+        return self is other
+
+    def __ne__(self, other):
+        return self is not other
 
     @property
     def start(self):
