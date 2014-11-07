@@ -105,7 +105,7 @@ class Entity(object):
     def _entity(self, value):
         self.__entity = value
         if value is not None:
-            value.pull()
+            value.properties
 
     @property
     def id(self):
