@@ -1,5 +1,8 @@
 import os
 import pytest
+import warnings
+
+warnings.simplefilter("error")
 
 @pytest.fixture(scope='session')
 def metadata():
