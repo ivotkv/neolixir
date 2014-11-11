@@ -5,7 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '0.63'
+VERSION = '1.0'
 
 setup(
     name='neolixir',
@@ -13,7 +13,7 @@ setup(
     version=VERSION,
     packages=['neolixir'],
     install_requires=[
-        'py2neo==1.4.6'
+        'py2neo'
     ],
     test_requires=[
         'pytest'
