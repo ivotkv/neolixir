@@ -1,6 +1,6 @@
 import py2neo
 
-if py2neo.__version__ in ('2.0.beta',):
+if py2neo.__version__ in ('2.0',):
 
     """
     This restores the id property for consistency with previous versions.
