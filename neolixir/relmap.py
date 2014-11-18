@@ -260,14 +260,23 @@ class RelView(object):
     def reversed(self):
         return self.sorted(reverse=True)
 
+    def iternodes(self):
+        return iter(self)
+
     def nodes(self):
         return list(self)
+
+    def iterrels(self):
+        return iter(self.data)
 
     def rels(self):
         return list(self.data)
 
-    def iterrels(self):
-        return iter(self.data)
+    def iteritems(self):
+        return ((rel, self.nodefunc(rel)) for rel in self.data)
+
+    def items(self):
+        return [(rel, self.nodefunc(rel)) for rel in self.data]
 
     def node(self, rel):
         return self.nodefunc(rel)
