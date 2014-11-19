@@ -86,7 +86,8 @@ class PropDict(dict):
             dirty = self.is_dirty()
 
         if self.owner and not self.owner.is_phantom():
-            super(PropDict, self).update(self.owner._entity.get_properties())
+            self.owner._entity.properties.pull()
+            super(PropDict, self).update(self.owner._entity.properties)
 
         self.set_dirty(dirty)
 
