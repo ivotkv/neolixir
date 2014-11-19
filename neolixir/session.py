@@ -77,12 +77,25 @@ class Session(object):
             self._threadlocal.propmap = PropMap()
             return self._threadlocal.propmap
 
+    def __contains__(self, item):
+        from node import Node
+        if isinstance(item, Node):
+            if item.is_phantom():
+                return item in self.phantomnodes
+            else:
+                return item in self.nodes.itervalues()
+        else:
+            return item in self.relmap
+
+    def __iter__(self):
+        return chain(self.nodes.itervalues(), self.phantomnodes, self.relmap)
+
     def __len__(self):
-        return self.count
+        return len(self.nodes) + len(self.phantomnodes) + len(self.relmap)
 
     @property
     def count(self):
-        return len(self.nodes) + len(self.phantomnodes) + len(self.relmap)
+        return self.__len__()
 
     @property
     def new(self):

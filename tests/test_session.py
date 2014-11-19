@@ -3,6 +3,65 @@ from threading import Thread
 from common import *
 from py2neo import neo4j
 
+def test_contains_iter_len(m):
+    n1 = TNode()
+    n2 = TNode()
+    r1 = Relationship((n1, 'test1', n2))
+    assert n1 in m.session
+    assert n1 in iter(m.session)
+    assert n2 in m.session
+    assert n2 in iter(m.session)
+    assert r1 in m.session
+    assert r1 in iter(m.session)
+    assert len(list(iter(m.session))) == 3
+    assert len(m.session) == 3
+
+    m.session.commit()
+    assert n1 in m.session
+    assert n1 in iter(m.session)
+    assert n2 in m.session
+    assert n2 in iter(m.session)
+    assert r1 in m.session
+    assert r1 in iter(m.session)
+    assert len(list(iter(m.session))) == 3
+    assert len(m.session) == 3
+
+    n3 = TNode()
+    n4 = TNode()
+    r2 = Relationship((n3, 'test2', n4))
+    assert n3 in m.session
+    assert n3 in iter(m.session)
+    assert n4 in m.session
+    assert n4 in iter(m.session)
+    assert r2 in m.session
+    assert r2 in iter(m.session)
+    assert len(list(iter(m.session))) == 6
+    assert len(m.session) == 6
+
+    r1.expunge()
+    n1.expunge()
+    n2.expunge()
+    assert n1 not in m.session
+    assert n1 not in iter(m.session)
+    assert n2 not in m.session
+    assert n2 not in iter(m.session)
+    assert r1 not in m.session
+    assert r1 not in iter(m.session)
+    assert len(list(iter(m.session))) == 3
+    assert len(m.session) == 3
+
+    r2.expunge()
+    n3.expunge()
+    n4.expunge()
+    assert n3 not in m.session
+    assert n3 not in iter(m.session)
+    assert n4 not in m.session
+    assert n4 not in iter(m.session)
+    assert r2 not in m.session
+    assert r2 not in iter(m.session)
+    assert len(list(iter(m.session))) == 0
+    assert len(m.session) == 0
+
 def test_counts_and_clear(m):
     assert m.session.count == 0
     assert m.session.new == 0

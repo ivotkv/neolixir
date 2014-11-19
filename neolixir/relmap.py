@@ -125,11 +125,20 @@ class RelMap(object):
         else:
             return None
 
-    def __len__(self):
-        return len(self._ids) + len(self._phantoms)
+    def __contains__(self, item):
+        if isinstance(item, Relationship):
+            if item.is_phantom():
+                return item in self._phantoms
+            else:
+                return item in self._ids.itervalues()
+        else:
+            return False
 
     def __iter__(self):
         return chain(self._ids.itervalues(), iter(self._phantoms))
+
+    def __len__(self):
+        return len(self._ids) + len(self._phantoms)
 
     def iterphantoms(self):
         return iter(self._phantoms)
