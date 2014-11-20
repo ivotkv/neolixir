@@ -1,14 +1,20 @@
 from datetime import datetime as datetime_
 from decimal import Decimal
+from functools import partial
+from random import randint
 from neolixir import *
 
 class TRel(Relationship):
+    randval = Integer(default=partial(randint, 0, 1000000))
+
     string = String()
 
 class SubTRel(TRel):
     substring = String()
 
 class TNode(Node):
+    randval = Integer(default=partial(randint, 0, 1000000))
+
     boolean = Boolean()
     string = String()
     enum = Enum('value1', 'value2')
