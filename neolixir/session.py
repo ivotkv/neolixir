@@ -186,7 +186,7 @@ class Session(object):
                                 rel.expunge()
                                 retry = True
                                 continue
-                elif re.search('ResourceNotFound', error):
+                elif re.search('EntityNotFoundException', error):
                     if re.search(r'/node/\d+', error):
                         id = re.sub(r'^.*/node/(\d+)\D*$', r'\1', error)
                         if id.isdigit():

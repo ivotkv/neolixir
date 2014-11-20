@@ -31,7 +31,7 @@ class Relationship(Entity):
                 value = m.graph.relationship(value)
             except ValueError as e:
                 if str(e).find('not found') > 0:
-                    raise ResourceNotFound(str(e))
+                    raise EntityNotFoundException(str(e))
                 raise e
         elif isinstance(value, tuple):
             value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
@@ -139,7 +139,7 @@ class Relationship(Entity):
                 if not self.is_phantom():
                     try:
                         self._entity.delete()
-                    except ResourceNotFound:
+                    except EntityNotFoundException:
                         pass
                 self.expunge()
                 self._entity = None

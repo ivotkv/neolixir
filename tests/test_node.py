@@ -59,5 +59,5 @@ def test_delete(m):
     assert m.session.dirty == 1
     m.session.commit()
     assert m.session.count == 0
-    with raises(ResourceNotFound):
+    with raises(EntityNotFoundException):
         Node(n1_id)

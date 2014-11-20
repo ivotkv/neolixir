@@ -10,6 +10,34 @@ if py2neo.__version__ in ('2.0',):
     Relationship.id = Relationship._id
 
     """
+    This adds consistent subclasses to GraphError for easier exception catching
+    """
+    from py2neo.error import GraphError
+
+    def __new__(cls, *args, **kwargs):
+        try:
+            exception = kwargs["exception"]
+            error_cls = cls.subcls(exception)
+        except KeyError:
+            error_cls = cls
+        return Exception.__new__(error_cls, *args)
+
+    def subcls(cls, name):
+        try:
+            return cls._subcls[name]
+        except KeyError:
+            try:
+                cls._subcls[name] = type(name, (cls,), {})
+            except TypeError:
+                # for Python 2.x
+                cls._subcls[name] = type(str(name), (cls,), {})
+            return cls._subcls[name]
+
+    GraphError._subcls = {}
+    GraphError.subcls = classmethod(subcls)
+    GraphError.__new__ = classmethod(__new__)
+
+    """
     This ensures consistent cypher result format for batches (see __hydrate()).
     Redefined in full since the name-mangled __hydrate makes it difficult to override cleanly.
     """

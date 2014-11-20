@@ -34,5 +34,5 @@ def test_save_load_delete(m):
     assert r.is_deleted()
     assert not n2.is_deleted()
     m.session.commit()
-    with raises(ResourceNotFound):
+    with raises(EntityNotFoundException):
         Relationship(r_id)

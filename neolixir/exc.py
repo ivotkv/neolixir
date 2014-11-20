@@ -4,15 +4,13 @@ import traceback
 import overrides
 
 from py2neo.error import GraphError
-BadRequest = GraphError
-ResourceNotFound = GraphError
-ResourceConflict = GraphError
 from py2neo.cypher import CypherError
 
-__all__ = ['NeolixirError', 'CommitError',
-           'QueryError', 'NoResultFound', 'MultipleResultsFound',
-           'CypherError','BadRequest', 'ResourceNotFound',
-           'ResourceConflict']
+EntityNotFoundException = GraphError.subcls('EntityNotFoundException')
+
+__all__ = ['GraphError', 'CypherError', 'EntityNotFoundException',
+           'NeolixirError', 'CommitError', 'QueryError',
+           'NoResultFound', 'MultipleResultsFound']
 
 class NeolixirError(Exception):
     """Base class for all Neolixir exceptions."""

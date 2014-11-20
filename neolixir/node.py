@@ -41,7 +41,7 @@ class Node(Entity):
                 value = m.graph.node(value)
             except ValueError as e:
                 if str(e).find('not found') > 0:
-                    raise ResourceNotFound(str(e))
+                    raise EntityNotFoundException(str(e))
                 raise e
         elif value is not None and not isinstance(value, (cls, neo4j.Node)):
             raise ValueError("Node can only be instantiated by id, entity or None")
@@ -100,7 +100,7 @@ class Node(Entity):
         if 'id' in kwargs:
             try:
                 return cls(kwargs['id'])
-            except ResourceNotFound:
-                raise NoResultFound()
+            except EntityNotFoundException:
+                raise NoResultFound(u"{0} with ID {1} not found".format(cls.__name__, kwargs['id']))
         else:
             return cls.query.filter(*["instance.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).one()
