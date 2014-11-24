@@ -131,6 +131,6 @@ class Query(BaseQuery):
         if len(results) == 1:
             return results[0][0]
         elif len(results) == 0:
-            raise NoResultFound()
+            raise QueryError('No results found for one()')
         else:
-            raise MultipleResultsFound()
+            raise QueryError('Multiple results found for one()')

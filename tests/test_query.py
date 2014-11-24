@@ -7,12 +7,10 @@ def test_get_by(m):
     m.session.commit()
     assert Node.get_by(integer=v1) is n1
     assert TNode.get_by(integer=v1) is n1
-    with raises(NoResultFound):
-        SubTNode.get_by(integer=v1)
+    assert SubTNode.get_by(integer=v1) is None
     m.session.clear()
     n1 = Node.get_by(integer=v1)
     assert isinstance(n1, TNode)
     assert n1.integer == v1
     assert TNode.get_by(integer=v1) is n1
-    with raises(NoResultFound):
-        SubTNode.get_by(integer=v1)
+    assert SubTNode.get_by(integer=v1) is None

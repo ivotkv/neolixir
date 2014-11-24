@@ -9,8 +9,7 @@ from py2neo.cypher import CypherError
 EntityNotFoundException = GraphError.subcls('EntityNotFoundException')
 
 __all__ = ['GraphError', 'CypherError', 'EntityNotFoundException',
-           'NeolixirError', 'CommitError', 'QueryError',
-           'NoResultFound', 'MultipleResultsFound']
+           'NeolixirError', 'CommitError', 'QueryError']
 
 class NeolixirError(Exception):
     """Base class for all Neolixir exceptions."""
@@ -29,13 +28,5 @@ class CommitError(NeolixirError):
         super(CommitError, self).__init__(msg)
 
 class QueryError(NeolixirError):
-    """Base class for all Neolixir query exceptions."""
-    pass
-
-class NoResultFound(QueryError):
-    """Triggered when results were expected but none were found."""
-    pass
-
-class MultipleResultsFound(QueryError):
-    """Triggered when a single result was expected but more were found."""
+    """Exception class for Queries."""
     pass

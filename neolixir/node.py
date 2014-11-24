@@ -101,6 +101,6 @@ class Node(Entity):
             try:
                 return cls(kwargs['id'])
             except EntityNotFoundException:
-                raise NoResultFound(u"{0} with ID {1} not found".format(cls.__name__, kwargs['id']))
+                return None
         else:
-            return cls.query.filter(*["instance.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).one()
+            return cls.query.filter(*["instance.{0}! = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]).first()
