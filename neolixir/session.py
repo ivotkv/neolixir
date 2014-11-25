@@ -160,16 +160,51 @@ class Session(object):
         from relationship import Relationship
 
         retry = True
-        while retry:
+        max_retry = 5
+
+        while retry and max_retry > 0:
+
             retry = False
+
             try:
                 self._commit(batched=batched, batch_size=batch_size)
+
             except CommitError as e:
-                error = unicode(e.trace[-1])
-                if re.search('DeadlockDetectedException', error):
+                exc = e.exc_info[1]
+
+                if isinstance(exc, BatchError) and exc.status_code == 404:
+                    if re.match(r'^node/\d+($|/.*$)', exc.uri):
+                        id = re.sub(r'^node/(\d+)($|/.*$)', r'\1', exc.uri)
+                        if id.isdigit():
+                            node = Node(int(id))
+                            if node.is_deleted():
+                                node.expunge()
+                                retry = True
+                                continue
+                    elif re.match(r'^relationship/\d+($|/.*$)', exc.uri):
+                        id = re.sub(r'^relationship/(\d+)($|/.*$)', r'\1', exc.uri)
+                        if id.isdigit():
+                            rel = Relationship(int(id))
+                            if rel.is_deleted():
+                                rel.expunge()
+                                retry = True
+                                continue
+
+                elif isinstance(exc, BatchError):
+                    exc = exc.__cause__
+
+                if isinstance(exc, DeadlockDetectedException):
                     retry = True
+                    max_retry -= 1
                     continue
-                elif re.search('EntityNotFoundException', error):
+
+                elif isinstance(exc, GuardTimeoutException):
+                    retry = True
+                    max_retry = 0
+                    continue
+
+                elif isinstance(exc, EntityNotFoundException):
+                    error = unicode(exc)
                     if re.search(r'Node \d+ not found', error):
                         id = re.sub(r'^.*Node (\d+) not found.*$', r'\1', error)
                         if id.isdigit():
@@ -186,23 +221,7 @@ class Session(object):
                                 rel.expunge()
                                 retry = True
                                 continue
-                elif re.search('EntityNotFoundException', error):
-                    if re.search(r'/node/\d+', error):
-                        id = re.sub(r'^.*/node/(\d+)\D*$', r'\1', error)
-                        if id.isdigit():
-                            node = Node(int(id))
-                            if node.is_deleted():
-                                node.expunge()
-                                retry = True
-                                continue
-                    elif re.search(r'/relationship/\d+', error):
-                        id = re.sub(r'^.*/relationship/(\d+)\D*$', r'\1', error)
-                        if id.isdigit():
-                            rel = Relationship(int(id))
-                            if rel.is_deleted():
-                                rel.expunge()
-                                retry = True
-                                continue
+
                 raise e
 
         self.committing = False
@@ -229,13 +248,13 @@ class Session(object):
                     if batch_size and count % batch_size == 0:
                         pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
-                        for idx, request in enumerate(pending):
-                            saved.append((request, responses[idx]))
+                        for idx, job in enumerate(pending):
+                            saved.append((job, responses[idx]))
                         pending = []
                 pending = copy(self.batch.jobs)
                 responses = self.batch.submit()
-                for idx, request in enumerate(pending):
-                    saved.append((request, responses[idx]))
+                for idx, job in enumerate(pending):
+                    saved.append((job, responses[idx]))
                 pending = []
 
                 # submit rels
@@ -247,13 +266,13 @@ class Session(object):
                     if batch_size and count % batch_size == 0:
                         pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
-                        for idx, request in enumerate(pending):
-                            saved.append((request, responses[idx]))
+                        for idx, job in enumerate(pending):
+                            saved.append((job, responses[idx]))
                         pending = []
                 pending = copy(self.batch.jobs)
                 responses = self.batch.submit()
-                for idx, request in enumerate(pending):
-                    saved.append((request, responses[idx]))
+                for idx, job in enumerate(pending):
+                    saved.append((job, responses[idx]))
                 pending = []
 
             except:

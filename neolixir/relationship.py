@@ -80,6 +80,13 @@ class Relationship(Entity):
         return self is not other
 
     @property
+    def cls(self):
+        if self.__class__.__rel_type__ is not None:
+            return m.classes[self.__class__.__name__]
+        else:
+            return self.__class__
+
+    @property
     def start(self):
         try:
             return self._start

@@ -412,6 +412,62 @@ def test_commit(m):
     assert isinstance(r._entity, neo4j.Relationship)
     assert isinstance(r.id, int)
 
+def test_commit_deleted(m):
+    n1 = TNode()
+    n2 = TNode()
+    r1 = n1.trel_out.append(n2)
+    m.session.commit()
+
+    # change deleted rel
+    r1_id = r1.id
+    delete_out_of_session(m, r1)
+    assert r1 in m.session
+    assert not r1.is_deleted()
+
+    r1.string = 'test1'
+    assert r1.is_dirty()
+    with raises(CommitError):
+        m.session.commit()
+    assert r1 in m.session
+
+    # delete deleted rel
+    r1.delete()
+    assert r1.is_deleted()
+    m.session.commit()
+    assert r1 not in m.session
+    with raises(EntityNotFoundException):
+        Relationship(r1_id)
+
+    # add rel to deleted node
+    n2_id = n2.id
+    delete_out_of_session(m, n2)
+    assert n2 in m.session
+    assert not n2.is_deleted()
+
+    r2 = n1.subtrel_out.append(n2)
+    with raises(CommitError):
+        m.session.commit()
+    assert r2 in m.session
+    r2.expunge()
+    assert r2 not in m.session
+    assert n2 in m.session
+    assert not n2.is_deleted()
+
+    # change deleted node
+    n2.string = 'test2'
+    assert n2.is_dirty()
+    with raises(CommitError):
+        m.session.commit()
+    assert n2 in m.session
+
+    # delete deleted node
+    n2.delete()
+    assert n2.is_deleted()
+    m.session.commit()
+    assert n2 not in m.session
+    with raises(EntityNotFoundException):
+        Node(n2_id)
+
 def test_threadsafe(m):
     # initial state
     n1 = TNode()

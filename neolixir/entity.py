@@ -108,6 +108,10 @@ class Entity(object):
             value.properties
 
     @property
+    def cls(self):
+        return self.__class__
+
+    @property
     def id(self):
         return self._entity.id if self._entity else None
 

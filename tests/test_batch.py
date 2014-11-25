@@ -49,9 +49,9 @@ def test_index(m):
     def callback(n1, response):
         assert response is n1
     batch.index(index, 'node', '3', n1)
-    batch.request_callback(callback, n1)
+    batch.job_callback(callback, n1)
     batch.index(index, 'node', '3', TNode())
-    batch.request_callback(callback, n1)
+    batch.job_callback(callback, n1)
     batch.submit()
     assert len(batch.jobs) == 0
 
@@ -60,7 +60,7 @@ def test_index(m):
         assert index.get('node', '4')[0] is response
         assert len(m.session.phantomnodes) == 0
     batch.index(index, 'node', '4', TNode())
-    batch.request_callback(callback, m, TNode)
+    batch.job_callback(callback, m, TNode)
     batch.submit()
     assert len(batch.jobs) == 0
 
@@ -69,7 +69,7 @@ def test_index(m):
         assert response is n2
         assert len(m.session.phantomnodes) == 0
     batch.index(index, 'node', '5', n2)
-    batch.request_callback(callback, m, n2)
+    batch.job_callback(callback, m, n2)
     batch.submit()
     assert len(batch.jobs) == 0
 
@@ -91,7 +91,7 @@ def test_index(m):
         assert response is rel._entity
         assert response.start_node == n1._entity
         assert response.end_node == n2._entity
-    batch.request_callback(callback, batch, rel)
+    batch.job_callback(callback, batch, rel)
     batch.submit()
     assert len(batch.jobs) == 0
 

@@ -45,6 +45,25 @@ def test_delete_out_of_session(m):
     with raises(EntityNotFoundException):
         TNode(n_id)
 
+    m.session.clear()
+
+    n1 = TNode()
+    n2 = TNode()
+    rel = n1.rel_out.append(n2)
+    m.session.commit()
+    assert not rel.is_phantom()
+    rel_id = rel.id
+
+    ret = delete_out_of_session(m, rel)
+    assert ret == True
+    assert m.session.count == 3
+    assert rel in m.session
+    assert not rel.is_deleted()
+
+    m.session.clear()
+    with raises(EntityNotFoundException):
+        Relationship(rel_id)
+
 def test_append_out_of_session(m):
     n1 = TNode()
     n2 = TNode()

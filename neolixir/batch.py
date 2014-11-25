@@ -29,7 +29,7 @@ class WriteBatch(LegacyWriteBatch):
         else:
             self.callbacks.append(func)
 
-    def request_callback(self, func, *args):
+    def job_callback(self, func, *args):
         if not hasattr(self.jobs[-1], 'callbacks'):
             self.jobs[-1].callbacks = []
 
@@ -54,7 +54,7 @@ class WriteBatch(LegacyWriteBatch):
                     metadata.session.phantomnodes.discard(item)
                     metadata.session.add(item)
 
-                self.request_callback(callback, item, self.metadata)
+                self.job_callback(callback, item, self.metadata)
                 super(WriteBatch, self).create(py2neo.rel(self.last, "__instance_of__", item.classnode))
 
             elif isinstance(item, Relationship):
@@ -71,7 +71,7 @@ class WriteBatch(LegacyWriteBatch):
                     item.properties.set_dirty(False)
                     metadata.session.add(item)
 
-                self.request_callback(callback, item, self.metadata)
+                self.job_callback(callback, item, self.metadata)
 
             elif isinstance(item, dict):
                 super(WriteBatch, self).create(py2neo.node(item))
@@ -94,7 +94,7 @@ class WriteBatch(LegacyWriteBatch):
                     q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
                     q += "delete n"
                     self.cypher(q, params={'n_id': item.id}, automap=False)
-                    self.request_callback(callback, item)
+                    self.job_callback(callback, item)
                 else:
                     self.callback(callback, item)
 
@@ -106,7 +106,7 @@ class WriteBatch(LegacyWriteBatch):
                 if not (item.is_phantom() or \
                         item.start.is_deleted() or item.end.is_deleted()):
                     super(WriteBatch, self).delete(item._entity)
-                    self.request_callback(callback, item)
+                    self.job_callback(callback, item)
                 else:
                     self.callback(callback, item)
 
@@ -128,7 +128,7 @@ class WriteBatch(LegacyWriteBatch):
                 self.get_or_create_in_index(neo4j.Node, index.index, key, value, item.get_abstract())
                 self.phantom_nodes[item] = self.last
 
-                def callback(self, request, cls, item, response):
+                def callback(self, job, cls, item, response):
                     query = """
                         start n=node({n_id}), c=node({c_id})
                         where not n-[:__instance_of__]->()
@@ -151,9 +151,9 @@ class WriteBatch(LegacyWriteBatch):
                                 item.expunge()
                                 return cls(response1)
 
-                        self.request_callback(callback2, cls, item, response)
+                        self.job_callback(callback2, cls, item, response)
 
-                        for callback in request.callbacks[1:]:
+                        for callback in job.callbacks[1:]:
                             self.jobs[-1].callbacks.append(callback)
 
                         self.resubmit = True
@@ -167,7 +167,7 @@ class WriteBatch(LegacyWriteBatch):
                             item.expunge()
                             return cls(response)
 
-                self.request_callback(callback, self, self.jobs[-1], cls, item)
+                self.job_callback(callback, self, self.jobs[-1], cls, item)
 
             else:
                 self.get_or_add_to_index(neo4j.Node, index.index, key, value, item._entity)
@@ -178,7 +178,7 @@ class WriteBatch(LegacyWriteBatch):
                     else:
                         return cls(response)
 
-                self.request_callback(callback, cls, item)
+                self.job_callback(callback, cls, item)
 
         else:
             raise NotImplementedError("batch indexing not implemented for item type: {0}".format(item))
@@ -203,7 +203,7 @@ class WriteBatch(LegacyWriteBatch):
                     def callback(entity, response):
                         entity.properties.set_dirty(False)
 
-                    self.request_callback(callback, entity)
+                    self.job_callback(callback, entity)
 
             else:
                 raise TypeError(u"cannot save entity: {0}".format(entity))
@@ -223,16 +223,16 @@ class WriteBatch(LegacyWriteBatch):
 
         results = []
         for idx, response in enumerate(responses):
-            request = jobs[idx]
+            job = jobs[idx]
 
-            if hasattr(request, 'automap'):
+            if hasattr(job, 'automap'):
                 response = [list(record) for record in response]
-                if automap and request.automap:
+                if automap and job.automap:
                     response = self.metadata.automap(response, mapRels=False)
                     response = self.metadata.automap(response, mapRels=True)
 
-            if hasattr(request, 'callbacks'):
-                for callback in request.callbacks:
+            if hasattr(job, 'callbacks'):
+                for callback in job.callbacks:
                     output = callback(response)
                     if output is False:
                         break
