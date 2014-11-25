@@ -35,6 +35,7 @@ class Query(BaseQuery):
 
     def _set(self, string):
         if re.search(re.compile(r'\breturn\b', flags=re.I), string):
+            self._order = ''
             self._return = 'return ' + re.split(re.compile(r'\breturn\b', flags=re.I), string)[1].strip()
             self._return = re.split(re.compile(r'\b(order|skip|limit)\b', flags=re.I), self._return)[0].strip()
 
@@ -54,15 +55,38 @@ class Query(BaseQuery):
         copy._set(string)
         return copy
 
-    def _append(self, string):
+    def _append(self, string, params=None):
         self._clauses += ' ' + re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
         self._set(string)
-
-    def append(self, string, params=None):
-        copy = self.copy()
-        copy._append(string)
         if params is not None:
-            copy.params.update(params)
+            self.params.update(params)
+
+    def append(self, string, params=None, clear=True):
+        copy = self.copy()
+        if clear:
+            copy._clear()
+        copy._append(string, params=params)
+        return copy
+
+    def _clear(self, *parts):
+        if len(parts) == 0:
+            self._return = ''
+            self._order = ''
+            self._skip = ''
+            self._limit = ''
+        else:
+            for part in parts:
+                if part == 'return':
+                    self._return = ''
+                    self._order = ''
+                    self._skip = ''
+                    self._limit = ''
+                elif part in ('order', 'skip', 'limit'):
+                    setattr(self, '_' + part, '')
+
+    def clear(self, *parts):
+        copy = self.copy()
+        copy._clear(*parts)
         return copy
 
     @classmethod
@@ -93,14 +117,14 @@ class Query(BaseQuery):
         return copy
 
     def match(self, *clauses):
-        return self.append('match {0}'.format(', '.join(clauses)))
+        return self.append('match {0}'.format(', '.join(clauses)), clear=False)
 
     def where(self, *clauses):
-        return self.append('where {0}'.format(' and '.join(clauses)))
+        return self.append('where {0}'.format(' and '.join(clauses)), clear=False)
 
     def filter(self, *clauses):
         # NOTE: this expects that it comes after a 'where' statement
-        return self.append('and ' + ' and '.join(clauses))
+        return self.append('and ' + ' and '.join(clauses), clear=False)
 
     def return_(self, *keys):
         return self.set('return ' + ', '.join(keys))
@@ -108,8 +132,11 @@ class Query(BaseQuery):
     def order_by(self, *values):
         return self.set('order by ' + ', '.join(values))
 
-    def offset(self, value):
+    def skip(self, value):
         return self.set('skip ' + str(int(value)))
+
+    def offset(self, value):
+        return self.skip(value)
 
     def limit(self, value):
         return self.set('limit ' + str(int(value)))
