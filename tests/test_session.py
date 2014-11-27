@@ -387,6 +387,35 @@ def test_rollback(m):
     assert m.session.count == 3
 
     # deleted relationship
+    assert r1 in m.session
+    assert r1 in n1.trel_out
+    assert r1 in n2.trel_in
+    assert not r1.is_deleted()
+    r1.delete()
+    assert r1 in m.session
+    assert r1 not in n1.trel_out
+    assert r1 not in n2.trel_in
+    assert r1.is_deleted()
+    m.session.rollback()
+    assert r1 in m.session
+    assert r1 in n1.trel_out
+    assert r1 in n2.trel_in
+    assert not r1.is_deleted()
+
+    # deleted node
+    assert n1 in m.session
+    assert n1 in n2.trel_in
+    assert not n1.is_deleted()
+    n1.delete()
+    assert n1 in m.session
+    assert n1 not in n2.trel_in
+    assert n1.is_deleted()
+    m.session.rollback()
+    assert n1 in m.session
+    assert n1 in n2.trel_in
+    assert not n1.is_deleted()
+
+    # externally-deleted relationship
     delete_out_of_session(m, r1)
     assert r1 in m.session
     assert not r1.is_deleted()
@@ -398,7 +427,7 @@ def test_rollback(m):
     assert not r1.is_deleted()
     assert r1.string is None
 
-    # deleted node 
+    # externally-deleted node 
     delete_out_of_session(m, n1)
     assert n1 in m.session
     assert not n1.is_deleted()

@@ -61,3 +61,19 @@ def test_delete(m):
     assert m.session.count == 0
     with raises(EntityNotFoundException):
         Node(n1_id)
+
+    # with relationships
+    n1 = TNode()
+    n2 = TNode()
+    rel = n1.trel_out.append(n2)
+    m.session.commit()
+    assert rel in n1.trel_out
+    assert rel in n2.trel_in
+    n1.delete()
+    assert n1 in m.session
+    assert n1.is_deleted()
+    assert not n2.is_deleted()
+    assert rel.is_deleted()
+    assert rel in m.session
+    assert rel not in n1.trel_out
+    assert rel not in n2.trel_in
