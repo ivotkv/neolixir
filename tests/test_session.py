@@ -362,13 +362,14 @@ def test_rollback(m):
     n2 = TNode()
     r1 = n1.trel_out.append(n2)
     m.session.commit()
+
+    # base case
     n3 = TNode()
     n4 = TNode()
     r2 = n3.trel_out.append(n4)
     n1.string = "test"
     r1.string = "test"
     r3 = n1.trel_out.append(n3)
-
     m.session.rollback()
     assert not m.session.is_dirty()
     assert n1 in m.session.nodes.values()
@@ -384,6 +385,30 @@ def test_rollback(m):
     assert r2 not in m.session.relmap
     assert r3 not in m.session.relmap
     assert m.session.count == 3
+
+    # deleted relationship
+    delete_out_of_session(m, r1)
+    assert r1 in m.session
+    assert not r1.is_deleted()
+    assert r1.string is None
+    r1.string = 'test'
+    assert r1.is_dirty()
+    m.session.rollback()
+    assert r1 in m.session
+    assert not r1.is_deleted()
+    assert r1.string is None
+
+    # deleted node 
+    delete_out_of_session(m, n1)
+    assert n1 in m.session
+    assert not n1.is_deleted()
+    assert n1.string is None
+    n1.string = 'test'
+    assert n1.is_dirty()
+    m.session.rollback()
+    assert n1 in m.session
+    assert not n1.is_deleted()
+    assert n1.string is None
 
 def test_commit(m):
     from py2neo import neo4j
