@@ -56,6 +56,8 @@ class Relationship(Entity):
                 raise TypeError("entity type does not match class type")
             self.tuple # NOTE: the tuple needs to be inited for some reason - why??
             super(Relationship, self).__init__(value, **properties)
+            if self.start.is_deleted() or self.end.is_deleted():
+                self.delete()
 
     def __repr__(self):
         return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.properties, self.end.id)
