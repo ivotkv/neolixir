@@ -55,17 +55,18 @@ class Query(BaseQuery):
         copy._set(string)
         return copy
 
-    def _append(self, string, params=None):
-        self._clauses += ' ' + re.split(re.compile(r'\breturn\b', flags=re.I), string)[0].strip()
+    def _append(self, string, params=None, clear=True):
+        if not re.match('^\s*(return|order|skip|limit).*', string, flags=re.I):
+            if clear:
+                self._clear()
+            self._clauses += ' ' + re.split(re.compile(r'\b(return|order|skip|limit)\b', flags=re.I), string)[0].strip()
         self._set(string)
         if params is not None:
             self.params.update(params)
 
     def append(self, string, params=None, clear=True):
         copy = self.copy()
-        if clear:
-            copy._clear()
-        copy._append(string, params=params)
+        copy._append(string, params=params, clear=clear)
         return copy
 
     def _clear(self, *parts):
