@@ -4,10 +4,11 @@ from py2neo import neo4j
 from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
+from observable import Observable, ObservableMeta
 
 __all__ = ['Entity']
 
-class EntityMeta(type):
+class EntityMeta(ObservableMeta):
 
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
@@ -28,7 +29,7 @@ class EntityMeta(type):
         
         m.add(cls)
 
-class Entity(object):
+class Entity(Observable):
 
     """Base class for all Neolixir entities (Nodes and Relationships).
     
