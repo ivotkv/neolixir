@@ -15,6 +15,7 @@ class Session(object):
 
     def clear(self):
         self.batch.clear()
+        self.events.clear()
         self.nodes.clear()
         self.phantomnodes.clear()
         self.relmap.clear()
@@ -42,6 +43,15 @@ class Session(object):
         except AttributeError:
             self._threadlocal.batch = self.metadata.batch()
             return self._threadlocal.batch
+
+    @property
+    def events(self):
+        try:
+            return self._threadlocal.events
+        except AttributeError:
+            from observable import SessionEvents
+            self._threadlocal.events = SessionEvents()
+            return self._threadlocal.events
 
     @property
     def nodes(self):
@@ -147,6 +157,7 @@ class Session(object):
 
     def rollback(self):
         self.batch.clear()
+        self.events.clear()
         self.propmap.clear()
         self.relmap.rollback()
         self.phantomnodes.clear()
@@ -224,6 +235,7 @@ class Session(object):
 
                 raise e
 
+        self.events.fire_committed()
         self.committing = False
 
     def _commit(self, batched=True, batch_size=100):
