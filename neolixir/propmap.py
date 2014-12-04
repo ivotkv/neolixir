@@ -106,11 +106,16 @@ class PropDict(dict):
 
     def __setitem__(self, key, value):
         if self.get(key) != value:
+            if not self.owner.is_phantom() and self.owner.has_observer('change', key):
+                self.owner.fire_event('change', key, self.get(key), value)
             self.set_dirty()
         super(PropDict, self).__setitem__(key, value)
 
     def __delitem__(self, key):
-        self.set_dirty()
+        if self.get(key) != None:
+            if not self.owner.is_phantom() and self.owner.has_observer('change', key):
+                self.owner.fire_event('change', key, self.get(key), None)
+            self.set_dirty()
         super(PropDict, self).__delitem__(key)
 
     def clear(self):

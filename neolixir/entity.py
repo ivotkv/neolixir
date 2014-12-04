@@ -80,6 +80,7 @@ class Entity(Observable):
                 else:
                     self.properties[k] = v
             m.session.add(self)
+            self.fire_event('create', self)
 
     def __copy__(self):
         # TODO: support copying?
@@ -176,6 +177,9 @@ class Entity(Observable):
         else:
             return self.properties.is_dirty()
 
+    def is_expunged(self):
+        return getattr(self, '_session', None) is None
+
     def expunge(self):
         if getattr(self, '_session', None):
             self._session.expunge(self)
@@ -192,6 +196,8 @@ class Entity(Observable):
         self._deleted = True
         if self.is_phantom():
             self.expunge()
+        else:
+            self.fire_event('delete', self)
 
     def save(self, batch=None):
         raise NotImplementedError("cannot save through generic Entity class")
@@ -202,7 +208,8 @@ class Entity(Observable):
                 self.descriptors[target].has_observer(event, target))
 
     def fire_event(self, event, target, *args):
-        super(Entity, self).fire_event(event, target, *args)
-        if event == 'change':
-            if target in self.descriptors:
-                self.descriptors[target].fire_event(event, target, *args)
+        if not (self.is_expunged() and event != 'delete_committed'):
+            super(Entity, self).fire_event(event, target, *args)
+            if event == 'change':
+                if target in self.descriptors:
+                    self.descriptors[target].fire_event(event, (self, target), *args)

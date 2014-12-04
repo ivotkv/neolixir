@@ -26,6 +26,11 @@ class FieldDescriptor(Observable):
         if self._name is None:
             self._name = name
 
+    def fire_event(self, event, target, *args):
+        entity, field = target
+        if not entity.is_expunged():
+            super(FieldDescriptor, self).fire_event(event, target, *args)
+
 class Property(FieldDescriptor):
 
     __value_type__ = None
