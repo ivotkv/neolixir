@@ -195,3 +195,14 @@ class Entity(Observable):
 
     def save(self, batch=None):
         raise NotImplementedError("cannot save through generic Entity class")
+
+    def has_observer(self, event, target):
+        return super(Entity, self).has_observer(event, target) or \
+               (event == 'change' and target in self.descriptors and \
+                self.descriptors[target].has_observer(event, target))
+
+    def fire_event(self, event, target, *args):
+        super(Entity, self).fire_event(event, target, *args)
+        if event == 'change':
+            if target in self.descriptors:
+                self.descriptors[target].fire_event(event, target, *args)

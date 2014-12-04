@@ -4,15 +4,18 @@ from collections import Iterable
 from decimal import Decimal
 from datetime import datetime
 from utils import IN, OUT, classproperty
+from observable import Observable
 
 __all__ = ['Boolean', 'String', 'Enum', 'Integer', 'Float', 'Numeric', 'DateTime',
            'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
 
-class FieldDescriptor(object):
+class FieldDescriptor(Observable):
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, observers=None):
         self._name = None
         self.name = name
+        if isinstance(observers, dict):
+            self.add_observers(observers)
 
     @property
     def name(self):
@@ -27,8 +30,8 @@ class Property(FieldDescriptor):
 
     __value_type__ = None
 
-    def __init__(self, name=None, default=None):
-        super(Property, self).__init__(name)
+    def __init__(self, name=None, default=None, observers=None):
+        super(Property, self).__init__(name=name, observers=observers)
         self._default = default
 
     def __get__(self, instance, owner=None):
@@ -70,7 +73,9 @@ class String(Property):
 class Enum(String):
 
     def __init__(self, *args, **kwargs):
-        super(Enum, self).__init__(name=kwargs.get('name'), default=kwargs.get('default'))
+        super(Enum, self).__init__(name=kwargs.get('name'),
+                                   default=kwargs.get('default'),
+                                   observers=kwargs.get('observers'))
         self.values = args
     
     def __set__(self, instance, value):
@@ -90,8 +95,8 @@ class Numeric(Property):
 
     __value_type__ = Decimal
 
-    def __init__(self, scale=None, name=None, default=None):
-        super(Numeric, self).__init__(name=name, default=default)
+    def __init__(self, scale=None, name=None, default=None, observers=None):
+        super(Numeric, self).__init__(name=name, default=default, observers=observers)
         self.scale = scale
     
     def __set__(self, instance, value):
@@ -154,8 +159,8 @@ class Array(Property):
 
     __value_type__ = list
 
-    def __init__(self, type=None, name=None):
-        super(Array, self).__init__(name=name)
+    def __init__(self, type=None, name=None, observers=None):
+        super(Array, self).__init__(name=name, observers=observers)
         self._content_type = type
 
     def __get__(self, instance, owner=None):

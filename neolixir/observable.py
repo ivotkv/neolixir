@@ -76,8 +76,9 @@ class Observable(object):
             for observer in observers:
                 self._observers[event].add(observer)
 
-    def has_observer(self, event):
-        return event in self._observers or event + '_committed' in self._observers
+    def has_observer(self, event, target):
+        return hasattr(self, '_observers') and \
+               (event in self._observers or event + '_committed' in self._observers)
 
     def fire_event(self, event, target, *args):
         if hasattr(self, '_observers'):
