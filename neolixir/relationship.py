@@ -44,19 +44,20 @@ class Relationship(Entity):
         return super(Relationship, cls).__new__(cls, value, **properties)
 
     def __init__(self, value=None, **properties):
-        if self._entity is None:
-            if isinstance(value, tuple):
-                self._start = Node(value[0])
-                self._type = self.__rel_type__ or value[1]
-                self._end = Node(value[2])
-            else:
-                raise ValueError("Relationship could not be initialized with value provided")
-        elif self.__rel_type__ is not None and self._entity.type != self.__rel_type__:
-            raise TypeError("entity type does not match class type")
-        self.tuple # NOTE: the tuple needs to be inited for some reason - why??
-        super(Relationship, self).__init__(value, **properties)
-        if self.start.is_deleted() or self.end.is_deleted():
-            self.delete()
+        if not self._initialized:
+            if self._entity is None:
+                if isinstance(value, tuple):
+                    self._start = Node(value[0])
+                    self._type = self.__rel_type__ or value[1]
+                    self._end = Node(value[2])
+                else:
+                    raise ValueError("Relationship could not be initialized with value provided")
+            elif self.__rel_type__ is not None and self._entity.type != self.__rel_type__:
+                raise TypeError("entity type does not match class type")
+            self.tuple # NOTE: the tuple needs to be inited for some reason - why??
+            super(Relationship, self).__init__(value, **properties)
+            if self.start.is_deleted() or self.end.is_deleted():
+                self.delete()
 
     def __repr__(self):
         return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.properties, self.end.id)

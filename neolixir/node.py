@@ -48,8 +48,9 @@ class Node(Entity):
         return super(Node, cls).__new__(cls, value, **properties)
 
     def __init__(self, value=None, **properties):
-        self._relfilters = {}
-        super(Node, self).__init__(value, **properties)
+        if not self._initialized:
+            self._relfilters = {}
+            super(Node, self).__init__(value, **properties)
 
     @classproperty
     def classnode(cls):

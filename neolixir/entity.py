@@ -47,6 +47,7 @@ class Entity(Observable):
     
     __metaclass__ = EntityMeta
 
+    _initialized = False
     _deleted = False
 
     def __new__(cls, value=None, **properties):
@@ -70,19 +71,16 @@ class Entity(Observable):
             instance._entity = None
             return instance
 
-    def __init_disabled(self, *args, **kwargs):
-        # used to avoid multiple inits when __new__ returns an existing entity
-        pass
-
     def __init__(self, value=None, **properties):
-        self.__init__ = self.__init_disabled
-        for k, v in properties.iteritems():
-            if k in self._descriptors:
-                setattr(self, k, v)
-            else:
-                self.properties[k] = v
-        m.session.add(self)
-        self.fire_event('create', self)
+        if not self._initialized:
+            self._initialized = True
+            for k, v in properties.iteritems():
+                if k in self._descriptors:
+                    setattr(self, k, v)
+                else:
+                    self.properties[k] = v
+            m.session.add(self)
+            self.fire_event('create', self)
 
     def __copy__(self):
         # TODO: support copying?
