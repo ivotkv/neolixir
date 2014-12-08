@@ -1,3 +1,4 @@
+from itertools import chain
 import overrides
 from py2neo import neo4j
 from metadata import metadata as m
@@ -57,7 +58,7 @@ class PropDict(dict):
     @property
     def cache(self):
         try:
-            return self.owner._entity.__metadata__['data']
+            return self.owner._entity.properties
         except:
             return {}
 
@@ -105,35 +106,30 @@ class PropDict(dict):
         self.set_dirty(False)
 
     def __setitem__(self, key, value):
-        if self.get(key) != value:
+        current = self.get(key)
+        if not self.has_key(key) or value != current:
+            super(PropDict, self).__setitem__(key, value)
             if not self.owner.is_phantom() and self.owner.has_observer('change', key):
-                self.owner.fire_event('change', key, self.get(key), value)
+                self.owner.fire_event('change', key, current, self.get(key))
             self.set_dirty()
-        super(PropDict, self).__setitem__(key, value)
-
-    def __delitem__(self, key):
-        if self.get(key) != None:
-            if not self.owner.is_phantom() and self.owner.has_observer('change', key):
-                self.owner.fire_event('change', key, self.get(key), None)
-            self.set_dirty()
-        super(PropDict, self).__delitem__(key)
-
-    def clear(self):
-        self.set_dirty()
-        super(PropDict, self).clear()
-
-    def pop(self, key, default=None):
-        self.set_dirty()
-        return super(PropDict, self).pop(key, default)
-
-    def popitem(self):
-        self.set_dirty()
-        return super(PropDict, self).popitem()
 
     def setdefault(self, key, default=None):
-        self.set_dirty()
-        return super(PropDict, self).setdefault(key, default)
+        if self.has_key(key):
+            return self[key]
+        else:
+            value = super(PropDict, self).setdefault(key, default)
+            if not self.owner.is_phantom() and self.owner.has_observer('change', key):
+                self.owner.fire_event('change', key, None, value)
+            self.set_dirty()
+            return value
 
     def update(self, *args, **kwargs):
-        self.set_dirty()
-        return super(PropDict, self).update(*args, **kwargs)
+        if len(args) > 1:
+            raise TypeError('update expected at most 1 arguments')
+        elif len(args) == 1:
+            iterator = chain(args[0].iteritems() if isinstance(args[0], dict) else args[0],
+                             kwargs.iteritems())
+        else:
+            iterator = kwargs.iteritems()
+        for key, value in iterator:
+            self[key] = value
