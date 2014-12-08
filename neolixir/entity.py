@@ -204,8 +204,9 @@ class Entity(Observable):
 
     def has_observer(self, event, target):
         return super(Entity, self).has_observer(event, target) or \
-               (event == 'change' and target in self.descriptors and \
-                self.descriptors[target].has_observer(event, target))
+               (event == 'change' and (super(Entity, self).has_observer('update', target) or \
+                                       target in self.descriptors and \
+                                       self.descriptors[target].has_observer(event, target)))
 
     def fire_event(self, event, target, *args):
         if not (self.is_expunged() and event != 'delete_committed'):
