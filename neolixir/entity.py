@@ -211,5 +211,6 @@ class Entity(Observable):
         if not (self.is_expunged() and event != 'delete_committed'):
             super(Entity, self).fire_event(event, target, *args)
             if event == 'change':
+                self.fire_event('update', self)
                 if target in self.descriptors:
                     self.descriptors[target].fire_event(event, (self, target), *args)
