@@ -215,3 +215,5 @@ class Entity(Observable):
                 self.fire_event('update', self)
                 if target in self.descriptors:
                     self.descriptors[target].fire_event(event, (self, target), *args)
+            elif event in ('append', 'remove') and target in self.descriptors:
+                self.descriptors[target].fire_event(event, (self, target), *args)

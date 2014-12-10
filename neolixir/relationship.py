@@ -116,6 +116,14 @@ class Relationship(Entity):
     def tuple(self):
         return (self.start, self.type, self.end)
 
+    def other(self, node):
+        if node is self.start:
+            return self.end
+        elif node is self.end:
+            return self.start
+        else:
+            raise ValueError('value provided is not an end node of this relationship')
+
     def get_abstract(self):
         return (self.start._entity, self.type, self.end._entity, super(Relationship, self).get_abstract())
 

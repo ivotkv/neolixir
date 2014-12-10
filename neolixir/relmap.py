@@ -160,9 +160,10 @@ class RelView(object):
 
     __rel_cls__ = Relationship
 
-    def __init__(self, owner, direction, type_, multiple=False, preloaded=False):
+    def __init__(self, owner, name, direction, type_, multiple=False, preloaded=False):
         self.relmap = m.session.relmap
         self.owner = owner
+        self.name = name
         self.direction = direction
         self.type = getattr(type_, '__rel_type__', type_)
         self.cls = type_ if isinstance(type_, type) else self.__rel_cls__
@@ -302,15 +303,23 @@ class RelView(object):
 
     def append(self, value):
         if self.multiple or value not in self:
-            return self.relfunc(value)
+            rel = self.relfunc(value)
+            if not self.owner.is_phantom() and self.owner.has_observer('append', self.name):
+                node = value if isinstance(value, Node) else self.nodefunc(rel)
+                self.owner.fire_event('append', self.name, node, rel)
+            return rel
         return None
 
     def remove(self, value):
         if isinstance(value, Node):
             for rel in list(self.data.rel(value)):
+                if not self.owner.is_phantom() and self.owner.has_observer('remove', self.name):
+                    self.owner.fire_event('remove', self.name, value, rel)
                 rel.delete()
         elif isinstance(value, Relationship):
             if value in self:
+                if not self.owner.is_phantom() and self.owner.has_observer('remove', self.name):
+                    self.owner.fire_event('remove', self.name, self.nodefunc(value), value)
                 value.delete()
         else:
             raise TypeError("unexpected type: " + value.__class__.__name__)

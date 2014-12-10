@@ -190,8 +190,8 @@ class TypedList(list):
 
 class RelDescriptor(FieldDescriptor):
 
-    def __init__(self, direction, type, name=None, multiple=False, relview_cls=None):
-        super(RelDescriptor, self).__init__(name=name)
+    def __init__(self, direction, type, name=None, observers=None, multiple=False, relview_cls=None):
+        super(RelDescriptor, self).__init__(name=name, observers=observers)
         self.direction = direction
         self.type = type
         self.multiple = multiple
@@ -207,7 +207,7 @@ class RelDescriptor(FieldDescriptor):
             return instance._relfilters[self.name]
         except KeyError:
             relview_cls = self.relview_cls or self.__relview_cls__
-            instance._relfilters[self.name] = relview_cls(instance,
+            instance._relfilters[self.name] = relview_cls(instance, self.name,
                                                           self.direction, self.type,
                                                           multiple=self.multiple)
             return instance._relfilters[self.name]
