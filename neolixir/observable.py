@@ -27,6 +27,10 @@ class SessionEvents(dict):
         if key in self:
             if event == 'change':
                 args = (self[key].args[0], args[1])
+            elif event in ('append', 'remove'):
+                args = self[key].args + (args,)
+        elif event in ('append', 'remove'):
+            args = (args,)
         self[key] = Event(caller, event, target, *args)
 
     def fire_committed(self):

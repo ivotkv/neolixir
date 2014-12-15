@@ -304,7 +304,7 @@ class RelView(object):
     def append(self, value):
         if self.multiple or value not in self:
             rel = self.relfunc(value)
-            if not self.owner.is_phantom() and self.owner.has_observer('append', self.name):
+            if self.owner.has_observer('append', self.name):
                 node = value if isinstance(value, Node) else self.nodefunc(rel)
                 self.owner.fire_event('append', self.name, node, rel)
             return rel
@@ -313,12 +313,12 @@ class RelView(object):
     def remove(self, value):
         if isinstance(value, Node):
             for rel in list(self.data.rel(value)):
-                if not self.owner.is_phantom() and self.owner.has_observer('remove', self.name):
+                if self.owner.has_observer('remove', self.name):
                     self.owner.fire_event('remove', self.name, value, rel)
                 rel.delete()
         elif isinstance(value, Relationship):
             if value in self:
-                if not self.owner.is_phantom() and self.owner.has_observer('remove', self.name):
+                if self.owner.has_observer('remove', self.name):
                     self.owner.fire_event('remove', self.name, self.nodefunc(value), value)
                 value.delete()
         else:
