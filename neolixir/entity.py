@@ -80,7 +80,8 @@ class Entity(Observable):
                 else:
                     self.properties[k] = v
             m.session.add(self)
-            self.fire_event('create', self)
+            if self.is_phantom():
+                self.fire_event('create', self)
 
     def __copy__(self):
         # TODO: support copying?
