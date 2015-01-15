@@ -34,6 +34,10 @@ class MetaData(object):
             return self._threadlocal.graph
 
     @property
+    def version(self):
+        return self.graph.neo4j_version
+
+    @property
     def legacy(self):
         try:
             return self._threadlocal.legacy

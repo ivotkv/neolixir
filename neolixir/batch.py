@@ -91,7 +91,10 @@ class WriteBatch(LegacyWriteBatch):
 
                 if not item.is_phantom():
                     q = "start n=node({n_id}) "
-                    q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
+                    if self.metadata.version < (2, 0):
+                        q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
+                    else:
+                        q += "match n-[rels*1]-() foreach(rel in rels | delete rel) "
                     q += "delete n"
                     self.cypher(q, params={'n_id': item.id}, automap=False)
                     self.job_callback(callback, item)

@@ -202,6 +202,17 @@ class Session(object):
                                 continue
 
                 elif isinstance(exc, BatchError):
+                    if isinstance(exc.__cause__, EntityNotFoundException):
+                        try:
+                            entity = exc.batch.jobs[exc.job_id].entity
+                            if entity.is_deleted():
+                                entity.expunge()
+                                retry = True
+                                continue
+                        except (IndexError, AttributeError):
+                            pass
+
+                    # for the rest of the handlers, use the cause directly
                     exc = exc.__cause__
 
                 if isinstance(exc, DeadlockDetectedException):
@@ -252,11 +263,13 @@ class Session(object):
 
             try:
                 # submit nodes
-                count = 0
+                count = len(self.batch.jobs)
                 for node in nodes:
                     if node.is_phantom() or node.is_dirty():
                         self.batch.save(node)
-                        count += 1
+                        if len(self.batch.jobs) > count:
+                            self.batch.jobs[-1].entity = node
+                            count += 1
                     if batch_size and count % batch_size == 0:
                         pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
@@ -270,11 +283,13 @@ class Session(object):
                 pending = []
 
                 # submit rels
-                count = 0
+                count = len(self.batch.jobs)
                 for rel in rels:
                     if rel.is_phantom() or rel.is_dirty():
                         self.batch.save(rel)
-                        count += 1
+                        if len(self.batch.jobs) > count:
+                            self.batch.jobs[-1].entity = rel
+                            count += 1
                     if batch_size and count % batch_size == 0:
                         pending = copy(self.batch.jobs)
                         responses = self.batch.submit()
