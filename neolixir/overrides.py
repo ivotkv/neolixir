@@ -3,6 +3,11 @@ import py2neo
 if py2neo.__version__ in ('2.0',):
 
     """
+    This sets the default socket timeout to 300 seconds.
+    """
+    py2neo.packages.httpstream.http.socket_timeout = 300
+
+    """
     This restores the id property for consistency with previous versions.
     """
     from py2neo import Node, Relationship
