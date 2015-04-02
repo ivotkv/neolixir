@@ -15,8 +15,8 @@ class BaseQuery(object):
     def __copy__(self):
         return self.copy()
 
-    def execute(self, string=None, automap=True):
-        return m.cypher(string or self.string, params=self.params, automap=automap)
+    def execute(self, string=None, automap=True, fast=False):
+        return m.cypher(string or self.string, params=self.params, automap=automap, fast=fast)
 
 class Query(BaseQuery):
 
