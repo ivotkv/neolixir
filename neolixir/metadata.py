@@ -6,6 +6,7 @@ from py2neo import neo4j
 from py2neo.core import Graph
 from py2neo.legacy.core import LegacyResource
 from session import Session
+from fast import fast_cypher
 
 __all__ = ['metadata']
 
@@ -55,8 +56,11 @@ class MetaData(object):
         self.session = Session(metadata=self)
         self.classes = {}
 
-    def cypher(self, query, params=None, automap=True):
-        results = [list(record) for record in self.graph.cypher.execute(query, params or {})]
+    def cypher(self, query, params=None, automap=True, fast=False):
+        if fast:
+            results = fast_cypher(self, query, params=params)
+        else:
+            results = [list(record) for record in self.graph.cypher.execute(query, params or {})]
 
         if automap:
             results = self.automap(results, mapRels=False)

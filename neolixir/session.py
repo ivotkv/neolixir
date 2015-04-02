@@ -5,6 +5,7 @@ from copy import copy
 from itertools import chain
 import overrides
 from py2neo import neo4j
+from dummy import DummyEntity
 from exc import *
 
 class Session(object):
@@ -142,7 +143,7 @@ class Session(object):
         from relationship import Relationship
         if isinstance(entity, Relationship):
             self.relmap.remove(entity)
-            if entity._entity is not None:
+            if entity._entity is not None and not isinstance(entity._entity, DummyEntity):
                 neo4j.Relationship.cache.pop(entity._entity.uri, None)
                 neo4j.Rel.cache.pop(entity._entity.uri, None)
         else:
@@ -150,7 +151,7 @@ class Session(object):
                 self.expunge(rel)
             self.phantomnodes.discard(entity)
             self.nodes.pop(entity.id, None)
-            if entity._entity is not None:
+            if entity._entity is not None and not isinstance(entity._entity, DummyEntity):
                 neo4j.Node.cache.pop(entity._entity.uri, None)
         self.propmap.remove(entity)
         entity._session = None

@@ -4,6 +4,7 @@ from exc import *
 from metadata import metadata as m
 from entity import Entity
 from node import Node
+from dummy import DummyNode
 
 __all__ = ['Relationship']
 
@@ -34,7 +35,7 @@ class Relationship(Entity):
                     raise EntityNotFoundException(str(e))
                 raise e
         elif isinstance(value, tuple):
-            value = (Node(value[0]), cls.__rel_type__ or value[1], Node(value[2]))
+            value = (cls.node(value[0]), cls.__rel_type__ or value[1], cls.node(value[2]))
             if value[0] is None:
                 raise ValueError("start node not found!")
             if value[2] is None:
@@ -47,9 +48,9 @@ class Relationship(Entity):
         if not self._initialized:
             if self._entity is None:
                 if isinstance(value, tuple):
-                    self._start = Node(value[0])
+                    self._start = self.node(value[0])
                     self._type = self.__rel_type__ or value[1]
-                    self._end = Node(value[2])
+                    self._end = self.node(value[2])
                 else:
                     raise ValueError("Relationship could not be initialized with value provided")
             elif self.__rel_type__ is not None and self._entity.type != self.__rel_type__:
@@ -60,7 +61,7 @@ class Relationship(Entity):
                 self.delete()
 
     def __repr__(self):
-        return "<{0} (0x{1:x}): ({2})-[{3}:{4} {5}]->({6})>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.properties, self.end.id)
+        return "<{0} (0x{1:x}): ({2})-[{3}:{4}]->({5}) {6}>".format(self.__class__.__name__, id(self), self.start.id, self.id, self.type, self.end.id, self.properties)
 
     def __cmp__(self, other):
         if not isinstance(other, Relationship):
@@ -93,7 +94,7 @@ class Relationship(Entity):
         try:
             return self._start
         except AttributeError:
-            self._start = Node(self._entity.start_node)
+            self._start = self.node(self._entity.start_node)
             return self._start
 
     @property
@@ -101,7 +102,7 @@ class Relationship(Entity):
         try:
             return self._end
         except AttributeError:
-            self._end = Node(self._entity.end_node)
+            self._end = self.node(self._entity.end_node)
             return self._start
 
     @property
@@ -126,6 +127,12 @@ class Relationship(Entity):
 
     def get_abstract(self):
         return (self.start._entity, self.type, self.end._entity, super(Relationship, self).get_abstract())
+
+    @classmethod
+    def node(cls, value):
+        if isinstance(value, DummyNode) and len(value.properties) == 0:
+            value = m.graph.node(value.id)
+        return Node(value)
 
     @classmethod
     def get(cls, value):

@@ -1,6 +1,7 @@
 from itertools import chain
 import overrides
 from py2neo import neo4j
+from dummy import DummyEntity
 from metadata import metadata as m
 from properties import Property
 
@@ -87,7 +88,8 @@ class PropDict(dict):
             dirty = self.is_dirty()
 
         if self.owner and not self.owner.is_phantom():
-            self.owner._entity.properties.pull()
+            if not isinstance(self.owner._entity, DummyEntity):
+                self.owner._entity.properties.pull()
             super(PropDict, self).update(self.owner._entity.properties)
 
         self.set_dirty(dirty)

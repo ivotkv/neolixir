@@ -116,7 +116,7 @@ class Entity(Observable):
 
     @property
     def id(self):
-        return self._entity.id if self._entity else None
+        return getattr(self._entity, 'id', None)
 
     @property
     def descriptors(self):
