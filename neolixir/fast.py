@@ -17,7 +17,7 @@ def hydrate(data, seen=None):
         return [hydrate(item, seen=seen) for item in data]
     elif isinstance(data, dict) and 'self' in data:
         if data['self'].find('/db/data/node/') >= 0:
-            id = data['metadata']['id']
+            id = int(data['metadata']['id'])
             try:
                 node = seen['nodes'][id]
             except KeyError:
@@ -32,14 +32,14 @@ def hydrate(data, seen=None):
             try:
                 rel = seen['rels'][id]
             except KeyError:
-                start_id = data['start'].split('/')[-1]
+                start_id = int(data['start'].split('/')[-1])
                 try:
                     start = seen['nodes'][start_id]
                 except KeyError:
                     start = DummyNode(start_id)
                     seen['nodes'][start_id] = start
                 type = data['type']
-                end_id = data['end'].split('/')[-1]
+                end_id = int(data['end'].split('/')[-1])
                 try:
                     end = seen['nodes'][end_id]
                 except KeyError:
