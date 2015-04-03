@@ -18,30 +18,31 @@ class Relationship(Entity):
     _typed_classes = {}
 
     def __new__(cls, value, **properties):
-        if isinstance(value, basestring):
-            # returns a typed "copy" of the class
-            if cls.__rel_type__ is not None:
-                raise TypeError("cannot change the type of a typed Relationship class: " + cls.__name__)
-            key = cls.__name__ + ':' + value
-            try:
-                return cls._typed_classes[key]
-            except KeyError:
-                return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
-        elif isinstance(value, int):
-            try:
-                value = m.graph.relationship(value)
-            except ValueError as e:
-                if str(e).find('not found') > 0:
-                    raise EntityNotFoundException(str(e))
-                raise e
-        elif isinstance(value, tuple):
-            value = (cls.node(value[0]), cls.__rel_type__ or value[1], cls.node(value[2]))
-            if value[0] is None:
-                raise ValueError("start node not found!")
-            if value[2] is None:
-                raise ValueError("end node not found!")
-        elif not isinstance(value, (cls, DummyRelationship, neo4j.Relationship)):
-            raise ValueError("Relationship can only be instantiated by id, entity or tuple")
+        if not isinstance(value, (DummyRelationship, neo4j.Relationship, cls)):
+            if isinstance(value, basestring):
+                # returns a typed "copy" of the class
+                if cls.__rel_type__ is not None:
+                    raise TypeError("cannot change the type of a typed Relationship class: " + cls.__name__)
+                key = cls.__name__ + ':' + value
+                try:
+                    return cls._typed_classes[key]
+                except KeyError:
+                    return cls._typed_classes.setdefault(key, type(cls.__name__, (cls, ), {'__rel_type__': value}))
+            elif isinstance(value, int):
+                try:
+                    value = m.graph.relationship(value)
+                except ValueError as e:
+                    if str(e).find('not found') > 0:
+                        raise EntityNotFoundException(str(e))
+                    raise e
+            elif isinstance(value, tuple):
+                value = (cls.node(value[0]), cls.__rel_type__ or value[1], cls.node(value[2]))
+                if value[0] is None:
+                    raise ValueError("start node not found!")
+                if value[2] is None:
+                    raise ValueError("end node not found!")
+            else:
+                raise ValueError("Relationship can only be instantiated by id, entity or tuple")
         return super(Relationship, cls).__new__(cls, value, **properties)
 
     def __init__(self, value=None, **properties):
