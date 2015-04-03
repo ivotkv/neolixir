@@ -5,6 +5,7 @@ import overrides
 from py2neo import neo4j
 from metadata import metadata as m
 from relationship import Relationship
+from dummy import DummyRelationship
 from node import Node
 from utils import IN, OUT
 
@@ -120,7 +121,7 @@ class RelMap(object):
     def get(self, value):
         if isinstance(value, int):
             return self._ids.get(value)
-        elif isinstance(value, neo4j.Relationship):
+        elif isinstance(value, (DummyRelationship, neo4j.Relationship)):
             return self._ids.get(value.id)
         else:
             return None

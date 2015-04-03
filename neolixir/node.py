@@ -5,6 +5,7 @@ from exc import *
 from metadata import metadata as m
 from entity import Entity
 from query import Query
+from dummy import DummyNode
 
 __all__ = ['Node']
 
@@ -43,7 +44,7 @@ class Node(Entity):
                 if str(e).find('not found') > 0:
                     raise EntityNotFoundException(str(e))
                 raise e
-        elif value is not None and not isinstance(value, (cls, neo4j.Node)):
+        elif value is not None and not isinstance(value, (cls, DummyNode, neo4j.Node)):
             raise ValueError("Node can only be instantiated by id, entity or None")
         return super(Node, cls).__new__(cls, value, **properties)
 

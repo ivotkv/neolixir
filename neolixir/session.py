@@ -5,7 +5,7 @@ from copy import copy
 from itertools import chain
 import overrides
 from py2neo import neo4j
-from dummy import DummyEntity
+from dummy import DummyEntity, DummyNode, DummyRelationship
 from exc import *
 
 class Session(object):
@@ -132,9 +132,9 @@ class Session(object):
         entity._session = self
 
     def get(self, value):
-        if isinstance(value, neo4j.Node):
+        if isinstance(value, (DummyNode, neo4j.Node)):
             return self.nodes.get(value.id)
-        elif isinstance(value, neo4j.Relationship):
+        elif isinstance(value, (DummyRelationship, neo4j.Relationship)):
             return self.relmap.get(value)
         else:
             return None

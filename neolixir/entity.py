@@ -5,6 +5,7 @@ from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
 from observable import Observable, ObservableMeta
+from dummy import DummyEntity
 
 __all__ = ['Entity']
 
@@ -56,7 +57,7 @@ class Entity(Observable):
         instance = m.session.get(value)
         if instance is not None:
             return instance
-        elif isinstance(value, (neo4j.Node, neo4j.Relationship)):
+        elif isinstance(value, (DummyEntity, neo4j.Node, neo4j.Relationship)):
             loaded_properties = m.session.propmap.get_properties(value)
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):

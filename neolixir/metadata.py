@@ -6,6 +6,7 @@ from py2neo import neo4j
 from py2neo.core import Graph
 from py2neo.legacy.core import LegacyResource
 from session import Session
+from dummy import DummyNode, DummyRelationship
 from fast import fast_cypher
 
 __all__ = ['metadata']
@@ -81,10 +82,10 @@ class MetaData(object):
 
         for item in data:
 
-            if isinstance(item, neo4j.Node):
+            if isinstance(item, (DummyNode, neo4j.Node)):
                 mapped.append(Node(item))
 
-            elif isinstance(item, neo4j.Relationship):
+            elif isinstance(item, (DummyRelationship, neo4j.Relationship)):
                 if mapRels:
                     mapped.append(Relationship(item))
                 else:

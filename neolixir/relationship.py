@@ -4,7 +4,7 @@ from exc import *
 from metadata import metadata as m
 from entity import Entity
 from node import Node
-from dummy import DummyNode
+from dummy import DummyNode, DummyRelationship
 
 __all__ = ['Relationship']
 
@@ -40,7 +40,7 @@ class Relationship(Entity):
                 raise ValueError("start node not found!")
             if value[2] is None:
                 raise ValueError("end node not found!")
-        elif not isinstance(value, (cls, neo4j.Relationship)):
+        elif not isinstance(value, (cls, DummyRelationship, neo4j.Relationship)):
             raise ValueError("Relationship can only be instantiated by id, entity or tuple")
         return super(Relationship, cls).__new__(cls, value, **properties)
 
