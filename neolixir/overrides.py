@@ -19,6 +19,9 @@ if '2.0' <= py2neo.__version__ <= '2.0.4':
     """
     try:
         import simplejson
+        from datetime import date, time, datetime
+        from decimal import Decimal
+
         class JSONEncoder(simplejson.JSONEncoder):
 
             def default(self, obj):
