@@ -9,10 +9,10 @@ from dummy import DummyRelationship
 from node import Node
 from utils import IN, OUT
 
-class RelList(list):
+class RelSet(set):
 
     def __init__(self, direction, *args, **kwargs):
-        super(RelList, self).__init__(*args, **kwargs)
+        super(RelSet, self).__init__(*args, **kwargs)
         self.direction = direction
         self.nodes = {}
         for rel in self:
@@ -28,19 +28,18 @@ class RelList(list):
     def rel(self, node):
         return self.nodes.get(node, set())
 
-    def append(self, rel):
-        if rel not in self:
-            super(RelList, self).append(rel)
-            node = self.nodefunc(rel)
-            if node not in self.nodes:
-                self.nodes[node] = set([rel])
-            else:
-                self.nodes[node].add(rel)
+    def add(self, rel):
+        super(RelSet, self).add(rel)
+        node = self.nodefunc(rel)
+        if node not in self.nodes:
+            self.nodes[node] = set([rel])
+        else:
+            self.nodes[node].add(rel)
 
     def remove(self, rel):
         try:
-            super(RelList, self).remove(rel)
-        except ValueError:
+            super(RelSet, self).remove(rel)
+        except KeyError:
             pass
         else:
             node = self.nodefunc(rel)
@@ -88,12 +87,12 @@ class RelMap(object):
         self.node[rel.end].add(rel)
 
         if not self.start.has_key((rel.start, rel.type)):
-            self.start[(rel.start, rel.type)] = RelList(OUT)
-        self.start[(rel.start, rel.type)].append(rel)
+            self.start[(rel.start, rel.type)] = RelSet(OUT)
+        self.start[(rel.start, rel.type)].add(rel)
 
         if not self.end.has_key((rel.end, rel.type)):
-            self.end[(rel.end, rel.type)] = RelList(IN)
-        self.end[(rel.end, rel.type)].append(rel)
+            self.end[(rel.end, rel.type)] = RelSet(IN)
+        self.end[(rel.end, rel.type)].add(rel)
 
     def _unmap(self, rel):
         try:
@@ -197,11 +196,11 @@ class RelView(object):
                 self.load()
             if self.direction == OUT:
                 if not self.relmap.start.has_key((self.owner, self.type)):
-                    self.relmap.start[(self.owner, self.type)] = RelList(OUT)
+                    self.relmap.start[(self.owner, self.type)] = RelSet(OUT)
                 self._data = self.relmap.start[(self.owner, self.type)]
             else:
                 if not self.relmap.end.has_key((self.owner, self.type)):
-                    self.relmap.end[(self.owner, self.type)] = RelList(IN)
+                    self.relmap.end[(self.owner, self.type)] = RelSet(IN)
                 self._data = self.relmap.end[(self.owner, self.type)]
             return self._data
 
@@ -257,10 +256,8 @@ class RelView(object):
         return "[{0}]".format(", ".join(imap(repr, iter(self))))
 
     def __getitem__(self, key):
-        return self.nodefunc(self.data[key])
-
-    def __delitem__(self, key):
-        self.data[key].delete()
+        # NOTE: this is slow and should be avoided
+        return self.sorted()[key]
 
     def sorted(self, reverse=False):
         return map(self.nodefunc, sorted(self.data,
