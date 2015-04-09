@@ -256,8 +256,7 @@ class RelView(object):
         return "[{0}]".format(", ".join(imap(repr, iter(self))))
 
     def __getitem__(self, key):
-        # NOTE: this is slow and should be avoided
-        return self.sorted()[key]
+        return self.nodefunc(list(self.data)[key])
 
     def sorted(self, reverse=False):
         return map(self.nodefunc, sorted(self.data,
