@@ -15,6 +15,30 @@ if '2.0' <= py2neo.__version__ <= '2.0.4':
     Relationship.id = Relationship._id
 
     """
+    Replace py2neo's json with simplejson if available for performance improvement.
+    """
+    try:
+        import simplejson
+        class JSONEncoder(simplejson.JSONEncoder):
+
+            def default(self, obj):
+                if isinstance(obj, (datetime, date, time)):
+                    return obj.isoformat()
+                if isinstance(obj, Decimal):
+                    return str(obj)
+                if isinstance(obj, (set, frozenset)):
+                    return list(obj)
+                if isinstance(obj, complex):
+                    return [obj.real, obj.imag]
+                return json.JSONEncoder.default(self, obj)
+
+        py2neo.packages.httpstream.http.json = simplejson
+        py2neo.packages.httpstream.http.JSONEncoder = JSONEncoder
+
+    except ImportError:
+        pass
+
+    """
     This adds consistent subclasses to GraphError for easier exception catching
     """
     from py2neo.error import GraphError
