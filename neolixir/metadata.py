@@ -28,6 +28,10 @@ class MetaData(object):
         self._threadlocal = threading.local()
 
     @property
+    def host_port(self):
+        return self.url.split('//')[-1].split('/')[0]
+
+    @property
     def graph(self):
         try:
             return self._threadlocal.graph
@@ -46,6 +50,22 @@ class MetaData(object):
         except AttributeError:
             self._threadlocal.legacy = LegacyResource(self.url)
             return self._threadlocal.legacy
+
+    def authenticate(self, username, password):
+        try:
+            from py2neo import authenticate
+            authenticate(self.host_port, username, password)
+            return True
+        except ImportError:
+            return False
+
+    def change_password(self, username, password, new_password):
+        try:
+            from py2neo.password import UserManager
+            um = UserManager.for_user(self.graph.service_root, username, password)
+            return um.password_manager.change(new_password)
+        except ImportError:
+            return False
 
     def add(self, cls):
         self.classes.setdefault(cls.__name__, cls)

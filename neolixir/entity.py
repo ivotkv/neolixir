@@ -1,6 +1,7 @@
 import overrides
 import py2neo
 from py2neo import neo4j
+from exc import *
 from utils import classproperty
 from metadata import metadata as m
 from properties import Property, FieldDescriptor
@@ -58,7 +59,12 @@ class Entity(Observable):
         if instance is not None:
             return instance
         elif isinstance(value, (DummyEntity, neo4j.Node, neo4j.Relationship)):
-            loaded_properties = m.session.propmap.get_properties(value)
+            try:
+                loaded_properties = m.session.propmap.get_properties(value)
+            except GraphError as e:
+                if str(e).find('not found') > 0:
+                    raise EntityNotFoundException(str(e))
+                raise e
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):
                 raise TypeError("entity is not an instance of " + cls.__name__)
