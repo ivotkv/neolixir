@@ -94,8 +94,10 @@ class Query(BaseQuery):
     def node(cls, nodecls):
         string = """
         start classnode=node({classnode_id})
-        match instance-[:__extends__|__instance_of__*..]->classnode
-        where instance-[:__instance_of__]->()
+        optional match subclass-[:__extends__*..]->classnode
+        with collect(distinct classnode) + collect(distinct subclass) as classnodes
+        unwind classnodes as classnode
+        match instance-[:__instance_of__]->classnode
         return instance
         """
         return cls(string=string, params={'classnode_id': nodecls.classnode.id})
@@ -122,10 +124,6 @@ class Query(BaseQuery):
 
     def where(self, *clauses):
         return self.append('where {0}'.format(' and '.join(clauses)), clear=False)
-
-    def filter(self, *clauses):
-        # NOTE: this expects that it comes after a 'where' statement
-        return self.append('and ' + ' and '.join(clauses), clear=False)
 
     def return_(self, *keys):
         return self.set('return ' + ', '.join(keys))

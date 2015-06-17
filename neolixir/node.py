@@ -111,4 +111,4 @@ class Node(Entity):
                 clause = "instance.{0}! = {1}"
             else:
                 clause = "instance.{0} = {1}"
-            return cls.query.filter(*[clause.format(k, repr(v)) for k, v in kwargs.iteritems()]).first()
+            return cls.query.where(*[clause.format(k, repr(v)) for k, v in kwargs.iteritems()]).first()
