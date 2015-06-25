@@ -134,6 +134,12 @@ class DateTime(Property):
         instance.properties[self.name] = value
 
     @classmethod
+    def format(cls, value):
+        if not isinstance(value, datetime):
+            value = cls.parse(value)
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+
+    @classmethod
     def parse(cls, value):
         if isinstance(value, basestring):
             try:
