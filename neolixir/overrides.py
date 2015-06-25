@@ -33,7 +33,7 @@ if '2.0' <= py2neo.__version__ <= '2.0.7':
                     return list(obj)
                 if isinstance(obj, complex):
                     return [obj.real, obj.imag]
-                return json.JSONEncoder.default(self, obj)
+                return simplejson.JSONEncoder.default(self, obj)
 
         py2neo.packages.httpstream.http.json = simplejson
         py2neo.packages.httpstream.http.JSONEncoder = JSONEncoder
