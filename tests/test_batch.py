@@ -73,7 +73,7 @@ def test_index(m):
     batch.submit()
     assert len(batch.jobs) == 0
 
-    # test that __instance_of__ relationship was created
+    # test that node was labeled correctly
     assert n1 in TNode.query.all()
 
     # test indexed creates with relationships

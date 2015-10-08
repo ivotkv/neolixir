@@ -45,7 +45,8 @@ class WriteBatch(LegacyWriteBatch):
     def create(self, *items):
         for item in items:
             if isinstance(item, Node):
-                super(WriteBatch, self).create(py2neo.node(item.get_abstract()))
+                #TODO: this does not add labels, but a cypher call might be problematic for rels (phantom_nodes)
+                super(WriteBatch, self).create(py2neo.node(*item._labels, **item.get_abstract()))
                 self.phantom_nodes[item] = self.last
 
                 def callback(item, metadata, response):
@@ -55,7 +56,6 @@ class WriteBatch(LegacyWriteBatch):
                     metadata.session.add(item)
 
                 self.job_callback(callback, item, self.metadata)
-                super(WriteBatch, self).create(py2neo.rel(self.last, "__instance_of__", item.classnode))
 
             elif isinstance(item, Relationship):
                 abstract = [
@@ -133,21 +133,20 @@ class WriteBatch(LegacyWriteBatch):
 
                 def callback(self, job, cls, item, response):
                     query = """
-                        start n=node({n_id}), c=node({c_id})
-                        where not n-[:__instance_of__]->()
-                        create unique n-[r:__instance_of__]->c
-                        return r
-                    """
+                        start n=node({{n_id}})
+                        with n, length(labels(n)) as c
+                        set n:{0}
+                        return c
+                    """.format(':'.join(cls._labels))
                     params = {
-                        'n_id': response.id,
-                        'c_id': cls.classnode.id
+                        'n_id': response.id
                     }
 
                     if self.metadata.session.committing:
                         self.cypher(query, params=params, automap=False)
 
                         def callback2(cls, item, response1, response2):
-                            if len(response2) > 0:
+                            if response2[0][0] == 0:
                                 item.set_entity(response1)
                                 return item
                             else:
@@ -163,7 +162,7 @@ class WriteBatch(LegacyWriteBatch):
                         return False
 
                     else:
-                        if len(self.metadata.cypher(query, params=params, automap=False)) > 0:
+                        if self.metadata.cypher(query, params=params, automap=False)[0][0] == 0:
                             item.set_entity(response)
                             return item
                         else:

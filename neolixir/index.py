@@ -71,8 +71,9 @@ class NodeIndex(Index):
         elif isinstance(item, Node):
             if item.is_phantom():
                 n = super(NodeIndex, self).get(key, value, item.get_abstract())
-                c = item.classnode
-                if len(m.cypher('start n=node({n_id}), c=node({c_id}) where not n-[:__instance_of__]->() create unique n-[r:__instance_of__]->c return r', params={'n_id': n.id, 'c_id': c.id}, automap=False)) > 0:
+                if len(n.labels) == 0:
+                    n.labels.update(item._labels)
+                    n.push()
                     item.set_entity(n)
                     return item
                 else:

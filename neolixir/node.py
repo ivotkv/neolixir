@@ -9,29 +9,6 @@ from dummy import DummyNode
 
 __all__ = ['Node']
 
-class ClassNode(object):
-    
-    cache = {}
-
-    @classproperty
-    def index(cls):
-        try:
-            return cls._index
-        except AttributeError:
-            from index import Index
-            cls._index = Index(neo4j.Node, 'ClassNode')
-            return cls._index
-
-    @classmethod
-    def get(cls, value):
-        name = value.__name__ if isinstance(value, type) else value
-        try:
-            return cls.cache[name]
-        except KeyError:
-            node = cls.index.get('name', name, {'__class__': 'ClassNode', 'name': name})
-            cls.cache[name] = node
-            return node
-
 class Node(Entity):
     
     __query_cls__ = Query
@@ -52,10 +29,6 @@ class Node(Entity):
         if not self._initialized:
             self._relfilters = {}
             super(Node, self).__init__(value, **properties)
-
-    @classproperty
-    def classnode(cls):
-        return ClassNode.get(cls)
 
     def relview(self, name):
         descriptor = getattr(self.__class__, name)
@@ -87,7 +60,7 @@ class Node(Entity):
                 self._entity = None
 
             elif self.is_phantom():
-                self._entity = m.graph.create(self.get_abstract(), (0, "__instance_of__", self.classnode))[0]
+                self._entity = m.graph.create(neo4j.Node(*self._labels, **self.get_abstract()))[0]
                 m.session.add(self)
 
             elif self.is_dirty():

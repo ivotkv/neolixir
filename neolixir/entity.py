@@ -15,6 +15,9 @@ class EntityMeta(ObservableMeta):
     def __init__(cls, name, bases, dict_):
         super(EntityMeta, cls).__init__(name, bases, dict_)
 
+        # inherited labels
+        cls._labels = cls._labels + (name,) if hasattr(cls, '_labels') else (name,)
+
         # inherited descriptors
         cls._descriptors = cls._descriptors.copy() if hasattr(cls, '_descriptors') else {}
         for base in bases:

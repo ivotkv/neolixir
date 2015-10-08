@@ -92,15 +92,10 @@ class Query(BaseQuery):
 
     @classmethod
     def node(cls, nodecls):
-        string = """
-        start classnode=node({classnode_id})
-        optional match subclass-[:__extends__*..]->classnode
-        with collect(distinct classnode) + collect(distinct subclass) as classnodes
-        unwind classnodes as classnode
-        match instance-[:__instance_of__]->classnode
+        return cls(string="""
+        match (instance:{0})
         return instance
-        """
-        return cls(string=string, params={'classnode_id': nodecls.classnode.id})
+        """.format(nodecls.__name__))
 
     """
     WARNING: The methods below are very limited and provided for partial Elixir-like compatibility only
