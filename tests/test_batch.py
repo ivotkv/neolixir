@@ -83,6 +83,7 @@ def test_index(m):
     batch.create(n1)
     #batch.index(index, 'node', '6', n1) # TODO: is there a workaround to make this work?
     batch.index(index, 'node', '7', n2)
+    batch.submit() # NOTE: separate submit until same-batch creates are supported
     batch.create(rel)
     def callback(batch, rel, response):
         # need to resubmit if needed to fake during-commit behaviour
