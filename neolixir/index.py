@@ -72,7 +72,7 @@ class NodeIndex(Index):
             if item.is_phantom():
                 n = super(NodeIndex, self).get(key, value, item.get_abstract())
                 if len(n.labels) == 0:
-                    n.labels.update(item._labels)
+                    n.labels.update(item.clslabels)
                     n.push()
                     item.set_entity(n)
                     return item

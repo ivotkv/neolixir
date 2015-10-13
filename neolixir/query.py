@@ -95,7 +95,7 @@ class Query(BaseQuery):
         return cls(string="""
         match (instance:{0})
         return instance
-        """.format(nodecls.__name__))
+        """.format(nodecls.clslabel))
 
     """
     WARNING: The methods below are very limited and provided for partial Elixir-like compatibility only

@@ -30,6 +30,14 @@ class Node(Entity):
             self._relfilters = {}
             super(Node, self).__init__(value, **properties)
 
+    @classproperty
+    def clslabel(cls):
+        return cls.__name__
+
+    @classproperty
+    def clslabels(cls):
+        return cls._labels
+
     def relview(self, name):
         descriptor = getattr(self.__class__, name)
         return descriptor.get_relview(self)
@@ -58,7 +66,7 @@ class Node(Entity):
                 self._entity = None
 
             elif self.is_phantom():
-                self._entity = m.graph.create(neo4j.Node(*self._labels, **self.get_abstract()))[0]
+                self._entity = m.graph.create(neo4j.Node(*self.clslabels, **self.get_abstract()))[0]
                 m.session.add(self)
 
             elif self.is_dirty():

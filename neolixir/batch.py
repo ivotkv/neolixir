@@ -46,7 +46,7 @@ class WriteBatch(LegacyWriteBatch):
                 self.cypher("""
                     create (n:{0} {{propmap}})
                     return n
-                """.format(':'.join(item._labels)), params={
+                """.format(':'.join(item.clslabels)), params={
                     'propmap': item.get_abstract()
                 }, automap=False)
 
@@ -137,7 +137,7 @@ class WriteBatch(LegacyWriteBatch):
                         with n, length(labels(n)) as c
                         set n:{0}
                         return c
-                    """.format(':'.join(cls._labels))
+                    """.format(':'.join(cls.clslabels))
                     params = {
                         'n_id': response.id
                     }
