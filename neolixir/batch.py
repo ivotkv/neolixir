@@ -14,13 +14,11 @@ class WriteBatch(LegacyWriteBatch):
     def __init__(self, graph_db, metadata):
         super(WriteBatch, self).__init__(graph_db)
         self.metadata = metadata
-        self.phantom_nodes = {}
         self.callbacks = []
         self.resubmit = False
 
     def clear(self):
         self.jobs = []
-        self.phantom_nodes.clear()
         self.callbacks = []
 
     def callback(self, func, *args):
@@ -45,12 +43,15 @@ class WriteBatch(LegacyWriteBatch):
     def create(self, *items):
         for item in items:
             if isinstance(item, Node):
-                #TODO: this does not add labels, but a cypher call might be problematic for rels (phantom_nodes)
-                super(WriteBatch, self).create(py2neo.node(*item._labels, **item.get_abstract()))
-                self.phantom_nodes[item] = self.last
+                self.cypher("""
+                    create (n:{0} {{propmap}})
+                    return n
+                """.format(':'.join(item._labels)), params={
+                    'propmap': item.get_abstract()
+                }, automap=False)
 
                 def callback(item, metadata, response):
-                    item._entity = response
+                    item._entity = response[0][0]
                     item.properties.set_dirty(False)
                     metadata.session.phantomnodes.discard(item)
                     metadata.session.add(item)
@@ -58,10 +59,12 @@ class WriteBatch(LegacyWriteBatch):
                 self.job_callback(callback, item, self.metadata)
 
             elif isinstance(item, Relationship):
+                if item.start.is_phantom() or item.end.is_phantom():
+                    raise NotImplementedError('creating a relationship in the same batch as its endpoints is not supported.')
                 abstract = [
-                    self.phantom_nodes[item.start] if item.start.is_phantom() else item.start._entity,
+                    item.start._entity,
                     item.type,
-                    self.phantom_nodes[item.end] if item.end.is_phantom() else item.end._entity,
+                    item.end._entity,
                     super(Relationship, item).get_abstract()
                 ]
                 super(WriteBatch, self).create(py2neo.rel(*abstract))
@@ -90,13 +93,11 @@ class WriteBatch(LegacyWriteBatch):
                     item._entity = None
 
                 if not item.is_phantom():
-                    q = "start n=node({n_id}) "
-                    if self.metadata.version < (2, 0):
-                        q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
-                    else:
-                        q += "match n-[rels*1]-() foreach(rel in rels | delete rel) "
-                    q += "delete n"
-                    self.cypher(q, params={'n_id': item.id}, automap=False)
+                    self.cypher("""
+                        start n=node({n_id})
+                        optional match n-[rels*1]-() foreach(rel in rels | delete rel)
+                        delete n
+                    """, params={'n_id': item.id}, automap=False)
                     self.job_callback(callback, item)
                 else:
                     self.callback(callback, item)
@@ -129,7 +130,6 @@ class WriteBatch(LegacyWriteBatch):
 
             if item.is_phantom():
                 self.get_or_create_in_index(neo4j.Node, index.index, key, value, item.get_abstract())
-                self.phantom_nodes[item] = self.last
 
                 def callback(self, job, cls, item, response):
                     query = """

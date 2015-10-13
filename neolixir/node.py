@@ -49,13 +49,11 @@ class Node(Entity):
         else:
             if self.is_deleted():
                 if not self.is_phantom():
-                    q = "start n=node({n_id}) "
-                    if m.version < (2, 0):
-                        q += "match n-[rels*1]-() foreach(rel in rels: delete rel) "
-                    else:
-                        q += "match n-[rels*1]-() foreach(rel in rels | delete rel) "
-                    q += "delete n"
-                    m.cypher(q, params={'n_id': self.id})
+                    m.cypher("""
+                        start n=node({n_id})
+                        optional match n-[rels*1]-() foreach(rel in rels | delete rel)
+                        delete n
+                    """, params={'n_id': self.id})
                 self.expunge()
                 self._entity = None
 
@@ -80,8 +78,5 @@ class Node(Entity):
             except EntityNotFoundException:
                 return None
         else:
-            if m.version < (2, 0):
-                clause = "instance.{0}! = {1}"
-            else:
-                clause = "instance.{0} = {1}"
+            clause = "instance.{0} = {1}"
             return cls.query.where(*[clause.format(k, repr(v)) for k, v in kwargs.iteritems()]).first()
