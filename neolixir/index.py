@@ -70,7 +70,7 @@ class NodeIndex(Index):
             return self.get(key, value, node)
         elif isinstance(item, Node):
             if item.is_phantom():
-                n = super(NodeIndex, self).get(key, value, item.get_abstract())
+                n = super(NodeIndex, self).get(key, value, item.get_abstract(exclude_null=True))
                 if len(n.labels) == 0:
                     n.labels.update(item.clslabels)
                     n.push()

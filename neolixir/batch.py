@@ -47,7 +47,7 @@ class WriteBatch(LegacyWriteBatch):
                     create (n:{0} {{propmap}})
                     return n
                 """.format(':'.join(item.clslabels)), params={
-                    'propmap': item.get_abstract()
+                    'propmap': item.get_abstract(exclude_null=True)
                 }, automap=False)
 
                 def callback(item, metadata, response):
@@ -65,7 +65,7 @@ class WriteBatch(LegacyWriteBatch):
                     item.start._entity,
                     item.type,
                     item.end._entity,
-                    super(Relationship, item).get_abstract()
+                    super(Relationship, item).get_abstract(exclude_null=True)
                 ]
                 super(WriteBatch, self).create(py2neo.rel(*abstract))
 
@@ -129,7 +129,7 @@ class WriteBatch(LegacyWriteBatch):
             cls = item.__class__
 
             if item.is_phantom():
-                self.get_or_create_in_index(neo4j.Node, index.index, key, value, item.get_abstract())
+                self.get_or_create_in_index(neo4j.Node, index.index, key, value, item.get_abstract(exclude_null=True))
 
                 def callback(self, job, cls, item, response):
                     query = """

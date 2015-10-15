@@ -126,8 +126,9 @@ class Relationship(Entity):
         else:
             raise ValueError('value provided is not an end node of this relationship')
 
-    def get_abstract(self):
-        return (self.start._entity, self.type, self.end._entity, super(Relationship, self).get_abstract())
+    def get_abstract(self, exclude_null=False):
+        return (self.start._entity, self.type, self.end._entity,
+                super(Relationship, self).get_abstract(exclude_null=exclude_null))
 
     @classmethod
     def node(cls, value):
@@ -173,7 +174,7 @@ class Relationship(Entity):
                 if self.start is None or self.start.is_phantom() or \
                     self.end is None or self.end.is_phantom():
                     return False
-                self._entity = m.graph.create(self.get_abstract())[0]
+                self._entity = m.graph.create(self.get_abstract(exclude_null=True))[0]
                 m.session.add(self)
 
             elif self.is_dirty():

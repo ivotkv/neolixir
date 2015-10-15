@@ -66,7 +66,7 @@ class Node(Entity):
                 self._entity = None
 
             elif self.is_phantom():
-                self._entity = m.graph.create(neo4j.Node(*self.clslabels, **self.get_abstract()))[0]
+                self._entity = m.graph.create(neo4j.Node(*self.clslabels, **self.get_abstract(exclude_null=True)))[0]
                 m.session.add(self)
 
             elif self.is_dirty():

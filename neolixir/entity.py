@@ -157,9 +157,12 @@ class Entity(Observable):
             else:
                 self.properties[k] = v
 
-    def get_abstract(self):
+    def get_abstract(self, exclude_null=False):
         self.properties.sanitize()
-        return self.properties
+        if exclude_null:
+            return {k: v for k, v in self.properties.iteritems() if v is not None}
+        else:
+            return self.properties
 
     def set_entity(self, entity):
         if self._entity is None:

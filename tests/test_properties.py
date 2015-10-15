@@ -52,6 +52,24 @@ def test_rel_properties(m):
     assert rel.is_dirty() == False
     assert rel.properties['prop1'] == 'prop1-changed'
 
+def test_null(m):
+    n1 = TNode()
+    n1.properties['prop1'] = 'prop1'
+    n1.properties['prop2'] = None
+    m.session.commit()
+
+    n1_id = n1.id
+    m.session.clear()
+    n1 = Node(n1_id)
+    assert n1.properties['prop1'] == 'prop1'
+    assert 'prop2' not in n1.properties
+
+    n1.properties['prop1'] = None
+    m.session.commit()
+    m.session.clear()
+    n1 = Node(n1_id)
+    assert 'prop1' not in n1.properties
+
 def test_string(m):
     n1 = TNode()
     assert n1.is_dirty() == False
