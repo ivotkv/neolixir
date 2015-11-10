@@ -172,7 +172,7 @@ class RelView(object):
         self._noload = 0
     
     def is_loaded(self):
-        return self.preloaded or self._noload or self.owner.is_phantom()
+        return hasattr(self, '_data') or self.preloaded or self._noload or self.owner.is_phantom()
 
     def load(self):
         if not self.owner.is_phantom():
