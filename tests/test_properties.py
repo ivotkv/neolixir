@@ -1,4 +1,6 @@
 from common import *
+from decimal import Decimal
+from datetime import datetime
 
 def test_node_properties(m):
     n1 = TNode()
@@ -87,3 +89,50 @@ def test_enum(m):
     with raises(ValueError):
         n1.enum = 'invalid'
     assert n1.enum == 'value1'
+    n1.enum = None
+    assert n1.enum == None
+
+def test_numeric(m):
+    n1 = TNode()
+    n1.numeric = 1
+    assert n1.properties['numeric'] == '1'
+    n1.numeric = 1.5
+    assert n1.properties['numeric'] == '1.5'
+    n1.numeric = '1.6'
+    assert n1.properties['numeric'] == '1.6'
+    n1.numeric = Decimal('1.7')
+    assert n1.properties['numeric'] == '1.7'
+    with raises(ValueError):
+        n1.numeric = 'invalid'
+    with raises(ValueError):
+        n1.numeric = False
+    with raises(ValueError):
+        n1.numeric = object()
+    assert n1.properties['numeric'] == '1.7'
+    n1.numeric = None
+    assert n1.properties['numeric'] == None
+
+def test_datetime(m):
+    n1 = TNode()
+    dt = datetime.now()
+    n1.datetime = dt
+    assert n1.properties['datetime'] == dt.strftime("%Y-%m-%d %H:%M:%S")
+    n1.datetime = '2015-10-10 10:10:10'
+    assert n1.properties['datetime'] == '2015-10-10 10:10:10'
+    n1.datetime = '2015-10-10 10:10'
+    assert n1.properties['datetime'] == '2015-10-10 10:10:00'
+    n1.datetime = '2015-10-10'
+    assert n1.properties['datetime'] == '2015-10-10 00:00:00'
+    n1.datetime = '2015-10-10T10:10:10'
+    assert n1.properties['datetime'] == '2015-10-10 10:10:10'
+    n1.datetime = '2015-10-10 10:10:10.123'
+    assert n1.properties['datetime'] == '2015-10-10 10:10:10'
+    with raises(ValueError):
+        n1.datetime = 'invalid'
+    with raises(ValueError):
+        n1.datetime = False
+    with raises(ValueError):
+        n1.datetime = object()
+    assert n1.properties['datetime'] == '2015-10-10 10:10:10'
+    n1.datetime = None
+    assert n1.properties['datetime'] == None

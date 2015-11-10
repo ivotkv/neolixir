@@ -1,7 +1,7 @@
 from types import FunctionType
 from inspect import getargspec
 from collections import Iterable
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from utils import IN, OUT, classproperty
 from observable import Observable
@@ -84,7 +84,7 @@ class Enum(String):
         self.values = args
     
     def __set__(self, instance, value):
-        if value not in self.values:
+        if value is not None and value not in self.values:
             raise ValueError(u"Invalid value for Enum: {0}".format(value))
         super(Enum, self).__set__(instance, value)
 
@@ -106,11 +106,15 @@ class Numeric(Property):
     
     def __set__(self, instance, value):
         if value is not None:
-            value = str(value)
+            value = str(self.normalize(value))
         instance.properties[self.name] = value
 
     def normalize(self, value):
-        value = super(Numeric, self).normalize(value)
+        if value is not None:
+            try:
+                value = super(Numeric, self).normalize(unicode(value))
+            except InvalidOperation:
+                raise ValueError(u"Invalid value for Numeric: {0}".format(value))
         if self.scale is not None and isinstance(value, Decimal):
             value = value.quantize(Decimal('1.' + '0' * self.scale))
         return value
@@ -129,8 +133,13 @@ class DateTime(Property):
             return value if value is not None else self.get_default(instance)
     
     def __set__(self, instance, value):
-        if isinstance(value, datetime):
-            value = value.strftime("%Y-%m-%d %H:%M:%S")
+        if value is not None:
+            if not isinstance(value, datetime):
+                value = self.parse(value)
+            if isinstance(value, datetime):
+                value = value.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                raise ValueError(u"Invalid value for DateTime: {0}".format(value))
         instance.properties[self.name] = value
 
     @classmethod
@@ -162,8 +171,6 @@ class DateTime(Property):
                 return datetime.strptime(value, "%Y-%m-%d %H:%M:%S.%f")
             except ValueError:
                 pass
-        elif isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value)
         return None
 
 class Array(Property):
