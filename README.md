@@ -6,8 +6,6 @@ Declarative ORM abstraction layer for Neo4j.
 
 The current stable version requires py2neo 2.0+, which requires Python 2.7+.
 
-The legacy branch supports py2neo 1.4.6 with Python 2.6+.
-
 ## Testing
 
 Tests are based on pytest and are located in the `tests/` directory.
@@ -22,18 +20,18 @@ In order to run the tests:
 
     **WARNING**: running the tests will clear the contents of this database.
 
-2. Make sure `pip` and `virtualenv` are installed.
+2. Make sure `virtualenv` is installed.
 
 3. The first time, you will need to build the test virtualenv:
 
     ```bash
-    $ ./virtualenv/build.sh py2neo20
+    $ ./virtualenv/build.sh
     ```
 
 4. From the repo root, activate the virtualenv you wish to test against:
 
     ```bash
-    $ source virtualenv/py2neo20/bin/activate
+    $ source virtualenv/py2neo-2.0.8/bin/activate
     ```
 
 5. Run the tests:
