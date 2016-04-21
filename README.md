@@ -31,7 +31,7 @@ In order to run the tests:
 4. From the repo root, activate the virtualenv you wish to test against:
 
     ```bash
-    $ source virtualenv/py2neo-2.0.8/bin/activate
+    $ source virtualenv/python-2.7-py2neo-2.0.8/bin/activate
     ```
 
 5. Run the tests:
