@@ -5,17 +5,24 @@ set -x
 
 cd $(dirname "${BASH_SOURCE[0]}")
 
-VERSIONS=${VERSIONS:-"2.0.8"}
+PYTHON_VERSION=${PYTHON_VERSION:-"2.7"}
+PY2NEO_VERSION=${PY2NEO_VERSION:-"2.0.8"}
 
-for VERSION in $VERSIONS; do
-    DIRNAME="py2neo-$VERSION"
-    rm -rf $DIRNAME
-    virtualenv --python=python2.7 $DIRNAME
-    source $DIRNAME/bin/activate
-    pip install --upgrade pip
-    pip install ipython
-    pip install "py2neo==$VERSION"
-    pip install simplejson
-    pip install pytest
-    ln -s ../../../../../neolixir $DIRNAME/lib/python*/site-packages/
-done
+DIRNAME="python-$PYTHON_VERSION-py2neo-$PY2NEO_VERSION"
+
+# build clean virtualenv
+rm -rf $DIRNAME
+virtualenv --python=python$PYTHON_VERSION $DIRNAME
+source $DIRNAME/bin/activate
+
+# install standard packages
+pip install --upgrade pip
+pip install ipython
+pip install pytest
+
+# install neolixir dependencies
+pip install "py2neo==$PY2NEO_VERSION"
+pip install simplejson
+
+# symlink neolixir into virtualenv for convenience
+ln -s ../../../../../neolixir $DIRNAME/lib/python$PYTHON_VERSION/site-packages/
