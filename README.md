@@ -1,6 +1,6 @@
 # Neolixir
 
-A declarative ORM abstraction layer for Neo4j. Provides model definition via polymorphic classes, schema definition, property typing, query abstraction, event system and session management.
+A declarative ORM abstraction layer for Neo4j. Provides model definition via polymorphic classes, schema definition, property typing, query abstraction, event handling and session management.
 
 ## Quick Start
 
@@ -17,6 +17,10 @@ pip install "git+ssh://git@github.com/Didacti/neolixir.git"
 
 ## Development
 
+This software is open-source and released under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). Feel free to clone, modify and contribute.
+
+If contributing code, please follow the existing coding style and make sure to run and update the tests.
+
 ### Running the Tests
 
 Tests are based on [pytest](http://pytest.org/) and are located in the `tests/` directory.
@@ -27,7 +31,7 @@ In order to run the tests:
 
     **WARNING**: running the tests will clear the contents of this database.
 
-2. Make sure `virtualenv` Python package is installed.
+2. Make sure the `virtualenv` Python package is installed.
 
 3. Clone this repo and go to its root directory.
 
@@ -53,8 +57,10 @@ In order to run the tests:
     $ NEO4J_TEST_SERVER=localhost:7480 py.test tests
     ```
 
-Please make sure to run and update the tests as needed after any development.
-
 ## About
 
 Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com).
+
+Inspired by the [Elixir](http://elixir.ematia.de/apidocs/elixir.html) wrapper for [SQLAlchemy](http://www.sqlalchemy.org/).
+
+Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of The MIT License.
