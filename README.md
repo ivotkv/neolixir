@@ -1,18 +1,25 @@
 # Neolixir
 
-Declarative ORM abstraction layer for Neo4j.
+A declarative ORM abstraction layer for Neo4j. Provides model definition via polymorphic classes, schema definition, property typing, query abstraction, event system and session management.
 
-## Dependencies
+## Quick Start
+
+### Installation
 
 The current stable version requires py2neo 2.0+, which requires Python 2.7+.
 
-## Testing
+Since the package is not yet on PyPI, please install from GitHub directly:
+```bash
+pip install "git+ssh://git@github.com/Didacti/neolixir.git"
+```
 
-Tests are based on pytest and are located in the `tests/` directory.
+### Basic Usage
 
-Please make sure to run and update the tests if necessary after any development.
+## Development
 
-### Running tests
+### Running the Tests
+
+Tests are based on [pytest](http://pytest.org/) and are located in the `tests/` directory.
 
 In order to run the tests:
 
@@ -20,21 +27,23 @@ In order to run the tests:
 
     **WARNING**: running the tests will clear the contents of this database.
 
-2. Make sure `virtualenv` is installed.
+2. Make sure `virtualenv` Python package is installed.
 
-3. The first time, you will need to build the test virtualenv:
+3. Clone this repo and go to its root directory.
+
+4. The first time, you will need to build the test virtualenv:
 
     ```bash
     $ ./virtualenv/build.sh
     ```
 
-4. From the repo root, activate the virtualenv you wish to test against:
+5. Activate the virtualenv you wish to test against, by default:
 
     ```bash
-    $ source virtualenv/python-2.7-py2neo-2.0.8/bin/activate
+    $ source ./virtualenv/python-2.7-py2neo-2.0.8/bin/activate
     ```
 
-5. Run the tests:
+6. Run the tests:
 
     ```bash
     $ py.test tests
@@ -43,3 +52,9 @@ In order to run the tests:
     ```bash
     $ NEO4J_TEST_SERVER=localhost:7480 py.test tests
     ```
+
+Please make sure to run and update the tests as needed after any development.
+
+## About
+
+Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com).

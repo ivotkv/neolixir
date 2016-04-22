@@ -5,15 +5,15 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '2.0'
+from neolixir import __name__, __package__, __version__
 
 setup(
-    name='neolixir',
+    name=__name__,
     description='Declarative ORM abstraction layer for Neo4j',
-    version=VERSION,
-    packages=['neolixir'],
+    version=__version__,
+    packages=[__package__],
     install_requires=[
-        'py2neo',
+        'py2neo>=2.0',
         'simplejson'
     ],
     test_requires=[
