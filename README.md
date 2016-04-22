@@ -4,6 +4,8 @@ A declarative ORM abstraction layer for Neo4j. Provides model definition via pol
 
 ## Documentation
 
+Detailed documentation coming soon. In the meantime, please see the Quick Start section below.
+
 ## Quick Start
 
 ### Installation
@@ -16,6 +18,82 @@ pip install "git+ssh://git@github.com/Didacti/neolixir.git"
 ```
 
 ### Basic Usage
+
+Define a model:
+```python
+from neolixir import *
+
+class Person(Node):
+    name = String()
+    born = DateTime()
+    friends = RelOut('friends_with')
+```
+
+Set some values:
+```
+>>> bob = Person()
+>>> bob
+<Person (0x16cf310): 
+Id = None
+Descriptors = ['born', 'friends', 'name']
+Properties = {}
+>
+>>> bob.name = 'Bob'
+>>> bob.born = '1970-01-01'
+>>> bob
+<Person (0x16cf310): 
+Id = None
+Descriptors = ['born', 'friends', 'name']
+Properties = {'born': '1970-01-01 00:00:00', 'name': u'Bob'}
+>
+```
+
+Add a friend:
+```
+>>> alice = Person()
+>>> alice.name = 'Alice'
+>>> bob.friends.append(alice)
+<Relationship (0x16ef850): (None)-[None:friends_with]->(None) {}>
+>>> bob.friends
+[<Person (0x16e83d0): 
+Id = None
+Descriptors = ['born', 'friends', 'name']
+Properties = {'name': u'Alice'}
+>]
+```
+
+If your Neo4j server requires authentication:
+```
+>>> metadata.authenticate('user', 'password')
+True
+```
+
+Commit the session:
+```
+>>> metadata.session.commit()
+>>> bob.id
+315
+>>> alice.id
+316
+```
+
+Reload from database:
+```
+>>> metadata.session.clear()
+>>> bob = Person(315)
+>>> bob
+<Person (0x17971d0): 
+Id = 315
+Descriptors = ['born', 'friends', 'name']
+Properties = {u'born': u'1970-01-01 00:00:00', u'name': u'Bob', u'__class__': u'Person'}
+>
+>>> bob.friends
+[<Person (0x17c3210): 
+Id = 316
+Descriptors = ['born', 'friends', 'name']
+Properties = {u'name': u'Alice', u'__class__': u'Person'}
+>]
+```
 
 ## Development
 
@@ -63,4 +141,4 @@ In order to run the tests:
 
 Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com). Inspired by the [Elixir](http://elixir.ematia.de/apidocs/elixir.html) wrapper for [SQLAlchemy](http://www.sqlalchemy.org/).
 
-Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of The MIT License.
+Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of the [MIT License](https://opensource.org/licenses/MIT).
