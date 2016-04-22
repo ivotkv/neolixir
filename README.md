@@ -2,6 +2,8 @@
 
 A declarative ORM abstraction layer for Neo4j. Provides model definition via polymorphic classes, schema definition, property typing, query abstraction, event handling and session management.
 
+## Documentation
+
 ## Quick Start
 
 ### Installation
@@ -59,8 +61,6 @@ In order to run the tests:
 
 ## About
 
-Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com).
-
-Inspired by the [Elixir](http://elixir.ematia.de/apidocs/elixir.html) wrapper for [SQLAlchemy](http://www.sqlalchemy.org/).
+Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com). Inspired by the [Elixir](http://elixir.ematia.de/apidocs/elixir.html) wrapper for [SQLAlchemy](http://www.sqlalchemy.org/).
 
 Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of The MIT License.
