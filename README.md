@@ -14,7 +14,7 @@ The current stable version requires py2neo 2.0+, which requires Python 2.7+.
 
 Since the package is not yet on PyPI, please install from GitHub directly:
 ```bash
-pip install "git+ssh://git@github.com/Didacti/neolixir.git"
+pip install "git+ssh://git@github.com/lumnius/neolixir.git"
 ```
 
 ### Basic Usage
@@ -93,6 +93,8 @@ Id = 316
 Descriptors = ['born', 'friends', 'name']
 Properties = {u'name': u'Alice', u'__class__': u'Person'}
 >]
+>>> bob.friends.rels()
+[<Relationship (0x17c3050): (315)-[155:friends_with]->(316) {u'__class__': u'Relationship'}>]
 ```
 
 ## Development
