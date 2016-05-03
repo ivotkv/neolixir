@@ -14,7 +14,7 @@ The current stable version requires py2neo 2.0+, which requires Python 2.7+.
 
 Since the package is not yet on PyPI, please install from GitHub directly:
 ```bash
-pip install "git+ssh://git@github.com/lumnius/neolixir.git"
+pip install "git+https://git@github.com/ivotkv/neolixir.git"
 ```
 
 ### Basic Usage
