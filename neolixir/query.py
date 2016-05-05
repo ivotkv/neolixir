@@ -3,21 +3,72 @@ from exc import *
 from metadata import metadata as m
 from utils import classproperty
 
+NEST_CHARS = {
+    '\'': '\'',
+    '"': '"',
+    '[': ']',
+    '(': ')',
+    '{': '}'
+}
+
+LOWERCASE_RE = re.compile(r'^(return|union)$', flags=re.I)
+
+def tokenize(string):
+    tokens = []
+    idx = 0
+    token = ''
+    context = []
+    while idx < len(string):
+        if string[idx] == '\\':
+            token += string[idx] + string[idx + 1]
+            idx += 2
+        elif len(context) == 0:
+            if string[idx].isspace():
+                if len(token) > 0:
+                    if LOWERCASE_RE.match(token):
+                        token = token.lower()
+                    tokens.append(token)
+                    token = ''
+            else:
+                if string[idx] in NEST_CHARS:
+                    context.append(string[idx])
+                token += string[idx]
+            idx += 1
+        else:
+            if string[idx] == NEST_CHARS[context[-1]]:
+                context.pop()
+            elif string[idx] in NEST_CHARS:
+                context.append(string[idx])
+            token += string[idx]
+            idx += 1
+    if len(token) > 0:
+        if LOWERCASE_RE.match(token):
+            token = token.lower()
+        tokens.append(token)
+    return tokens
+
 class Query(object):
 
     def __init__(self, string='', params=None):
-        self.string = string or ''
+        self.tokens = tokenize(string) if string else []
         self.params = params or {}
 
+    @property
+    def string(self):
+        return ' '.join(self.tokens)
+
     def copy(self):
-        return self.__class__(string=self.string, params=self.params.copy())
+        copy = self.__class__()
+        copy.tokens = [x for x in self.tokens]
+        copy.params = self.params.copy()
+        return copy
 
     def __copy__(self):
         return self.copy()
 
     def append(self, string, params=None):
         copy = self.copy()
-        copy.string += ' ' + string
+        copy.tokens += tokenize(string)
         if params is not None:
             copy.params.update(params)
         return copy
