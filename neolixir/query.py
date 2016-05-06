@@ -139,16 +139,16 @@ class Query(BaseQuery):
         return [x[0] for x in self.execute(automap=automap)]
 
     def count(self):
-        return self.execute(' '.join([self._clauses, 'return count(*)']), automap=False)[0][0]
+        return self.set('return count(*)').execute(automap=False)[0][0]
 
     def first(self, automap=True):
         try:
-            return self.execute(' '.join([self._clauses, self._return, self._order, self._skip, 'limit 1']), automap=automap)[0][0]
+            return self.limit(1).execute(automap=automap)[0][0]
         except IndexError:
             return None
 
     def one(self, automap=True):
-        results = self.execute(' '.join([self._clauses, self._return, self._order, self._skip, 'limit 2']), automap=automap)
+        results = self.limit(2).execute(automap=automap)
         if len(results) == 1:
             return results[0][0]
         elif len(results) == 0:
