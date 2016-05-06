@@ -11,7 +11,13 @@ NEST_CHARS = {
     '{': '}'
 }
 
-LOWERCASE_RE = re.compile(r'^(return|union)$', flags=re.I)
+RETURN_RE = re.compile(r'^return$', flags=re.I)
+RETURN_OPTS_RE = re.compile(r'^(order|skip|limit)$', flags=re.I)
+ORDER_RE = re.compile(r'^order$', flags=re.I)
+SKIP_RE = re.compile(r'^skip$', flags=re.I)
+LIMIT_RE = re.compile(r'^limit$', flags=re.I)
+SKIP_OR_LIMIT_RE = re.compile(r'^(skip|limit)$', flags=re.I)
+UNION_RE = re.compile(r'^union$', flags=re.I)
 
 def tokenize(string):
     tokens = []
@@ -25,8 +31,6 @@ def tokenize(string):
         elif len(context) == 0:
             if string[idx].isspace():
                 if len(token) > 0:
-                    if LOWERCASE_RE.match(token):
-                        token = token.lower()
                     tokens.append(token)
                     token = ''
             else:
@@ -42,9 +46,9 @@ def tokenize(string):
             token += string[idx]
             idx += 1
     if len(token) > 0:
-        if LOWERCASE_RE.match(token):
-            token = token.lower()
         tokens.append(token)
+    if len(context) > 0:
+        raise ValueError("unclosed nestings in query: {0}".format(' '.join(context)))
     return tokens
 
 class Query(object):
@@ -68,7 +72,39 @@ class Query(object):
 
     def append(self, string, params=None):
         copy = self.copy()
-        copy.tokens += tokenize(string)
+        new_tokens = tokenize(string)
+        return_idx = None
+        union_idx = None
+        for idx, token in enumerate(copy.tokens):
+            if RETURN_RE.match(token):
+                return_idx = idx
+            elif UNION_RE.match(token):
+                union_idx = idx
+        new_return_idx = None
+        new_union_idx = None
+        for idx, token in enumerate(new_tokens):
+            if new_return_idx is None and RETURN_RE.match(token):
+                new_return_idx = idx
+            elif new_union_idx is None and UNION_RE.match(token):
+                new_union_idx = idx
+        if return_idx is not None and new_return_idx is None:
+            if RETURN_OPTS_RE.match(new_tokens[0]):
+                if ORDER_RE.match(new_tokens[0]):
+                    copy.tokens = copy.tokens[:return_idx + 1] + new_tokens
+                else:
+                    extra_tokens = copy.tokens[return_idx:]
+                    copy.tokens = copy.tokens[:return_idx]
+                    regex = SKIP_OR_LIMIT_RE if SKIP_RE.match(new_tokens[0]) else LIMIT_RE
+                    while extra_tokens and not regex.match(extra_tokens[0]):
+                        copy.tokens.append(extra_tokens.pop(0))
+                    copy.tokens += new_tokens
+            else:
+                copy.tokens = copy.tokens[:return_idx] + new_tokens + copy.tokens[return_idx:]
+        elif return_idx is None or new_return_idx is None or \
+             new_union_idx is not None and new_union_idx < new_return_idx:
+            copy.tokens += new_tokens
+        else:
+            copy.tokens = copy.tokens[:return_idx] + new_tokens
         if params is not None:
             copy.params.update(params)
         return copy
@@ -78,35 +114,27 @@ class Query(object):
 
     @classmethod
     def node(cls, nodecls):
-        return cls(string='match (instance:{0})'.format(nodecls.clslabel))
+        return cls(string='match (instance:{0}) return instance'.format(nodecls.clslabel))
 
     """
     WARNING: The methods below are very limited and provided for partial Elixir-like compatibility only
     """
     def offset(self, value):
-        ret = 'return instance' if not re.search(re.compile(r'\breturn\b', flags=re.I), self.string) else ''
-        return self.append('{0} skip {1}'.format(ret, str(int(value))))
+        return self.append('skip {0}'.format(str(int(value))))
 
     def limit(self, value):
-        ret = 'return instance' if not re.search(re.compile(r'\breturn\b', flags=re.I), self.string) else ''
-        return self.append('{0} limit {1}'.format(ret, str(int(value))))
+        return self.append('limit {0}'.format(str(int(value))))
 
     def all(self, automap=True, fast=False):
-        if not re.search(re.compile(r'\breturn\b', flags=re.I), self.string):
-            return self.append('return instance').all(automap=automap, fast=fast)
         return [x[0] for x in self.execute(automap=automap, fast=fast)]
 
     def first(self, automap=True):
-        if not re.search(re.compile(r'\breturn\b', flags=re.I), self.string):
-            return self.append('return instance').first(automap=automap)
         try:
             return self.limit(1).execute(automap=automap)[0][0]
         except IndexError:
             return None
 
     def one(self, automap=True):
-        if not re.search(re.compile(r'\breturn\b', flags=re.I), self.string):
-            return self.append('return instance').one(automap=automap)
         results = self.limit(2).execute(automap=automap)
         if len(results) == 1:
             return results[0][0]
