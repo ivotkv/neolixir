@@ -7,6 +7,29 @@ def test_tokenize(m):
 def test_append(m):
     q = TNode.query
     assert q.string == 'match (instance:TNode) return instance'
+    q = q.append('where instance.string = "foo"')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance'
+    q = q.append('order by id(instance) desc')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance order by id(instance) desc'
+    q = q.append('limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance order by id(instance) desc limit 10'
+    q = q.append('skip 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance order by id(instance) desc skip 10'
+    q = q.append('limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance order by id(instance) desc skip 10 limit 10'
+    q = q.append('order by instance.string, id(instance) desc')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance order by instance.string, id(instance) desc'
+    q = q.append('return instance.string, id(instance)')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance.string, id(instance)'
+    q = q.append('skip 10 limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance.string, id(instance) skip 10 limit 10'
+    q = q.append('order by instance.string, id(instance) desc')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance.string, id(instance) order by instance.string, id(instance) desc'
+    q = q.append('limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance.string, id(instance) order by instance.string, id(instance) desc limit 10'
+    q = q.append('and instance.integer = 1')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" and instance.integer = 1 return instance.string, id(instance) order by instance.string, id(instance) desc limit 10'
+    #TODO: add union tests
 
 def test_elixir_compat(m):
     q = TNode.query

@@ -89,15 +89,17 @@ class Query(object):
                 new_union_idx = idx
         if return_idx is not None and new_return_idx is None:
             if RETURN_OPTS_RE.match(new_tokens[0]):
+                extra_tokens = copy.tokens[return_idx:]
+                copy.tokens = copy.tokens[:return_idx]
                 if ORDER_RE.match(new_tokens[0]):
-                    copy.tokens = copy.tokens[:return_idx + 1] + new_tokens
+                    regex = RETURN_OPTS_RE
+                elif SKIP_RE.match(new_tokens[0]):
+                    regex = SKIP_OR_LIMIT_RE
                 else:
-                    extra_tokens = copy.tokens[return_idx:]
-                    copy.tokens = copy.tokens[:return_idx]
-                    regex = SKIP_OR_LIMIT_RE if SKIP_RE.match(new_tokens[0]) else LIMIT_RE
-                    while extra_tokens and not regex.match(extra_tokens[0]):
-                        copy.tokens.append(extra_tokens.pop(0))
-                    copy.tokens += new_tokens
+                    regex = LIMIT_RE
+                while extra_tokens and not regex.match(extra_tokens[0]):
+                    copy.tokens.append(extra_tokens.pop(0))
+                copy.tokens += new_tokens
             else:
                 copy.tokens = copy.tokens[:return_idx] + new_tokens + copy.tokens[return_idx:]
         elif return_idx is None or new_return_idx is None or \
