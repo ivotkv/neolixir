@@ -147,4 +147,4 @@ Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of the 
 
 ## Contact
 
-Gmail: ivotkv.
+Feel free to contact me via my gmail: ivotkv.
