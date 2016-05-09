@@ -144,3 +144,7 @@ In order to run the tests:
 Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com). Inspired by the [Elixir](http://elixir.ematia.de/apidocs/elixir.html) wrapper for [SQLAlchemy](http://www.sqlalchemy.org/).
 
 Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Contact
+
+Gmail: ivotkv.
