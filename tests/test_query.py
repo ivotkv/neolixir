@@ -3,6 +3,7 @@ from random import randint
 
 def test_tokenize(m):
     from neolixir.query import tokenize
+    #TODO
 
 def test_append(m):
     q = TNode.query
