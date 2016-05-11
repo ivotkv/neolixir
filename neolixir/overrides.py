@@ -1,6 +1,6 @@
 import py2neo
 
-if '2.0' <= py2neo.__version__ <= '2.0.8':
+if '2.0' <= py2neo.__version__ < '2.1':
 
     """
     This sets the default socket timeout to 300 seconds.
