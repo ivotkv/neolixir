@@ -10,7 +10,7 @@ Detailed documentation coming soon. In the meantime, please see the Quick Start 
 
 ### Installation
 
-The current stable version requires py2neo 2.0.*, which requires Python 2.7+.
+The current stable version requires py2neo 2.0, which requires Python 2.7+.
 
 **NOTE**: Neo4j 3.0+ and Python 3.0+ support is currently still under development.
 
