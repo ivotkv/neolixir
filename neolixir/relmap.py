@@ -231,12 +231,12 @@ class RelView(object):
         if isinstance(value, Relationship):
             return value
         else:
-            other = Node(value)
+            other = Node.get(value)
             if other is not None:
                 if self.direction == OUT:
-                    return self.cls((self.owner, self.type, other))
+                    return self.cls.get((self.owner, self.type, other))
                 else:
-                    return self.cls((other, self.type, self.owner))
+                    return self.cls.get((other, self.type, self.owner))
             else:
                 raise ValueError("could not find other Node")
 

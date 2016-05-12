@@ -13,7 +13,8 @@ class Node(Entity):
     
     __query_cls__ = Query
 
-    def __new__(cls, value=None, **properties):
+    @classmethod
+    def get(cls, value, **properties):
         if isinstance(value, int):
             try:
                 value = m.graph.node(value)
@@ -22,13 +23,14 @@ class Node(Entity):
                     raise EntityNotFoundException(str(e))
                 raise e
         elif value is not None and not isinstance(value, (cls, DummyNode, neo4j.Node)):
-            raise ValueError("Node can only be instantiated by id, entity or None")
-        return super(Node, cls).__new__(cls, value, **properties)
+            raise ValueError(u"unexpected value for Node: {0}".format(value))
+        return super(Node, cls).get(value=value, **properties)
 
-    def __init__(self, value=None, **properties):
-        if not self._initialized:
-            self._relfilters = {}
-            super(Node, self).__init__(value, **properties)
+    def __init__(self, entity=None, **properties):
+        if not (entity is None or isinstance(entity, (DummyNode, neo4j.Node))):
+            raise ValueError(u"cannot initialize Node from entity: {0}".format(entity))
+        self._relfilters = {}
+        super(Node, self).__init__(entity=entity, **properties)
 
     @classproperty
     def clslabel(cls):
@@ -82,7 +84,7 @@ class Node(Entity):
     def get_by(cls, **kwargs):
         if 'id' in kwargs:
             try:
-                return cls(kwargs['id'])
+                return cls.get(kwargs['id'])
             except EntityNotFoundException:
                 return None
         else:

@@ -188,7 +188,7 @@ class Session(object):
                     if re.match(r'^node/\d+($|/.*$)', exc.uri):
                         id = re.sub(r'^node/(\d+)($|/.*$)', r'\1', exc.uri)
                         if id.isdigit():
-                            node = Node(int(id))
+                            node = Node.get(int(id))
                             if node.is_deleted():
                                 node.expunge()
                                 retry = True
@@ -196,7 +196,7 @@ class Session(object):
                     elif re.match(r'^relationship/\d+($|/.*$)', exc.uri):
                         id = re.sub(r'^relationship/(\d+)($|/.*$)', r'\1', exc.uri)
                         if id.isdigit():
-                            rel = Relationship(int(id))
+                            rel = Relationship.get(int(id))
                             if rel.is_deleted():
                                 rel.expunge()
                                 retry = True
@@ -231,7 +231,7 @@ class Session(object):
                     if re.search(r'Node \d+ not found', error):
                         id = re.sub(r'^.*Node (\d+) not found.*$', r'\1', error)
                         if id.isdigit():
-                            node = Node(int(id))
+                            node = Node.get(int(id))
                             if node.is_deleted():
                                 node.expunge()
                                 retry = True
@@ -239,7 +239,7 @@ class Session(object):
                     elif re.search(r'Relationship \d+ not found', error):
                         id = re.sub(r'^.*Relationship (\d+) not found.*$', r'\1', error)
                         if id.isdigit():
-                            rel = Relationship(int(id))
+                            rel = Relationship.get(int(id))
                             if rel.is_deleted():
                                 rel.expunge()
                                 retry = True

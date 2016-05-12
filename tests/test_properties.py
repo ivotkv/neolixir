@@ -22,7 +22,7 @@ def test_node_properties(m):
     n1_id = n1.id
     n1_entity = n1._entity
     m.session.clear()
-    n1 = Node(n1_id)
+    n1 = Node.get(n1_id)
     assert n1._entity is not n1_entity
     assert n1.is_dirty() == False
     assert n1.properties['prop1'] == 'prop1-changed'
@@ -49,7 +49,7 @@ def test_rel_properties(m):
     rel_id = rel.id
     rel_entity = rel._entity
     m.session.clear()
-    rel = Relationship(rel_id)
+    rel = Relationship.get(rel_id)
     assert rel._entity is not rel_entity
     assert rel.is_dirty() == False
     assert rel.properties['prop1'] == 'prop1-changed'
@@ -62,14 +62,14 @@ def test_null(m):
 
     n1_id = n1.id
     m.session.clear()
-    n1 = Node(n1_id)
+    n1 = Node.get(n1_id)
     assert n1.properties['prop1'] == 'prop1'
     assert 'prop2' not in n1.properties
 
     n1.properties['prop1'] = None
     m.session.commit()
     m.session.clear()
-    n1 = Node(n1_id)
+    n1 = Node.get(n1_id)
     assert 'prop1' not in n1.properties
 
 def test_string(m):

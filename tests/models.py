@@ -54,3 +54,10 @@ class IField(Entity):
 
 class IFieldTNode(TNode, IField):
     pass
+
+class InitNode(Node):
+    counter = Integer(default=0)
+
+    def __init__(self, entity=None, **properties):
+        super(InitNode, self).__init__(entity=entity, **properties)
+        self.counter += 1

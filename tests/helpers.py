@@ -22,7 +22,7 @@ def update_out_of_session(m, entity, properties=None):
 
     @checked_thread
     def run(m, entity, properties):
-        entity = entity.cls(entity.id)
+        entity = entity.cls.get(entity.id)
         entity.properties.update(properties)
         m.session.commit()
         return m.session.dirty == 0
@@ -35,7 +35,7 @@ def delete_out_of_session(m, entity):
 
     @checked_thread
     def run(m, entity):
-        entity = entity.cls(entity.id)
+        entity = entity.cls.get(entity.id)
         entity.delete()
         m.session.commit()
         return entity not in m.session
@@ -51,8 +51,8 @@ def append_out_of_session(m, n1, relname, n2):
 
     @checked_thread
     def run(m, n1, relname, n2):
-        n1 = n1.cls(n1.id)
-        n2 = n2.cls(n2.id)
+        n1 = n1.cls.get(n1.id)
+        n2 = n2.cls.get(n2.id)
         rel = getattr(n1, relname).append(n2)
         m.session.commit()
         return rel.id if rel else None
@@ -68,8 +68,8 @@ def remove_out_of_session(m, n1, relname, n2):
 
     @checked_thread
     def run(m, n1, relname, n2):
-        n1 = n1.cls(n1.id)
-        n2 = n2.cls(n2.id)
+        n1 = n1.cls.get(n1.id)
+        n2 = n2.cls.get(n2.id)
         relview = getattr(n1, relname)
         if n2 in relview:
             count = len(relview)

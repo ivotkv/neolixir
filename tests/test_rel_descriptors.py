@@ -5,7 +5,7 @@ def test_plain(m):
     n2 = TNode()
     assert len(n1.rel_out) == 0
     assert len(n1.rel_in) == 0
-    r = Relationship((n1, 'rel', n2))
+    r = Relationship.get((n1, 'rel', n2))
     assert r in n1.rel_out
     assert n2 in n1.rel_out
     assert r in n2.rel_in

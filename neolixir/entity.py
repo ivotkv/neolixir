@@ -52,10 +52,10 @@ class Entity(Observable):
     
     __metaclass__ = EntityMeta
 
-    _initialized = False
     _deleted = False
 
-    def __new__(cls, value=None, **properties):
+    @classmethod
+    def get(cls, value, **properties):
         if isinstance(value, cls):
             return value
         instance = m.session.get(value)
@@ -71,27 +71,23 @@ class Entity(Observable):
             valcls = m.classes.get(loaded_properties.get('__class__'))
             if not valcls or not issubclass(valcls, cls):
                 raise TypeError("entity is not an instance of " + cls.__name__)
-            instance = super(Entity, cls).__new__(valcls)
-            instance._entity = value
-            if valcls is not cls:
-                instance.__init__(value, **properties)
-            return instance
+            return valcls(entity=value, **properties)
         else:
-            instance = super(Entity, cls).__new__(cls)
-            instance._entity = None
-            return instance
+            return cls(entity=value, **properties)
 
-    def __init__(self, value=None, **properties):
-        if not self._initialized:
-            self._initialized = True
-            for k, v in properties.iteritems():
-                if k in self._descriptors:
-                    setattr(self, k, v)
-                else:
-                    self.properties[k] = v
-            m.session.add(self)
-            if self.is_phantom():
-                self.fire_event('create', self)
+    def __init__(self, entity=None, **properties):
+        if isinstance(entity, (DummyEntity, neo4j.Node, neo4j.Relationship)):
+            self._entity = entity
+        else:
+            self._entity = None
+        for k, v in properties.iteritems():
+            if k in self._descriptors:
+                setattr(self, k, v)
+            else:
+                self.properties[k] = v
+        m.session.add(self)
+        if self.is_phantom():
+            self.fire_event('create', self)
 
     def __copy__(self):
         # TODO: support copying?

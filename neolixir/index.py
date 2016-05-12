@@ -64,9 +64,9 @@ class NodeIndex(Index):
     def get(self, key, value=None, item=None):
         if isinstance(item, dict):
             if self.cls:
-                node = self.cls(value=None, **item)
+                node = self.cls.get(value=None, **item)
             else:
-                node = Node(value=None, **item)
+                node = Node.get(value=None, **item)
             return self.get(key, value, node)
         elif isinstance(item, Node):
             if item.is_phantom():
@@ -78,17 +78,17 @@ class NodeIndex(Index):
                     return item
                 else:
                     item.expunge()
-                    return Node(n)
+                    return Node.get(n)
             else:
                 if self.add(key, value, item, if_none=True):
                     return item
                 else:
-                    return Node(super(NodeIndex, self).get(key, value)[0])
+                    return Node.get(super(NodeIndex, self).get(key, value)[0])
         else:
-            return map(Node, super(NodeIndex, self).get(key, value))
+            return map(Node.get, super(NodeIndex, self).get(key, value))
 
     def query(self, query):
-        return map(Node, super(NodeIndex, self).query(query))
+        return map(Node.get, super(NodeIndex, self).query(query))
 
 class RelationshipIndex(Index):
 

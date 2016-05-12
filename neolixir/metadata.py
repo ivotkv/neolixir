@@ -103,11 +103,11 @@ class MetaData(object):
         for item in data:
 
             if isinstance(item, (DummyNode, neo4j.Node)):
-                mapped.append(Node(item))
+                mapped.append(Node.get(item))
 
             elif isinstance(item, (DummyRelationship, neo4j.Relationship)):
                 if mapRels:
-                    mapped.append(Relationship(item))
+                    mapped.append(Relationship.get(item))
                 else:
                     mapped.append(item)
 
@@ -117,12 +117,12 @@ class MetaData(object):
             elif isinstance(item, neo4j.Path):
                 path = []
                 for i, rel in enumerate(item.relationships):
-                    path.append(Node(item.nodes[i]))
+                    path.append(Node.get(item.nodes[i]))
                     if mapRels:
-                        path.append(Relationship(rel))
+                        path.append(Relationship.get(rel))
                     else:
                         path.append(rel)
-                path.append(Node(item.nodes[-1]))
+                path.append(Node.get(item.nodes[-1]))
                 mapped.append(path)
 
             else:

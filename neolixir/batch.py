@@ -123,7 +123,7 @@ class WriteBatch(LegacyWriteBatch):
     def index(self, index, key, value, item):
         if isinstance(item, dict):
             cls = index.cls or Node
-            return self.index(index, key, value, cls(value=None, **item))
+            return self.index(index, key, value, cls.get(value=None, **item))
 
         elif isinstance(item, Node):
             cls = item.__class__
@@ -151,7 +151,7 @@ class WriteBatch(LegacyWriteBatch):
                                 return item
                             else:
                                 item.expunge()
-                                return cls(response1)
+                                return cls.get(response1)
 
                         self.job_callback(callback2, cls, item, response)
 
@@ -167,7 +167,7 @@ class WriteBatch(LegacyWriteBatch):
                             return item
                         else:
                             item.expunge()
-                            return cls(response)
+                            return cls.get(response)
 
                 self.job_callback(callback, self, self.jobs[-1], cls, item)
 
@@ -178,7 +178,7 @@ class WriteBatch(LegacyWriteBatch):
                     if item.id == response.id:
                         return item
                     else:
-                        return cls(response)
+                        return cls.get(response)
 
                 self.job_callback(callback, cls, item)
 

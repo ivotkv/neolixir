@@ -9,7 +9,7 @@ def test_create_out_of_session(m):
     assert m.session.count == 0
     assert isinstance(ret, int)
 
-    n = TNode(ret)
+    n = TNode.get(ret)
     assert m.session.count == 1
     assert n.randval == randval
 
@@ -43,7 +43,7 @@ def test_delete_out_of_session(m):
 
     m.session.clear()
     with raises(EntityNotFoundException):
-        TNode(n_id)
+        TNode.get(n_id)
 
     m.session.clear()
 
@@ -62,7 +62,7 @@ def test_delete_out_of_session(m):
 
     m.session.clear()
     with raises(EntityNotFoundException):
-        Relationship(rel_id)
+        Relationship.get(rel_id)
 
 def test_append_out_of_session(m):
     n1 = TNode()
@@ -96,8 +96,8 @@ def test_remove_out_of_session(m):
     assert n2 in n1.rel_out
 
     m.session.clear()
-    n1 = TNode(n1_id)
-    n2 = TNode(n2_id)
+    n1 = TNode.get(n1_id)
+    n2 = TNode.get(n2_id)
     assert n2 not in n1.rel_out
     with raises(EntityNotFoundException):
-        Relationship(rel_id)
+        Relationship.get(rel_id)

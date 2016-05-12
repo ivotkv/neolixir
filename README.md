@@ -80,7 +80,7 @@ Commit the session:
 Reload from database:
 ```
 >>> metadata.session.clear()
->>> bob = Person(315)
+>>> bob = Person.get(315)
 >>> bob
 <Person (0x17971d0): 
 Id = 315

@@ -6,7 +6,7 @@ from py2neo import neo4j
 def test_contains_iter_len(m):
     n1 = TNode()
     n2 = TNode()
-    r1 = Relationship((n1, 'test1', n2))
+    r1 = Relationship.get((n1, 'test1', n2))
     assert n1 in m.session
     assert n1 in iter(m.session)
     assert n2 in m.session
@@ -28,7 +28,7 @@ def test_contains_iter_len(m):
 
     n3 = TNode()
     n4 = TNode()
-    r2 = Relationship((n3, 'test2', n4))
+    r2 = Relationship.get((n3, 'test2', n4))
     assert n3 in m.session
     assert n3 in iter(m.session)
     assert n4 in m.session
@@ -490,7 +490,7 @@ def test_commit_deleted(m):
     m.session.commit()
     assert r1 not in m.session
     with raises(EntityNotFoundException):
-        Relationship(r1_id)
+        Relationship.get(r1_id)
 
     # add rel to deleted node
     n2_id = n2.id
@@ -520,7 +520,7 @@ def test_commit_deleted(m):
     m.session.commit()
     assert n2 not in m.session
     with raises(EntityNotFoundException):
-        Node(n2_id)
+        Node.get(n2_id)
 
 def test_threadsafe(m):
     # initial state
