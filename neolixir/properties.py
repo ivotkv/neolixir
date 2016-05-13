@@ -7,7 +7,7 @@ from utils import IN, OUT, classproperty
 from observable import Observable
 
 __all__ = ['Boolean', 'String', 'Enum', 'Integer', 'Float', 'Numeric', 'DateTime',
-           'Array', 'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
+           'RelOut', 'RelIn', 'RelOutOne', 'RelInOne']
 
 class FieldDescriptor(Observable):
 
@@ -178,6 +178,7 @@ class Array(Property):
     __value_type__ = list
 
     def __init__(self, type=None, name=None, observers=None):
+        raise NotImplementedError("Array support not yet implemented")
         super(Array, self).__init__(name=name, observers=observers)
         self._content_type = type
 
@@ -198,6 +199,7 @@ class TypedList(list):
     # TODO: implement type checking, casting and enforcing
 
     def __init__(self, list=None, type=None):
+        raise NotImplementedError("Array support not yet implemented")
         super(TypedList, self).__init__(list or [])
         self._content_type = type
 
