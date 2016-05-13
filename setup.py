@@ -17,10 +17,10 @@ try:
 except ImportError:
     from distutils.core import setup
 
-from neolixir import __name__, __package__, __version__
+__version__ = '2.1.1'
 
 setup(
-    name=__name__,
+    name='neolixir',
     version=__version__,
     description='A declarative ORM abstraction layer for Neo4j',
     long_description='A declarative ORM abstraction layer for the Neo4j graph database. '
@@ -48,7 +48,7 @@ setup(
         "neo4j", "declarative", "orm", "polymorphic", "schema", "session"
     ],
     packages=[
-        __package__
+        'neolixir'
     ],
     install_requires=[
         'py2neo>=2.0,<2.1',
