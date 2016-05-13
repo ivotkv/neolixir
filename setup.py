@@ -21,14 +21,37 @@ from neolixir import __name__, __package__, __version__
 
 setup(
     name=__name__,
-    description='A declarative ORM abstraction layer for Neo4j.',
     version=__version__,
-    packages=[__package__],
+    description='A declarative ORM abstraction layer for Neo4j',
+    long_description='A declarative ORM abstraction layer for the Neo4j graph database. '
+                     'Provides declarative model definition via polymorphic classes, '
+                     'strict property typing, relationship abstraction, query abstraction, '
+                     'event handling and session management.',
+    author='Ivo Tzvetkov',
+    author_email='ivotkv@gmail.com',
+    license='MIT',
+    url='http://neolixir.org',
+    download_url='https://github.com/ivotkv/neolixir/tarball/v' + __version__,
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2.7",
+        #"Programming Language :: Python :: 3.3",
+        #"Programming Language :: Python :: 3.4",
+        #"Programming Language :: Python :: 3.5",
+        "Topic :: Database",
+        "Topic :: Software Development",
+    ],
+    keywords=[
+        "neo4j", "declarative", "orm", "polymorphic", "schema", "session"
+    ],
+    packages=[
+        __package__
+    ],
     install_requires=[
         'py2neo>=2.0,<2.1',
         'simplejson'
-    ],
-    test_requires=[
-        'pytest'
     ]
 )

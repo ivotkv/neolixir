@@ -30,6 +30,8 @@ import properties as __m_properties__
 from relationship import *
 import relationship as __m_relationship__
 
+__name__ = 'neolixir'
+__package__ = 'neolixir'
 __version__ = '2.1.0'
 
 __all__ = [n for m in dir() if re.match('^__m_.*', m) for n in eval(m).__all__]
