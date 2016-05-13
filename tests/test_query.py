@@ -3,7 +3,70 @@ from random import randint
 
 def test_tokenize(m):
     from neolixir.query import tokenize
-    #TODO
+    string = """
+    """
+    assert tokenize(string) == [
+    ]
+    string = """
+        start user=node({user_id}), location=node({location_id})
+        match (location)<-[:lives_in|lives_near]-neighbour
+        with collect(user) + collect(neighbour) as people
+        unwind people as person
+        with distinct person
+        match person-[:knows*1..4]->(other {name: "Bob"})
+        return count(*)
+    """
+    assert tokenize(string) == [
+        'start', 'user=node({user_id}),', 'location=node({location_id})',
+        'match', '(location)<-[:lives_in|lives_near]-neighbour',
+        'with', 'collect(user)', '+', 'collect(neighbour)', 'as', 'people',
+        'unwind', 'people', 'as', 'person',
+        'with', 'distinct', 'person',
+        'match', 'person-[:knows*1..4]->(other {name: "Bob"})',
+        'return', 'count(*)'
+    ]
+    string = """
+        {   }  [   ]   (   )   {  [  ]  }  ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}]
+        '{   }  [   ]   (   )   {  [  ]  }  ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}]'
+        "{   }  [   ]   (   )   {  [  ]  }  ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}]"
+        "{[  { } {{ [   ]   (   )  ( {  [  ((]  } (]]]]]]{{[(]0[ ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}] [[{(([[({{i"
+    """
+    assert tokenize(string) == [
+        '{   }', '[   ]', '(   )', '{  [  ]  }', '({ })', '{([ ])}', '{{{ }}}', '[[[ ]]]', '((( )))', '[{( )}]',
+        '\'{   }  [   ]   (   )   {  [  ]  }  ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}]\'',
+        '"{   }  [   ]   (   )   {  [  ]  }  ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}]"',
+        '"{[  { } {{ [   ]   (   )  ( {  [  ((]  } (]]]]]]{{[(]0[ ({ }) {([ ])} {{{ }}} [[[ ]]] ((( ))) [{( )}] [[{(([[({{i"'
+    ]
+    with raises(ValueError):
+        tokenize('{')
+    with raises(ValueError):
+        tokenize('[')
+    with raises(ValueError):
+        tokenize('(')
+    with raises(ValueError):
+        tokenize('[(])')
+    with raises(ValueError):
+        tokenize('[{[(])}]')
+    string = """
+        ' '    ' " {[" }'     '  \\' " \\' " \\' \\'\\' \\\\'\\'
+        "' '"    "' \\" {[\\" }'"     "'  \\' \\" \\' \\" \\' \\'\\' \\\\'\\'"
+        " "    " ' {[' }"     "  \\" ' \\" ' \\" \\"\\" \\\\"\\"
+        '" "'    '" \\' {[\\' }"'     '"  \\" \\' \\" \\' \\" \\"\\" \\\\"\\"'
+    """
+    assert tokenize(string) == [
+        """' '""", """' " {[" }'""", """'  \\' " \\' " \\' \\'\\' \\\\'\\'""",
+        '''"' '"''', '''"' \\" {[\\" }'"''', '''"'  \\' \\" \\' \\" \\' \\'\\' \\\\'\\'"''',
+        '''" "''', '''" ' {[' }"''', '''"  \\" ' \\" ' \\" \\"\\" \\\\"\\"''',
+        """'" "'""", """'" \\' {[\\' }"'""", """'"  \\" \\' \\" \\' \\" \\"\\" \\\\"\\"'"""
+    ]
+    with raises(ValueError):
+        tokenize('\'')
+    with raises(ValueError):
+        tokenize('"')
+    with raises(ValueError):
+        tokenize('\'\'\'')
+    with raises(ValueError):
+        tokenize('"""')
 
 def test_append(m):
     q = TNode.query

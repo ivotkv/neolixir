@@ -10,6 +10,7 @@ NEST_CHARS = {
     '(': ')',
     '{': '}'
 }
+NO_SUBNEST = {'\'', '"'}
 
 RETURN_RE = re.compile(r'^return$', flags=re.I)
 RETURN_OPTS_RE = re.compile(r'^(order|skip|limit)$', flags=re.I)
@@ -41,7 +42,7 @@ def tokenize(string):
         else:
             if string[idx] == NEST_CHARS[context[-1]]:
                 context.pop()
-            elif string[idx] in NEST_CHARS:
+            elif context[-1] not in NO_SUBNEST and string[idx] in NEST_CHARS:
                 context.append(string[idx])
             token += string[idx]
             idx += 1
