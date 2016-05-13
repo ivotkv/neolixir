@@ -6,6 +6,8 @@ A declarative ORM abstraction layer for Neo4j. Provides model definition via pol
 
 Detailed documentation coming soon. In the meantime, please see the Quick Start section below.
 
+You can also review the slides from the original [Montréal-Python](http://montrealpython.org) presentation [here](https://docs.google.com/presentation/d/1acPrTA7FJ3LbPNRIT7bBfBgc6d05ZYY2oGmjs00Jkh4).
+
 ## Quick Start
 
 ### Installation
@@ -14,9 +16,9 @@ The current stable version requires py2neo 2.0, which requires Python 2.7+.
 
 **NOTE**: Neo4j 3.0+ and Python 3.0+ support is currently still under development.
 
-Since the package is not yet on PyPI, please install from GitHub directly:
+Neolixir is now available on PyPI, so you can just install directly with pip:
 ```bash
-pip install "git+https://git@github.com/ivotkv/neolixir.git"
+pip install neolixir
 ```
 
 ### Basic Usage
