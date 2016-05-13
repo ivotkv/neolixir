@@ -30,7 +30,24 @@ def test_append(m):
     assert q.string == 'match (instance:TNode) where instance.string = "foo" return instance.string, id(instance) order by instance.string, id(instance) desc limit 10'
     q = q.append('and instance.integer = 1')
     assert q.string == 'match (instance:TNode) where instance.string = "foo" and instance.integer = 1 return instance.string, id(instance) order by instance.string, id(instance) desc limit 10'
-    #TODO: add union tests
+    q = TNode.query
+    assert q.string == 'match (instance:TNode) return instance'
+    q = q.append('union match (instance:SubTNode) return instance')
+    assert q.string == 'match (instance:TNode) return instance union match (instance:SubTNode) return instance'
+    q = q.append('where instance.string = "foo"')
+    assert q.string == 'match (instance:TNode) return instance union match (instance:SubTNode) where instance.string = "foo" return instance'
+    q = q.append('return id(instance) limit 10')
+    assert q.string == 'match (instance:TNode) return instance union match (instance:SubTNode) where instance.string = "foo" return id(instance) limit 10'
+    q = q.append('skip 10 limit 10')
+    assert q.string == 'match (instance:TNode) return instance union match (instance:SubTNode) where instance.string = "foo" return id(instance) skip 10 limit 10'
+    q = q.append('union match (instance:IFieldNode) return instance')
+    assert q.string == 'match (instance:TNode) return instance union match (instance:SubTNode) where instance.string = "foo" return id(instance) skip 10 limit 10 union match (instance:IFieldNode) return instance'
+    q = TNode.query
+    assert q.string == 'match (instance:TNode) return instance'
+    q = q.append('where instance.string = "foo" return id(instance) order by id(instance) desc limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return id(instance) order by id(instance) desc limit 10'
+    q = q.append('union all match (instance:TNode) where instance.string = "foo" return id(instance) order by id(instance) desc limit 10')
+    assert q.string == 'match (instance:TNode) where instance.string = "foo" return id(instance) order by id(instance) desc limit 10 union all match (instance:TNode) where instance.string = "foo" return id(instance) order by id(instance) desc limit 10'
 
 def test_elixir_compat(m):
     q = TNode.query
