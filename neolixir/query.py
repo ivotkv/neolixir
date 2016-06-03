@@ -86,10 +86,14 @@ class Query(object):
 
     def append(self, string, params=None):
         copy = self.copy()
+        copy._append(string, params=params)
+        return copy
+
+    def _append(self, string, params=None):
         new_tokens = tokenize(string)
         return_idx = None
         union_idx = None
-        for idx, token in enumerate(copy.tokens):
+        for idx, token in enumerate(self.tokens):
             if RETURN_RE.match(token):
                 return_idx = idx
             elif UNION_RE.match(token):
@@ -103,8 +107,8 @@ class Query(object):
                 new_union_idx = idx
         if return_idx is not None and new_return_idx is None:
             if RETURN_OPTS_RE.match(new_tokens[0]):
-                extra_tokens = copy.tokens[return_idx:]
-                copy.tokens = copy.tokens[:return_idx]
+                extra_tokens = self.tokens[return_idx:]
+                self.tokens = self.tokens[:return_idx]
                 if ORDER_RE.match(new_tokens[0]):
                     regex = RETURN_OPTS_RE
                 elif SKIP_RE.match(new_tokens[0]):
@@ -112,18 +116,17 @@ class Query(object):
                 else:
                     regex = LIMIT_RE
                 while extra_tokens and not regex.match(extra_tokens[0]):
-                    copy.tokens.append(extra_tokens.pop(0))
-                copy.tokens += new_tokens
+                    self.tokens.append(extra_tokens.pop(0))
+                self.tokens += new_tokens
             else:
-                copy.tokens = copy.tokens[:return_idx] + new_tokens + copy.tokens[return_idx:]
+                self.tokens = self.tokens[:return_idx] + new_tokens + self.tokens[return_idx:]
         elif return_idx is None or new_return_idx is None or \
              new_union_idx is not None and new_union_idx < new_return_idx:
-            copy.tokens += new_tokens
+            self.tokens += new_tokens
         else:
-            copy.tokens = copy.tokens[:return_idx] + new_tokens
+            self.tokens = self.tokens[:return_idx] + new_tokens
         if params is not None:
-            copy.params.update(params)
-        return copy
+            self.params.update(params)
 
     def execute(self, automap=True, fast=False):
         return m.cypher(self.string, params=self.params, automap=automap, fast=fast)

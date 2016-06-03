@@ -3,3 +3,8 @@
 *.log
 *.bak
 .cache
+
+# PyPI builds
+build/
+dist/
+neolixir.egg-info/
