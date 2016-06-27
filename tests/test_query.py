@@ -161,7 +161,7 @@ def test_elixir_compat(m):
 
 def test_get_by(m):
     v1 = randint(0, 2**30)
-    n1 = TNode(integer=v1)
+    n1 = TNode(integer=v1, string=v1)
     m.session.commit()
     assert Node.get_by(integer=v1) is n1
     assert TNode.get_by(integer=v1) is n1
@@ -172,3 +172,9 @@ def test_get_by(m):
     assert n1.integer == v1
     assert TNode.get_by(integer=v1) is n1
     assert SubTNode.get_by(integer=v1) is None
+    m.session.clear()
+    assert Node.get_by(string=v1) is None
+    n1 = Node.get_by(string=str(v1))
+    assert isinstance(n1, TNode)
+    assert n1.string == str(v1)
+    assert Node.get_by(string=unicode(v1)) is n1

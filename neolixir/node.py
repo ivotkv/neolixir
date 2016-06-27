@@ -101,5 +101,6 @@ class Node(Entity):
             except EntityNotFoundException:
                 return None
         else:
-            clauses = [u"instance.{0} = {1}".format(k, repr(v)) for k, v in kwargs.iteritems()]
+            clauses = [u"instance.{0} = {1}".format(k, "'" + v + "'" if isinstance(v, (str, unicode)) else v)
+                       for k, v in kwargs.iteritems()]
             return cls.query.append('where {0}'.format(' and '.join(clauses))).first()
