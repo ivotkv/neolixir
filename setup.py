@@ -17,7 +17,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-__version__ = '2.1.3'
+__version__ = '2.1.4'
 
 setup(
     name='neolixir',
@@ -30,7 +30,7 @@ setup(
     author='Ivo Tzvetkov',
     author_email='ivotkv@gmail.com',
     license='MIT',
-    url='http://neolixir.org',
+    url='https://github.com/ivotkv/neolixir',
     download_url='https://github.com/ivotkv/neolixir/tarball/v' + __version__,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
