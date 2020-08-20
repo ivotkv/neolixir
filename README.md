@@ -142,9 +142,3 @@ In order to run the tests:
     ```bash
     $ NEO4J_TEST_SERVER=localhost:7480 py.test tests
     ```
-
-## About
-
-Developed and maintained by [Ivo Tzvetkov](https://github.com/ivotkv) at [ChallengeU](http://challengeu.com). Twitter: [@ivotkv](https://twitter.com/ivotkv). Gmail: ivotkv.
-
-Copyright (c) 2013 Ivaylo Tzvetkov, ChallengeU. Released under the terms of the [MIT License](https://opensource.org/licenses/MIT).
